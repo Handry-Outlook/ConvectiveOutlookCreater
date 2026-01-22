@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecaster Admin - Multi-Polygon</title>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
+    
+    <style>
+        body { margin: 0; font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Layout */
+        #history-panel { width: 250px; background: #e0e0e0; border-right: 1px solid #ccc; overflow-y: auto; display: none; padding: 10px; }
+        #control-panel { width: 320px; background: #f4f4f4; padding: 20px; border-right: 1px solid #ccc; overflow-y: auto; display: none; }
+        #map { flex: 1; display: none; }
+
+        /* Login Overlay */
+        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #2c6092; display: flex; justify-content: center; align-items: center; z-index: 1000; }
+        .login-box { background: white; padding: 40px; border-radius: 8px; width: 300px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .login-box input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; box-sizing: border-box;}
+        .login-box button { width: 100%; padding: 10px; background: #da2128; color: white; border: none; font-weight: bold; cursor: pointer; }
+
+        /* Sidebar Elements */
+        h2 { margin-top: 0; color: #2c6092; font-size: 20px; }
+        h3 { font-size: 14px; color: #666; margin-bottom: 10px; text-transform: uppercase; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 5px; }
+        input, select, textarea { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        textarea { height: 80px; resize: vertical; }
+
+        /* History Items */
+        .history-item { background: white; padding: 10px; margin-bottom: 10px; border-radius: 4px; cursor: pointer; border-left: 4px solid #ccc; font-size: 12px; }
+        .history-item:hover { background: #fff8f8; border-left-color: #da2128; }
+        .history-date { font-weight: bold; color: #333; }
+        
+        /* Buttons */
+        .btn-save { background: #2c6092; color: white; border: none; padding: 12px; width: 100%; cursor: pointer; font-size: 16px; margin-top: 10px; font-weight: bold; }
+        .btn-save:hover { background: #1a4066; }
+        
+        .btn-logout { background: #666; color: white; border: none; padding: 4px 8px; font-size: 11px; cursor: pointer; float: right; }
+        
+        /* Tool Controls */
+        .tool-row { display: flex; gap: 5px; margin-bottom: 15px; align-items: flex-end; }
+        .tool-btn { flex:1; padding: 8px; background: #ddd; border: none; cursor: pointer; font-size: 12px; }
+        .tool-btn.active { background: #da2128; color: white; }
+
+        /* Legend for Admin */
+        .admin-legend { margin-top: 10px; font-size: 11px; }
+        .legend-item { display: flex; align-items: center; margin-bottom: 4px; }
+        .color-box { width: 12px; height: 12px; margin-right: 5px; border: 1px solid #999; }
+    </style>
+</head>
+<body>
+
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>Forecaster Login</h2>
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Password">
+            <button id="login-btn">Login</button>
+            <p id="error-msg" style="color:red; font-size:12px; margin-top:10px;"></p>
+        </div>
+    </div>
+
+    <div id="history-panel">
+        <h3>Previous Forecasts</h3>
+        <div id="history-list">Loading...</div>
+    </div>
+
+    <div id="control-panel">
+        <button id="logout-btn" class="btn-logout">Logout</button>
+        <h2>Forecast Editor</h2>
+        
+        <div class="form-group">
+            <label>1. Select Active Risk Level</label>
+            <select id="risk-level-selector">
+                <option value="1 Very Low" data-color="#c29f92">1 Very Low</option>
+                <option value="2 Low" data-color="#00aeef">2 Low</option>
+                <option value="3 Slight" data-color="#5da848">3 Slight</option>
+                <option value="4 Moderate" data-color="#f7941d">4 Moderate</option>
+                <option value="5 High" data-color="#da2128">5 High</option>
+                <option value="SEVERE" data-color="#800080">SEVERE</option>
+            </select>
+            <p style="font-size:11px; color:#666; margin-top:5px;">
+                Select a level, then use the Draw Polygon tool.
+            </p>
+        </div>
+
+        <div class="form-group">
+            <label>2. Forecast Metadata</label>
+            <label style="font-weight:normal; font-size:11px;">Valid From:</label>
+            <input type="datetime-local" id="valid-from">
+            
+            <label style="font-weight:normal; font-size:11px; margin-top:5px;">Valid To:</label>
+            <input type="datetime-local" id="valid-to">
+            
+            <label style="font-weight:normal; font-size:11px; margin-top:5px;">Description:</label>
+            <textarea id="forecast-text" placeholder="e.g. Large hail possible in red areas..."></textarea>
+        </div>
+
+        <button class="btn-save" id="save-forecast">PUBLISH FORECAST</button>
+        <div id="status" style="margin-top:10px; font-size:12px; font-weight:bold;"></div>
+
+        <div class="admin-legend">
+            <strong>Current Layer Stack:</strong>
+            <div id="layer-stack"></div>
+        </div>
+    </div>
+
+    <div id="map"></div>
+
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
+    
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
+            authDomain: "genweather-f9a45.firebaseapp.com",
+            projectId: "genweather-f9a45",
+            storageBucket: "genweather-f9a45.firebasestorage.app",
+            messagingSenderId: "682497500954",
+            appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3",
+            measurementId: "G-Y7Y0PH9JEZ"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // --- MAPBOX CONFIG ---
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-2.5, 54.5],
+            zoom: 5
+        });
+
+        // Initialize Draw with custom styles to support coloring
+        const draw = new MapboxDraw({
+            displayControlsDefault: false,
+            controls: { polygon: true, trash: true },
+            userProperties: true, // IMPORTANT: Allows us to style features by property
+            styles: [
+                // 1. Polygon Fill (Active/Static)
+                {
+                    'id': 'gl-draw-polygon-fill-active',
+                    'type': 'fill',
+                    'filter': ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+                    'paint': {
+                        'fill-color': ['get', 'user_color'], // Use property we inject
+                        'fill-opacity': 0.6
+                    }
+                },
+                {
+                    'id': 'gl-draw-polygon-fill-static',
+                    'type': 'fill',
+                    'filter': ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+                    'paint': {
+                        'fill-color': ['get', 'user_color'],
+                        'fill-opacity': 0.6
+                    }
+                },
+                // 2. Polygon Outline
+                {
+                    'id': 'gl-draw-polygon-stroke-active',
+                    'type': 'line',
+                    'filter': ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+                    'paint': {
+                        'line-color': '#000',
+                        'line-width': 2
+                    }
+                },
+                {
+                    'id': 'gl-draw-polygon-stroke-static',
+                    'type': 'line',
+                    'filter': ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+                    'paint': {
+                        'line-color': '#000',
+                        'line-width': 2
+                    }
+                },
+                // 3. Vertex points (for editing)
+                {
+                    'id': 'gl-draw-polygon-and-line-vertex-active',
+                    'type': 'circle',
+                    'filter': ['all', ['==', 'meta', 'vertex'], ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
+                    'paint': {
+                        'circle-radius': 5,
+                        'circle-color': '#fff',
+                        'circle-stroke-color': '#000',
+                        'circle-stroke-width': 2
+                    }
+                }
+            ]
+        });
+        map.addControl(draw);
+
+        // --- AUTH & UI STATE ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('control-panel').style.display = 'block';
+                document.getElementById('history-panel').style.display = 'block';
+                document.getElementById('map').style.display = 'block';
+                map.resize();
+                loadHistory(); // Load previous forecasts
+            } else {
+                document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('control-panel').style.display = 'none';
+                document.getElementById('history-panel').style.display = 'none';
+                document.getElementById('map').style.display = 'none';
+            }
+        });
+
+        document.getElementById('login-btn').addEventListener('click', () => {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            signInWithEmailAndPassword(auth, email, pass).catch(e => document.getElementById('error-msg').textContent = e.message);
+        });
+        document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+
+
+        // --- LOGIC: ASSIGN COLORS TO DRAWN SHAPES ---
+
+        // Helper to get current selected color/risk
+        function getCurrentRiskConfig() {
+            const sel = document.getElementById('risk-level-selector');
+            const opt = sel.options[sel.selectedIndex];
+            return {
+                level: sel.value,
+                color: opt.dataset.color || '#888'
+            };
+        }
+
+        // Event: When a shape is created
+        map.on('draw.create', updateFeatureProperties);
+        // Event: When selection changes (if they select an existing shape, update selector?)
+        // Not strictly necessary, but good for UX. For now, we focus on creation.
+        
+        function updateFeatureProperties(e) {
+            const config = getCurrentRiskConfig();
+            const features = e.features;
+            
+            features.forEach(f => {
+                // We add 'user_color' and 'user_risk' properties to the feature
+                // The Draw style above uses ['get', 'user_color'] to paint it immediately
+                draw.setFeatureProperty(f.id, 'user_color', config.color);
+                draw.setFeatureProperty(f.id, 'user_risk', config.level);
+            });
+            updateLayerStackUI();
+        }
+
+        // Also update if user changes the dropdown WHILE a shape is selected
+        document.getElementById('risk-level-selector').addEventListener('change', () => {
+            const selectedIds = draw.getSelectedIds();
+            if (selectedIds.length > 0) {
+                const config = getCurrentRiskConfig();
+                selectedIds.forEach(id => {
+                    draw.setFeatureProperty(id, 'user_color', config.color);
+                    draw.setFeatureProperty(id, 'user_risk', config.level);
+                });
+                updateLayerStackUI();
+            }
+        });
+
+        // --- LOGIC: PUBLISH FORECAST ---
+        document.getElementById('save-forecast').addEventListener('click', async () => {
+            const allFeatures = draw.getAll();
+
+            if (allFeatures.features.length === 0) {
+                alert("No polygons drawn.");
+                return;
+            }
+
+            // We construct ONE document that contains an ARRAY of polygons
+            // Or a FeatureCollection string
+            const featureCollection = {
+                type: 'FeatureCollection',
+                features: allFeatures.features.map(f => ({
+                    type: 'Feature',
+                    geometry: f.geometry,
+                    properties: {
+                        risk: f.properties.user_risk || 'Unknown',
+                        color: f.properties.user_color || '#000'
+                    }
+                }))
+            };
+
+            const forecastData = {
+                geoJSON: JSON.stringify(featureCollection), // Store whole collection
+                validFrom: document.getElementById('valid-from').value,
+                validTo: document.getElementById('valid-to').value,
+                description: document.getElementById('forecast-text').value,
+                createdAt: new Date().toISOString()
+            };
+
+            try {
+                await addDoc(collection(db, "forecasts_v2"), forecastData); // Using v2 collection
+                document.getElementById('status').textContent = "Published Successfully!";
+                document.getElementById('status').style.color = "green";
+                loadHistory(); // Refresh list
+            } catch (e) {
+                console.error(e);
+                document.getElementById('status').textContent = "Error publishing.";
+            }
+        });
+
+        // --- LOGIC: HISTORY & EDITING ---
+        async function loadHistory() {
+            const listDiv = document.getElementById('history-list');
+            listDiv.innerHTML = "Loading...";
+            
+            // Get last 10 forecasts
+            const q = query(collection(db, "forecasts_v2"), orderBy("createdAt", "desc"), limit(10));
+            const querySnapshot = await getDocs(q);
+            
+            listDiv.innerHTML = "";
+            
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                const d = new Date(data.createdAt);
+                
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `
+                    <div class="history-date">${d.toLocaleDateString()} ${d.toLocaleTimeString()}</div>
+                    <div>Valid: ${data.validFrom.slice(0,10)}</div>
+                `;
+                
+                item.addEventListener('click', () => {
+                    // Load this forecast into the editor
+                    loadForecastIntoEditor(data);
+                });
+                
+                listDiv.appendChild(item);
+            });
+        }
+
+        function loadForecastIntoEditor(data) {
+            if(!confirm("Load this previous forecast? Unsaved changes will be lost.")) return;
+
+            // 1. Clear current map
+            draw.deleteAll();
+
+            // 2. Parse GeoJSON
+            const geo = JSON.parse(data.geoJSON);
+            
+            // 3. Add to Draw
+            if (geo.features) {
+                geo.features.forEach(f => {
+                    draw.add(f); // This keeps the properties (color/risk)
+                });
+            }
+
+            // 4. Fill Inputs
+            document.getElementById('valid-from').value = data.validFrom;
+            document.getElementById('valid-to').value = data.validTo;
+            document.getElementById('forecast-text').value = data.description;
+            
+            document.getElementById('status').textContent = "Loaded previous forecast. Edit and Publish to create new version.";
+            document.getElementById('status').style.color = "blue";
+            
+            updateLayerStackUI();
+        }
+
+        function updateLayerStackUI() {
+            const stack = document.getElementById('layer-stack');
+            const counts = {};
+            draw.getAll().features.forEach(f => {
+                const r = f.properties.user_risk || 'Unset';
+                counts[r] = (counts[r] || 0) + 1;
+            });
+            
+            stack.innerHTML = Object.keys(counts).map(k => `<div>${k}: ${counts[k]} polygon(s)</div>`).join('');
+        }
+    </script>
+</body>
+</html>
