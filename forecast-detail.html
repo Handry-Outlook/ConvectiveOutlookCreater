@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecast Detail | Convective Weather</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #2c6092;
+            --light-bg: #e6e6e6;
+            --border-color: #ccc;
+        }
+
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            color: #333;
+        }
+
+        /* --- HEADER --- */
+        .top-nav {
+            background-color: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 45px;
+        }
+
+        .nav-left a {
+            color: #ccc;
+            text-decoration: none;
+            padding: 0 15px;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .detail-container {
+            max-width: 1000px;
+            margin: 20px auto;
+            background: white;
+            padding: 30px 50px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        h1 { font-size: 24px; font-weight: normal; margin: 0; color: #444; }
+
+        /* --- MAP SECTION --- */
+        #map {
+            width: 100%;
+            height: 600px;
+            border: 1px solid var(--border-color);
+            background: #f0f0f0;
+        }
+
+        /* --- RISK LEGEND --- */
+        .risk-legend {
+            display: flex;
+            background: #ddd;
+            padding: 10px;
+            margin-top: -1px; /* Overlap map border slightly */
+            border: 1px solid var(--border-color);
+            align-items: center;
+            gap: 2px;
+        }
+
+        .legend-item {
+            padding: 5px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            border: 1px solid #888;
+            text-transform: uppercase;
+        }
+
+        .legend-label {
+            margin-left: auto;
+            font-size: 13px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        /* --- TEXT CONTENT --- */
+        .outlook-body {
+            margin-top: 30px;
+            line-height: 1.6;
+        }
+
+        .meta-section {
+            font-size: 14px;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            color: #444;
+        }
+
+        .meta-section p { margin: 4px 0; }
+
+        .discussion-text {
+            font-size: 15px;
+            color: #222;
+            white-space: pre-wrap; /* Preserves line breaks from admin input */
+            text-align: justify;
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Risk Colors */
+        .low { background: #c29f92; color: #000; }
+        .slgt { background: #5da848; color: #fff; }
+        .mdt { background: #f7941d; color: #000; }
+        .high { background: #da2128; color: #fff; }
+        .svr { border: 2px dashed #000; background: transparent; color: #000; }
+
+    </style>
+</head>
+<body>
+
+    <header class="top-nav">
+        <nav class="nav-left">
+            <a href="index.html">About</a>
+            <a href="index.html">Products</a>
+            <a href="archive.html">Archive</a>
+            <a href="#">Contact</a>
+        </nav>
+        <div style="padding-right: 20px;"><i class="fas fa-user" style="color:#666;"></i></div>
+    </header>
+
+    <div class="detail-container">
+        <div class="header-row">
+            <h1 id="title-date">Convective Outlook: -- --- ----</h1>
+            <div style="color: #2c6092; font-size: 20px;">
+                <i class="fab fa-facebook"></i> <i class="fab fa-twitter"></i> <i class="fab fa-google-plus-g"></i> <i class="fas fa-envelope"></i>
+            </div>
+        </div>
+
+        <div id="map"></div>
+
+        <div class="risk-legend">
+            <div class="legend-item low">LOW</div>
+            <div class="legend-item slgt">SLGT</div>
+            <div class="legend-item mdt">MDT</div>
+            <div class="legend-item high">HIGH</div>
+            <div class="legend-item svr">SVR</div>
+            <div class="legend-label">What do these risk levels mean?</div>
+        </div>
+
+        <div class="outlook-body">
+            <div class="meta-section">
+                <p><strong>Convective Outlook</strong></p>
+                <p id="valid-time">VALID: --:-- UTC --- -- --- ---- - --:-- UTC --- -- --- ----</p>
+                <p id="issued-time">ISSUED: --:-- UTC --- -- --- ----</p>
+                <p id="issued-by">ISSUED BY: ---</p>
+            </div>
+
+            <div class="discussion-text" id="discussion-content">
+                Loading meteorological discussion...
+            </div>
+        </div>
+    </div>
+
+    <footer>&copy; Convective Weather</footer>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
+            authDomain: "genweather-f9a45.firebaseapp.com",
+            projectId: "genweather-f9a45",
+            storageBucket: "genweather-f9a45.firebasestorage.app",
+            messagingSenderId: "682497500954",
+            appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // --- GET DATA ID FROM URL ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const forecastId = urlParams.get('id');
+
+        async function fetchForecast() {
+            if (!forecastId) {
+                document.getElementById('discussion-content').innerText = "No forecast ID provided.";
+                return;
+            }
+
+            try {
+                const docRef = doc(db, "forecasts_v2", forecastId);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    renderPage(data);
+                } else {
+                    document.getElementById('discussion-content').innerText = "Forecast not found.";
+                }
+            } catch (error) {
+                console.error("Error fetching forecast:", error);
+            }
+        }
+
+        function renderPage(data) {
+            const geoJSON = JSON.parse(data.geoJSON);
+            const validFrom = new Date(data.validFrom);
+            const validTo = new Date(data.validTo);
+            const issuedAt = new Date(data.issuedAt || data.validFrom);
+
+            // Update Text content
+            document.getElementById('title-date').innerText = `Convective Outlook: ${validFrom.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`;
+            document.getElementById('valid-time').innerText = `VALID: ${validFrom.toUTCString().replace('GMT', 'UTC')} - ${validTo.toUTCString().replace('GMT', 'UTC')}`;
+            document.getElementById('issued-time').innerText = `ISSUED: ${issuedAt.toUTCString().replace('GMT', 'UTC')}`;
+            document.getElementById('issued-by').innerText = `ISSUED BY: ${data.forecaster || 'DAN'}`;
+            document.getElementById('discussion-content').innerText = data.description;
+
+            // Initialize Mapbox
+            mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/mapbox/light-v11', // Clean style similar to image
+                center: [-2, 54.5],
+                zoom: 5.5
+            });
+
+            map.on('load', () => {
+                map.addSource('forecast-data', { type: 'geojson', data: geoJSON });
+
+                // Fill Layer
+                map.addLayer({
+                    'id': 'risk-fill',
+                    'type': 'fill',
+                    'source': 'forecast-data',
+                    'paint': {
+                        'fill-color': ['get', 'color'],
+                        'fill-opacity': 0.4
+                    }
+                });
+
+                // Outline Layer
+                map.addLayer({
+                    'id': 'risk-outline',
+                    'type': 'line',
+                    'source': 'forecast-data',
+                    'paint': {
+                        'line-color': ['get', 'color'],
+                        'line-width': 2
+                    }
+                });
+
+                // Auto-zoom to fit the polygons
+                const bounds = new mapboxgl.LngLatBounds();
+                geoJSON.features.forEach(feature => {
+                    if (feature.geometry.type === 'Polygon') {
+                        feature.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
+                    }
+                });
+                if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 50 });
+            });
+        }
+
+        fetchForecast();
+    </script>
+</body>
+</html>

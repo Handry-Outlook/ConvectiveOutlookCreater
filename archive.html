@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archive | Thunderstorm Outlook</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- VARIABLES (Synced with Main UI) --- */
+        :root {
+            --primary-blue: #2c6092;
+            --dark-grey: #333;
+            --light-bg: #e6e6e6;
+            --risk-1: #c29f92; /* Very Low */
+            --risk-2: #00aeef; /* Low */
+            --risk-3: #5da848; /* Slight */
+            --risk-4: #f7941d; /* Moderate */
+            --risk-5: #da2128; /* High */
+            --risk-severe: #800080; /* Severe */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            margin: 0;
+            color: #333;
+        }
+
+        /* --- HEADER & NAV (Synced) --- */
+        .top-nav {
+            background-color: #222;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            height: 40px;
+            font-size: 14px;
+        }
+
+        .nav-left { display: flex; align-items: center; }
+
+        .nav-left a {
+            color: #ccc;
+            text-decoration: none;
+            padding: 0 15px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            border-right: 1px solid #444;
+            text-transform: none; /* Matches new UI */
+        }
+
+        .nav-left a:first-child { border-left: 1px solid #444; }
+        .nav-left a:hover, .nav-left a.active { background-color: #444; color: white; }
+
+        .nav-right i { margin-left: 15px; color: #ccc; cursor: pointer; }
+
+        /* --- CONTENT CONTAINER --- */
+        .archive-wrapper {
+            max-width: 1100px;
+            margin: 40px auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .archive-header {
+            border-bottom: 2px solid var(--primary-blue);
+            margin-bottom: 30px;
+            padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        h1 { font-weight: 300; font-size: 32px; color: var(--primary-blue); text-transform: uppercase; }
+        .intro-text { font-size: 14px; color: #666; margin-bottom: 30px; line-height: 1.6; }
+
+        /* --- ARCHIVE LIST --- */
+        .archive-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .archive-card {
+            display: grid;
+            grid-template-columns: 240px 100px 1fr;
+            background: #fff;
+            border: 1px solid #ddd;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.2s ease-in-out;
+            overflow: hidden;
+        }
+
+        .archive-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .map-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #eee;
+            border-right: 1px solid #eee;
+        }
+
+        /* Risk Badge Column */
+        .risk-col {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fcfcfc;
+            border-right: 1px solid #eee;
+        }
+
+        .badge-main {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+        }
+
+        .badge-main span {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 400;
+            margin-top: -2px;
+        }
+
+        /* Info Column */
+        .info-col {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-col h3 { margin: 0 0 10px 0; font-size: 20px; color: var(--dark-grey); font-weight: 400; }
+        .info-col p { margin: 3px 0; font-size: 13px; color: #666; }
+        .info-col strong { color: #333; }
+
+        .loading-state { text-align: center; padding: 60px; color: #999; font-style: italic; }
+
+        /* Risk Backgrounds (Synced) */
+        .bg-low { background-color: var(--risk-2); }
+        .bg-vlow { background-color: var(--risk-1); }
+        .bg-slgt { background-color: var(--risk-3); }
+        .bg-mdt { background-color: var(--risk-4); }
+        .bg-high { background-color: var(--risk-5); }
+        .bg-svr { background-color: var(--risk-severe); }
+
+        @media (max-width: 768px) {
+            .archive-card { grid-template-columns: 1fr; }
+            .map-thumb { height: 150px; border-right: none; border-bottom: 1px solid #eee; }
+            .risk-col { padding: 15px; border-right: none; border-bottom: 1px solid #eee; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="top-nav">
+        <nav class="nav-left">
+            <a href="index.html">About</a>
+            <a href="index.html">Outlooks</a>
+            <a href="archive.html" class="active">Archive</a>
+            <a href="#">Blog</a>
+        </nav>
+        <div class="nav-right">
+            <i class="fas fa-user"></i>
+            <i class="fab fa-facebook-f"></i>
+            <i class="fab fa-twitter"></i>
+        </div>
+    </header>
+
+    <div class="archive-wrapper">
+        <div class="archive-header">
+            <h1>Forecast Archive</h1>
+            <div style="color: #ccc; font-size: 18px;">
+                <i class="fab fa-facebook-square"></i> <i class="fab fa-twitter-square"></i>
+            </div>
+        </div>
+        
+        <p class="intro-text">
+            Historical thunderstorm outlooks issued by our forecasting team. Select a forecast to view the full technical discussion and interactive map.
+        </p>
+
+        <div id="archive-list" class="archive-list">
+            <div class="loading-state">Fetching published forecasts...</div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getFirestore, collection, query, where, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
+            authDomain: "genweather-f9a45.firebaseapp.com",
+            projectId: "genweather-f9a45",
+            storageBucket: "genweather-f9a45.firebasestorage.app",
+            messagingSenderId: "682497500954",
+            appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+
+        async function loadArchive() {
+            const listContainer = document.getElementById('archive-list');
+            
+            const q = query(
+                collection(db, "forecasts_v2"), 
+                where("isActive", "==", true), 
+                orderBy("validFrom", "desc")
+            );
+
+            try {
+                const querySnapshot = await getDocs(q);
+                listContainer.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    listContainer.innerHTML = `<div class="loading-state">No published forecasts found.</div>`;
+                    return;
+                }
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    let geoJSON = JSON.parse(data.geoJSON);
+
+                    // Fix for Mapbox Static Colors
+                    geoJSON.features = geoJSON.features.map(f => {
+                        const col = f.properties.color || "#cccccc";
+                        return {
+                            ...f,
+                            properties: {
+                                ...f.properties,
+                                "fill": col,
+                                "fill-opacity": 0.6,
+                                "stroke": col,
+                                "stroke-width": 2
+                            }
+                        };
+                    });
+
+                    // Author Clean (email to username)
+                    const authorName = data.authorEmail ? data.authorEmail.split('@')[0] : "Forecaster";
+
+                    // Determine Primary Risk for Badge
+                    const risks = geoJSON.features.map(f => (f.properties.risk || 'LOW').toUpperCase());
+                    let primaryRisk = 'LOW';
+                    let riskNum = '2';
+                    
+                    if (risks.some(r => r.includes('SEVERE'))) { primaryRisk = 'SVR'; riskNum = '!'; }
+                    else if (risks.some(r => r.includes('HIGH'))) { primaryRisk = 'HIGH'; riskNum = '5'; }
+                    else if (risks.some(r => r.includes('MODERATE'))) { primaryRisk = 'MDT'; riskNum = '4'; }
+                    else if (risks.some(r => r.includes('SLIGHT'))) { primaryRisk = 'SLGT'; riskNum = '3'; }
+                    else if (risks.some(r => r.includes('LOW'))) { primaryRisk = 'LOW'; riskNum = '2'; }
+                    else { primaryRisk = 'VLOW'; riskNum = '1'; }
+
+                    const encodedGeo = encodeURIComponent(JSON.stringify(geoJSON));
+                    const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
+
+                    const dateTitle = new Date(data.validFrom).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+                    const card = `
+                        <a href="forecast-detail.html?id=${id}" class="archive-card">
+                            <img src="${staticMapUrl}" class="map-thumb" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'">
+                            <div class="risk-col">
+                                <div class="badge-main bg-${primaryRisk.toLowerCase()}">
+                                    ${riskNum}
+                                    <span>${primaryRisk}</span>
+                                </div>
+                            </div>
+                            <div class="info-col">
+                                <h3>Thunderstorm Outlook: ${dateTitle}</h3>
+                                <p><strong>Period:</strong> ${data.validFrom.replace('T', ' ')} &rarr; ${data.validTo.replace('T', ' ')}</p>
+                                <p><strong>Forecaster:</strong> <span style="text-transform: capitalize;">${authorName}</span></p>
+                            </div>
+                        </a>
+                    `;
+                    listContainer.insertAdjacentHTML('beforeend', card);
+                });
+            } catch (err) {
+                console.error("Archive Load Error:", err);
+                listContainer.innerHTML = '<div class="loading-state">Error connecting to database.</div>';
+            }
+        }
+
+        loadArchive();
+    </script>
+</body>
+</html>
