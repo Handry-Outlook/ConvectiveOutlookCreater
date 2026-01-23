@@ -641,29 +641,24 @@
         map.on('load', () => {
             // Real-time listener
             onSnapshot(collection(db, "forecasts_v2"), (snapshot) => {
-                allFeatures = []; // Reset global array
+                allFeatures = [];
 
                 snapshot.forEach((doc) => {
                     const data = doc.data();
-                    // Parse the stored GeoJSON string which contains MULTIPLE features
+
+                    // 1. FILTER OUT ARCHIVED: If isActive is explicitly false, skip this entire forecast
+                    if (data.isActive === false) return;
+
                     const geoJSON = JSON.parse(data.geoJSON);
 
                     if (geoJSON.features) {
                         geoJSON.features.forEach(f => {
-                            // We must flatten the structure: 
-                            // The geometry is in f.geometry
-                            // The specific risk color is in f.properties.color
-                            // But the valid times are in the parent doc (data)
-
                             const feature = {
                                 type: 'Feature',
                                 geometry: f.geometry,
                                 properties: {
-                                    // Inherit from specific polygon
                                     color: f.properties.color,
                                     risk: f.properties.risk,
-
-                                    // Inherit from parent document (Forecast metadata)
                                     description: data.description,
                                     validFrom: data.validFrom,
                                     validTo: data.validTo
@@ -674,36 +669,39 @@
                     }
                 });
 
-                // Initialize Source/Layers if needed (Same as before)
-                if (!map.getSource('forecasts')) {
-                    map.addSource('forecasts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-
-                    map.addLayer({
-                        'id': 'forecast-fill', 'type': 'fill', 'source': 'forecasts',
-                        'paint': { 'fill-color': ['get', 'color'], 'fill-opacity': 0.5 }
-                    });
-                    map.addLayer({
-                        'id': 'forecast-line', 'type': 'line', 'source': 'forecasts',
-                        'paint': { 'line-color': ['get', 'color'], 'line-width': 2 }
-                    });
-                }
-
-                // Trigger the time filter to show polygons for the selected day
+                // Refresh the map view based on the current slider position
                 updateDateLabels();
-            });
+            
+            // Initialize Source/Layers if needed (Same as before)
+            if (!map.getSource('forecasts')) {
+                map.addSource('forecasts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
-            // Popups
-            map.on('click', 'forecast-fill', (e) => {
-                const props = e.features[0].properties;
-                const toDate = new Date(props.validTo).toLocaleString();
-                new mapboxgl.Popup()
-                    .setLngLat(e.lngLat)
-                    .setHTML(`<div class="popup-header" style="color:${props.color}">${props.risk} RISK</div><div class="popup-meta">Valid until: ${toDate}</div><p>${props.description}</p>`)
-                    .addTo(map);
-            });
+                map.addLayer({
+                    'id': 'forecast-fill', 'type': 'fill', 'source': 'forecasts',
+                    'paint': { 'fill-color': ['get', 'color'], 'fill-opacity': 0.5 }
+                });
+                map.addLayer({
+                    'id': 'forecast-line', 'type': 'line', 'source': 'forecasts',
+                    'paint': { 'line-color': ['get', 'color'], 'line-width': 2 }
+                });
+            }
 
-            map.on('mouseenter', 'forecast-fill', () => map.getCanvas().style.cursor = 'pointer');
-            map.on('mouseleave', 'forecast-fill', () => map.getCanvas().style.cursor = '');
+            // Trigger the time filter to show polygons for the selected day
+            updateDateLabels();
+        });
+
+        // Popups
+        map.on('click', 'forecast-fill', (e) => {
+            const props = e.features[0].properties;
+            const toDate = new Date(props.validTo).toLocaleString();
+            new mapboxgl.Popup()
+                .setLngLat(e.lngLat)
+                .setHTML(`<div class="popup-header" style="color:${props.color}">${props.risk} RISK</div><div class="popup-meta">Valid until: ${toDate}</div><p>${props.description}</p>`)
+                .addTo(map);
+        });
+
+        map.on('mouseenter', 'forecast-fill', () => map.getCanvas().style.cursor = 'pointer');
+        map.on('mouseleave', 'forecast-fill', () => map.getCanvas().style.cursor = '');
         });
 
         // Initialize labels on load
