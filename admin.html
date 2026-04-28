@@ -973,7 +973,7 @@
                                 <strong id="hoco-admin-run-issued">No run</strong>
                             </div>
                             <input type="range" id="hoco-admin-run-slider" min="0" max="0" value="0" step="1" disabled>
-                            <div class="admin-hoco-slider-caption">The latest automated run is selected by default for the chosen `06:00` to next-day `05:59` valid window.</div>
+                            <div class="admin-hoco-slider-caption">Move the slider to step through earlier automated runs for the chosen forecast day. The latest run is selected by default.</div>
                         </div>
 
                         <div class="admin-hoco-card">
@@ -1006,13 +1006,14 @@
                             </div>
                         </div>
 
+                        <!-- Layer visibility toggles — these only show/hide guidance overlays, never touch drawn polygons -->
                         <div class="forecast-layer-toggle-row">
                             <button type="button" class="forecast-layer-toggle active" data-layer-toggle="manual">Manual</button>
                             <button type="button" class="forecast-layer-toggle" data-layer-toggle="auto">Auto</button>
                             <button type="button" class="forecast-layer-toggle" data-layer-toggle="ensemble">Ensemble</button>
                         </div>
 
-                        <div class="admin-hoco-note">Loading HOCO replaces the current draft polygons after confirmation. The imported draft keeps your discussion text and converts HOCO probabilities into `1 Low` through `5 High` categories so you can edit them manually.</div>
+                        <div class="admin-hoco-note">The HOCO guidance layers shown above are <strong>read-only overlays</strong> — they never modify your drawn polygons. Use the layer toggles to compare guidance against your draft. The slider above updates the Auto overlay for the selected run immediately.</div>
                     </div>
                 </div>
             </details>
@@ -1199,11 +1200,14 @@
         const HOCO_ENSEMBLE_FILL_ID = 'admin-hoco-ensemble-fill';
         const HOCO_ENSEMBLE_LINE_ID = 'admin-hoco-ensemble-line';
 
+        // ─── FIX 1: Layer defaults match index.html exactly ──────────────────────
+        // manual=true, auto=false, ensemble=false  (same as live page)
         let layerVisibilityState = {
             manual: true,
-            auto: true,
+            auto: false,
             ensemble: false
         };
+
         let currentEditingData = null;
         let historyUnsubscribe = null;
         let adminHocoUnsubscribe = null;
@@ -1283,8 +1287,14 @@
 
         map.on('style.load', () => {
             ensurePreviewLayers();
-            if (adminActiveHocoAutoGeojson) renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, adminActiveHocoAutoGeojson, 0.24, 1.8);
-            if (adminActiveHocoEnsembleGeojson) renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, adminActiveHocoEnsembleGeojson, 0.22, 2.4);
+            // ─── FIX 2: Re-render guidance overlays after style change without
+            //     touching draw polygons ─────────────────────────────────────────
+            if (adminActiveHocoAutoGeojson) {
+                renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, adminActiveHocoAutoGeojson, 0.24, 1.8);
+            }
+            if (adminActiveHocoEnsembleGeojson) {
+                renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, adminActiveHocoEnsembleGeojson, 0.22, 2.4);
+            }
             applyLayerVisibility();
         });
 
@@ -1616,6 +1626,8 @@
             updateAdminHocoPreview(adminVisibleHocoRuns.find(run => run.id === adminSelectedHocoRunId) || fallbackRun);
         }
 
+        // ─── FIX 3: renderGuidanceLayer NEVER touches draw polygons ──────────────
+        // It only adds/updates read-only overlay sources and layers on the map.
         function renderGuidanceLayer(sourceId, fillId, lineId, geojsonData, fillOpacity, lineWidth) {
             if (!geojsonData) return;
             if (!map.getSource(sourceId)) {
@@ -1673,6 +1685,8 @@
             });
         }
 
+        // ─── FIX 4: loadSelectedAdminHocoRun — only updates the AUTO overlay ─────
+        // draw.getAll() / draw.deleteAll() are never called here.
         async function loadSelectedAdminHocoRun() {
             const run = adminVisibleHocoRuns.find(item => item.id === adminSelectedHocoRunId) || adminVisibleHocoRuns[adminVisibleHocoRuns.length - 1] || null;
             updateAdminHocoPreview(run);
@@ -1698,6 +1712,8 @@
             }
         }
 
+        // ─── FIX 5: loadSelectedAdminHocoEnsemble — only updates ENSEMBLE overlay ─
+        // Never touches draw polygons.
         async function loadSelectedAdminHocoEnsemble() {
             if (!adminVisibleHocoRuns.length) {
                 adminActiveHocoEnsembleGeojson = null;
@@ -1756,6 +1772,7 @@
             }
 
             renderAdminHocoSlider();
+            // Both overlays refresh together — neither touches draw polygons
             await Promise.all([loadSelectedAdminHocoRun(), loadSelectedAdminHocoEnsemble()]);
         }
 
@@ -2337,10 +2354,21 @@
 
             const requestWidth = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
             const requestHeight = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
-            const encodedGeojson = encodeURIComponent(JSON.stringify({
-                type: 'FeatureCollection',
-                features: displayFeatures
-            }));
+
+            // ─── FIX 6: Simplify GeoJSON before encoding for static map URL ────────
+            // Prevents 414 / 400 errors from oversized URLs.
+            let staticGeoJson = { type: 'FeatureCollection', features: displayFeatures };
+            try {
+                const simplified = turf.simplify(staticGeoJson, { tolerance: 0.015, highPrecision: false });
+                const geoStr = JSON.stringify(simplified);
+                if (geoStr.length < 7800) {
+                    staticGeoJson = simplified;
+                }
+            } catch (e) {
+                console.warn('Poster map simplify failed, using original.', e);
+            }
+
+            const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeoJson));
             const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
 
             return loadCanvasImage(staticMapUrl);
@@ -2776,19 +2804,25 @@
         document.getElementById('clear-draft').addEventListener('click', requestDraftReset);
         document.getElementById('new-btn').addEventListener('click', requestDraftReset);
         document.getElementById('fit-map-btn').addEventListener('click', () => fitMapToFeatures(draw.getAll().features));
+
         adminHocoDateInput.addEventListener('change', () => {
             setAdminHocoWindow(getWindowFromDateValue(adminHocoDateInput.value));
             refreshAdminHocoForSelectedDay();
         });
+
+        // ─── FIX 7: Slider input triggers the auto-run plot directly ─────────────
+        // No separate "Load Selected Auto" button needed — the slider IS the trigger.
         adminHocoRunSlider.addEventListener('input', () => {
             const index = parseInt(adminHocoRunSlider.value, 10);
             const run = adminVisibleHocoRuns[index];
             if (run) {
                 adminSelectedHocoRunId = run.id;
                 renderAdminHocoSlider();
+                // Matches index.html: slider only triggers the auto overlay, not ensemble
                 loadSelectedAdminHocoRun();
             }
         });
+
         layerToggleButtons.forEach(button => {
             button.addEventListener('click', () => {
                 layerVisibilityState[button.dataset.layerToggle] = !layerVisibilityState[button.dataset.layerToggle];
@@ -2796,6 +2830,7 @@
                 applyLayerVisibility();
             });
         });
+
         document.getElementById('filter-author').addEventListener('change', initHistoryListener);
         document.getElementById('sort-by').addEventListener('change', initHistoryListener);
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
