@@ -1,901 +1,1388 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Forecaster Admin - V3.1</title>
-
+    <title>Forecaster Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
-
     <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
-
-    
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="forecast-utils.js"></script>
 
     <style>
-
         :root {
-
             --primary: #1e293b;
-
             --accent: #da2128;
-
             --success: #10b981;
-
             --sidebar-bg: #f1f5f9;
-
+            --panel-edge: #dbe4ef;
         }
 
-
-
-        body { margin: 0; font-family: 'Inter', sans-serif; display: flex; height: 100vh; overflow: hidden; background: #f8fafc; }
-
-        
-
-        /* Layout */
-
-        #history-panel { width: 320px; background: #fff; border-right: 1px solid #e2e8f0; display: none; flex-direction: column; z-index: 10; }
-
-        #control-panel { width: 340px; background: var(--sidebar-bg); padding: 20px; border-right: 1px solid #e2e8f0; overflow-y: auto; display: none; z-index: 10; }
-
-        #map { flex: 1; display: none; }
-
-
-
-        /* Login */
-
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--primary); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-
-        .login-box { background: white; padding: 40px; border-radius: 12px; width: 320px; text-align: center; }
-
-        .login-box input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-
-        .login-box button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-
-
-
-        /* History */
-
-        .panel-header { padding: 16px; background: #fff; border-bottom: 1px solid #e2e8f0; }
-
-        .sort-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
-
-        
-
-        .btn-new { background: var(--primary); color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-bottom: 12px; transition: opacity 0.2s; }
-
-        
-
-        #history-list { flex: 1; overflow-y: auto; padding: 12px; background: #f8fafc; }
-
-        
-
-        .history-item { 
-
-            background: white; padding: 14px; margin-bottom: 12px; border-radius: 10px; 
-
-            border: 1px solid #e2e8f0; cursor: pointer; position: relative; transition: all 0.2s;
-
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f8fafc;
+            color: #1f2937;
         }
 
-        .history-item:hover { border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-
-        .history-item.active-item { border-left: 6px solid var(--accent); background: #fff1f2; }
-
-
-
-        .history-meta { font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 4px; display: flex; justify-content: space-between; }
-
-        .risk-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #eee; color: #333; }
-
-        
-
-        .publish-btn { 
-
-            margin-top: 10px; width: 100%; padding: 6px; border-radius: 4px; border: 1px solid #cbd5e1;
-
-            font-size: 11px; font-weight: bold; cursor: pointer; background: #fff;
-
+        #app-header {
+            display: none;
         }
 
-        .publish-btn.is-active { background: var(--success); color: white; border-color: var(--success); }
+        .admin-shell {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            overflow: hidden;
+        }
 
+        #history-panel,
+        #control-panel,
+        #map-wrap {
+            display: none;
+            min-height: 0;
+        }
 
+        #history-panel {
+            width: 320px;
+            flex-direction: column;
+            background: #fff;
+            border-right: 1px solid var(--panel-edge);
+        }
 
-        /* Form */
+        #control-panel {
+            width: 420px;
+            background: var(--sidebar-bg);
+            border-right: 1px solid var(--panel-edge);
+            overflow-y: auto;
+            padding: 22px;
+        }
 
-        h2#editor-title { margin: 0 0 20px 0; color: var(--primary); font-size: 20px; }
+        #map-wrap {
+            flex: 1;
+            position: relative;
+            background: #dbe4ef;
+        }
 
-        .form-group { margin-bottom: 18px; }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
 
-        label { display: block; font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 6px; }
+        .map-toolbar {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            right: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            z-index: 3;
+            pointer-events: none;
+        }
 
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px; }
+        .map-toolbar .status-pill,
+        .map-toolbar .action-row {
+            pointer-events: auto;
+        }
 
-        
+        .small-btn {
+            padding: 10px 14px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            color: #1f2937;
+            font-weight: 700;
+            cursor: pointer;
+        }
 
-        .btn-save { background: var(--accent); color: white; border: none; padding: 16px; width: 100%; cursor: pointer; font-size: 15px; border-radius: 8px; font-weight: bold; }
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at top left, rgba(255, 255, 255, 0.08), transparent 35%),
+                linear-gradient(135deg, #0f172a, #1e293b 60%, #334155);
+            padding: 20px;
+        }
 
-        .btn-logout { background: transparent; color: #64748b; border: 1px solid #cbd5e1; padding: 4px 8px; border-radius: 4px; cursor: pointer; float: right; font-size: 10px; }
+        .login-box {
+            width: min(420px, 100%);
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 24px 60px rgba(15, 23, 42, 0.3);
+            padding: 32px;
+        }
 
+        .login-box h2 {
+            margin: 10px 0 8px;
+            font-size: 28px;
+            color: #172033;
+        }
 
+        .login-box p {
+            margin: 0 0 18px;
+            color: #64748b;
+            line-height: 1.6;
+        }
 
-        #layer-stack div { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
+        .login-box input {
+            width: 100%;
+            padding: 13px 14px;
+            margin-bottom: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 14px;
+            background: #fff;
+        }
 
-        .color-preview { width: 12px; height: 12px; border-radius: 3px; }
+        .login-box button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+        }
 
+        .panel-header {
+            padding: 18px 18px 14px;
+            border-bottom: 1px solid var(--panel-edge);
+        }
+
+        .panel-subtitle {
+            margin: 8px 0 0;
+            color: #64748b;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .btn-new {
+            width: 100%;
+            padding: 13px 16px;
+            border: none;
+            border-radius: 14px;
+            background: var(--primary);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+            margin: 14px 0 12px;
+        }
+
+        .sort-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        #history-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 14px;
+            background: #f8fafc;
+        }
+
+        .history-item {
+            background: #fff;
+            border: 1px solid #dbe4ef;
+            border-radius: 16px;
+            padding: 14px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .history-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(15, 23, 42, 0.08);
+        }
+
+        .history-item.active-item {
+            border-color: rgba(218, 33, 40, 0.35);
+            box-shadow: inset 0 0 0 2px rgba(218, 33, 40, 0.08);
+            background: #fff8f8;
+        }
+
+        .history-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .history-title {
+            margin: 10px 0 6px;
+            font-size: 14px;
+            font-weight: 700;
+            color: #172033;
+        }
+
+        .history-detail {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        .risk-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 999px;
+            padding: 4px 8px;
+            font-size: 10px;
+            font-weight: 800;
+        }
+
+        .publish-btn {
+            width: 100%;
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .publish-btn.is-active {
+            background: var(--success);
+            color: #fff;
+            border-color: var(--success);
+        }
+
+        .editor-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        #editor-title {
+            margin: 8px 0 0;
+            font-size: 28px;
+            color: #172033;
+        }
+
+        .editor-subtitle {
+            margin: 12px 0 0;
+            color: #64748b;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .btn-logout {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #475569;
+            border-radius: 12px;
+            padding: 11px 14px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .editor-card {
+            background: #fff;
+            border: 1px solid var(--panel-edge);
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 16px;
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.04);
+        }
+
+        .section-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+        }
+
+        .section-note {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            font-size: 14px;
+            background: #fff;
+            color: #1f2937;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .discussion-toolbar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .template-btn {
+            border: 1px solid #cbd5e1;
+            background: #f8fafc;
+            color: #334155;
+            border-radius: 999px;
+            padding: 8px 11px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        #forecast-text {
+            min-height: 240px;
+            resize: vertical;
+            line-height: 1.7;
+        }
+
+        .discussion-meta {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            color: #64748b;
+            font-size: 12px;
+        }
+
+        .discussion-preview {
+            margin-top: 14px;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 14px;
+            min-height: 120px;
+            white-space: pre-wrap;
+            line-height: 1.7;
+            color: #334155;
+        }
+
+        .discussion-preview.is-empty {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        .editor-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 15px 16px;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        #status {
+            min-height: 22px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        #layer-stack {
+            display: grid;
+            gap: 8px;
+        }
+
+        .layer-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 12px;
+            background: #fff;
+        }
+
+        .layer-row-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .color-preview {
+            width: 14px;
+            height: 14px;
+            border-radius: 4px;
+            flex: 0 0 auto;
+        }
+
+        .layer-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .layer-rank {
+            font-size: 11px;
+            color: #64748b;
+        }
+
+        .mapboxgl-ctrl-group {
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
+        }
+
+        @media (max-width: 1400px) {
+            #control-panel {
+                width: 380px;
+            }
+        }
+
+        @media (max-width: 1180px) {
+            .admin-shell {
+                flex-direction: column;
+                overflow: auto;
+            }
+
+            #history-panel,
+            #control-panel,
+            #map-wrap {
+                width: 100%;
+            }
+
+            #history-panel {
+                max-height: 320px;
+                border-right: none;
+                border-bottom: 1px solid var(--panel-edge);
+            }
+
+            #control-panel {
+                border-right: none;
+                border-bottom: 1px solid var(--panel-edge);
+            }
+
+            #map-wrap {
+                min-height: 560px;
+            }
+        }
+
+        @media (max-width: 760px) {
+            .field-grid,
+            .editor-actions,
+            .sort-row {
+                grid-template-columns: 1fr;
+            }
+
+            #control-panel {
+                padding: 16px;
+            }
+
+            .login-box {
+                padding: 24px;
+            }
+        }
     </style>
-
 </head>
-
 <body>
-
-
-
     <div id="login-overlay">
-
         <div class="login-box">
-
+            <div class="page-eyebrow">Forecast Desk</div>
             <h2>Forecaster Portal</h2>
-
+            <p>Sign in to draw outlook polygons, write the convective discussion, publish updates, and export the finished poster.</p>
             <input type="email" id="email" placeholder="Email">
-
             <input type="password" id="password" placeholder="Password">
-
             <button id="login-btn">Login</button>
-
-            <p id="error-msg" style="color:#ef4444; font-size:12px; margin-top:10px;"></p>
-
+            <p id="error-msg" style="color:#ef4444; font-size:12px; margin-top:12px;"></p>
         </div>
-
     </div>
 
+    <header id="app-header">
+        <div class="top-nav">
+            <nav class="nav-left" aria-label="Primary">
+                <a href="index.html">Outlooks</a>
+                <a href="obs.html">Observations</a>
+                <a href="archive.html">Archive</a>
+                <a href="admin.html" class="active">Admin</a>
+            </nav>
+            <div class="nav-right">
+                <a href="admin.html" class="nav-icon-link active" title="Forecaster admin"><i class="fas fa-user"></i></a>
+            </div>
+        </div>
+    </header>
 
+    <main class="admin-shell">
+        <aside id="history-panel">
+            <div class="panel-header">
+                <div class="page-eyebrow">Recent Issues</div>
+                <p class="panel-subtitle">Open a previous outlook to revise it, or start a clean draft.</p>
+                <button class="btn-new" id="new-btn"><i class="fas fa-plus"></i> New outlook</button>
+                <div class="sort-row">
+                    <select id="filter-author">
+                        <option value="all">Everyone</option>
+                        <option value="mine">My posts</option>
+                    </select>
+                    <select id="sort-by">
+                        <option value="updatedAt">Latest update</option>
+                        <option value="createdAt">Creation date</option>
+                        <option value="maxRiskRank">Highest risk</option>
+                        <option value="validFrom">Valid date</option>
+                    </select>
+                </div>
+            </div>
+            <div id="history-list"></div>
+        </aside>
 
-    <div id="history-panel">
-
-        <div class="panel-header">
-
-            <button class="btn-new" id="new-btn">+ NEW OUTLOOK</button>
-
-            <div class="sort-row">
-
-                <select id="filter-author">
-
-                    <option value="all">Everyone</option>
-
-                    <option value="mine">My Posts</option>
-
-                </select>
-
-                <select id="sort-by">
-
-                    <option value="updatedAt">Latest Update</option>
-
-                    <option value="createdAt">Creation Date</option>
-
-                    <option value="maxRiskRank">Highest Risk</option>
-
-                    <option value="validFrom">Valid Date</option>
-
-                </select>
-
+        <section id="control-panel">
+            <div class="editor-top">
+                <div>
+                    <div class="page-eyebrow">Issuing Desk</div>
+                    <h2 id="editor-title">New Outlook</h2>
+                    <p class="editor-subtitle">Set the risk level, define the validity window, and build the convective discussion before publishing or exporting.</p>
+                </div>
+                <button id="logout-btn" class="btn-logout">Logout</button>
             </div>
 
-        </div>
-
-        <div id="history-list"></div>
-
-    </div>
-
-
-
-    <div id="control-panel">
-
-        <button id="logout-btn" class="btn-logout">Logout</button>
-
-        <h2 id="editor-title">New Outlook</h2>
-
-        
-
-        <div class="form-group">
-
-            <label>1. Risk Tool</label>
-
-            <select id="risk-level-selector">
-
-                <option value="1 Very Low" data-color="#c29f92" data-rank="1">1 Very Low</option>
-
-                <option value="2 Low" data-color="#00aeef" data-rank="2">2 Low</option>
-
-                <option value="3 Slight" data-color="#5da848" data-rank="3">3 Slight</option>
-
-                <option value="4 Moderate" data-color="#f7941d" data-rank="4">4 Moderate</option>
-
-                <option value="5 High" data-color="#da2128" data-rank="5">5 High</option>
-
-                <option value="6 SEVERE" data-color="#800080" data-rank="6">6 SEVERE</option>
-
-            </select>
-
-        </div>
-
-
-
-        <div class="form-group">
-
-            <label>2. Validity</label>
-
-            <div style="display:flex; gap:5px;">
-
-                <input type="datetime-local" id="valid-from">
-
-                <input type="datetime-local" id="valid-to">
-
+            <div class="editor-card">
+                <label for="risk-level-selector">Risk tool</label>
+                <select id="risk-level-selector">
+                    <option value="1 Very Low" data-color="#c29f92" data-rank="1">1 Very Low</option>
+                    <option value="2 Low" data-color="#00aeef" data-rank="2">2 Low</option>
+                    <option value="3 Slight" data-color="#5da848" data-rank="3">3 Slight</option>
+                    <option value="4 Moderate" data-color="#f7941d" data-rank="4">4 Moderate</option>
+                    <option value="5 High" data-color="#da2128" data-rank="5">5 High</option>
+                    <option value="6 Severe" data-color="#800080" data-rank="6">6 Severe</option>
+                </select>
             </div>
 
-        </div>
+            <div class="editor-card">
+                <div class="section-head">
+                    <div class="section-title">Validity</div>
+                    <div class="section-note">Local entry, UTC output</div>
+                </div>
+                <div class="field-grid">
+                    <div>
+                        <label for="valid-from">Valid from</label>
+                        <input type="datetime-local" id="valid-from">
+                    </div>
+                    <div>
+                        <label for="valid-to">Valid to</label>
+                        <input type="datetime-local" id="valid-to">
+                    </div>
+                </div>
+            </div>
 
+            <div class="editor-card">
+                <div class="section-head">
+                    <div class="section-title">Convective Discussion</div>
+                    <div class="section-note" id="discussion-stats">0 words</div>
+                </div>
+                <div class="discussion-toolbar">
+                    <button type="button" class="template-btn" data-snippet="SYNOPSIS&#10;&#10;">Synopsis</button>
+                    <button type="button" class="template-btn" data-snippet="ENVIRONMENT&#10;&#10;">Environment</button>
+                    <button type="button" class="template-btn" data-snippet="TIMING&#10;&#10;">Timing</button>
+                    <button type="button" class="template-btn" data-snippet="HAZARDS&#10;- ">Hazards</button>
+                    <button type="button" class="template-btn" data-snippet="CONFIDENCE&#10;&#10;">Confidence</button>
+                    <button type="button" class="template-btn" id="insert-utc-btn">Insert UTC stamp</button>
+                </div>
+                <textarea id="forecast-text" placeholder="Write the forecast discussion here..."></textarea>
+                <div class="discussion-meta">
+                    <span id="discussion-lines">0 lines</span>
+                    <span id="discussion-chars">0 characters</span>
+                </div>
+                <div class="discussion-preview is-empty" id="discussion-preview">Discussion preview will appear here.</div>
+            </div>
 
+            <div class="editor-actions">
+                <button type="button" class="btn-ghost" id="clear-draft"><i class="fas fa-rotate-left"></i> Clear draft</button>
+                <button type="button" class="btn-secondary" id="export-png"><i class="fas fa-file-export"></i> Export PNG</button>
+                <button class="btn-save" id="save-forecast"><i class="fas fa-bullhorn"></i> Publish Outlook</button>
+            </div>
 
-        <div class="form-group">
+            <div id="status"></div>
 
-            <label>3. Discussion</label>
+            <div class="editor-card">
+                <div class="section-head">
+                    <div class="section-title">Active Layers</div>
+                    <div class="section-note" id="layer-count">0 polygons</div>
+                </div>
+                <div id="layer-stack"></div>
+            </div>
+        </section>
 
-            <textarea id="forecast-text" placeholder="Meteorological discussion..."></textarea>
-
-        </div>
-
-
-
-        <button class="btn-save" id="save-forecast">PUBLISH OUTLOOK</button>
-
-        <div id="status" style="margin-top:10px; text-align:center; font-weight:600; font-size:13px;"></div>
-
-
-
-        <div style="margin-top:20px;">
-
-            <label>Active Layers</label>
-
-            <div id="layer-stack"></div>
-
-        </div>
-
-    </div>
-
-
-
-    <div id="map"></div>
-
-
+        <section id="map-wrap">
+            <div class="map-toolbar">
+                <div class="status-pill"><i class="fas fa-map"></i> Outlook preview</div>
+                <div class="action-row">
+                    <button type="button" class="small-btn" id="fit-map-btn"><i class="fas fa-expand"></i> Fit polygons</button>
+                </div>
+            </div>
+            <div id="map"></div>
+        </section>
+    </main>
 
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
-
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
 
-    
-
     <script type="module">
-
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-
-        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-
-        import { getFirestore, collection, addDoc, query, orderBy, limit, onSnapshot, doc, updateDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
-
-
-
-        // CONFIG
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+        import { addDoc, collection, doc, getFirestore, onSnapshot, orderBy, query, updateDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         const firebaseConfig = {
-
             apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
-
             authDomain: "genweather-f9a45.firebaseapp.com",
-
             projectId: "genweather-f9a45",
-
             storageBucket: "genweather-f9a45.firebasestorage.app",
-
             messagingSenderId: "682497500954",
-
             appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3"
-
         };
 
-        const mapboxToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
-
-
+        const PREVIEW_SOURCE_ID = 'outlook-preview-source';
+        const PREVIEW_FILL_ID = 'outlook-preview-fill';
+        const PREVIEW_LINE_ID = 'outlook-preview-line';
 
         const app = initializeApp(firebaseConfig);
-
         const auth = getAuth(app);
-
         const db = getFirestore(app);
 
-
-
-        mapboxgl.accessToken = mapboxToken;
-
-        const map = new mapboxgl.Map({
-
-            container: 'map',
-
-            style: 'mapbox://styles/mapbox/light-v11',
-
-            center: [-2.5, 54.5],
-
-            zoom: 5
-
-        });
-
-
-
         const riskSelector = document.getElementById('risk-level-selector');
-
-        const getSelectedColor = () => riskSelector.options[riskSelector.selectedIndex].dataset.color;
-
-        const getSelectedRisk = () => riskSelector.value;
-
-        const getSelectedRank = () => parseInt(riskSelector.options[riskSelector.selectedIndex].dataset.rank);
-
-
-
-        // --- MAPBOX DRAW STYLING (FIXED COLOR LOGIC) ---
-
-        // --- UPDATED MAPBOX DRAW CONFIGURATION ---
-
-const draw = new MapboxDraw({
-
-    displayControlsDefault: false,
-
-    controls: { polygon: true, trash: true },
-
-    userProperties: true, 
-
-    styles: [
-
-        // 1. ACTIVE FILL (The polygon being drawn right now)
-
-        {
-
-            'id': 'gl-draw-polygon-fill-active',
-
-            'type': 'fill',
-
-            'filter': ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
-
-            'paint': {
-
-                // 'coalesce' tries to get the user_color; if it's missing (drawing phase), it uses the current selector color
-
-                'fill-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
-
-                'fill-opacity': 0.4
-
-            }
-
-        },
-
-        // 2. STATIC FILL (Drawn polygons already in the list)
-
-        {
-
-            'id': 'gl-draw-polygon-fill-static',
-
-            'type': 'fill',
-
-            'filter': ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
-
-            'paint': {
-
-                'fill-color': ['coalesce', ['get', 'user_color'], '#333333'],
-
-                'fill-opacity': 0.4
-
-            }
-
-        },
-
-        // 3. STROKE/OUTLINE (Updates live)
-
-        {
-
-            'id': 'gl-draw-polygon-stroke-active',
-
-            'type': 'line',
-
-            'filter': ['all', ['==', '$type', 'Polygon']],
-
-            'paint': {
-
-                'line-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
-
-                'line-width': 3
-
-            }
-
-        },
-
-        // 4. VERTICES (Dots on corners)
-
-        {
-
-            'id': 'gl-draw-point-active',
-
-            'type': 'circle',
-
-            'filter': ['all', ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
-
-            'paint': { 
-
-                'circle-radius': 6, 
-
-                'circle-color': '#fff', 
-
-                'circle-stroke-color': getSelectedColor(), 
-
-                'circle-stroke-width': 2 
-
-            }
-
-        }
-
-    ]
-
-});
-
-
-
-// --- THE CRITICAL FIX: REAL-TIME PROPERTY INJECTION ---
-
-// We listen for the start of a draw and force the property into the feature immediately
-
-map.on('draw.modechange', (e) => {
-
-    if (e.mode === 'draw_polygon') {
-
-        // Set a small interval to check for the 'active' feature and stamp the color
-
-        const checkActive = setInterval(() => {
-
-            const selected = draw.getSelected();
-
-            if (selected.features.length > 0) {
-
-                const id = selected.features[0].id;
-
-                draw.setFeatureProperty(id, 'user_color', getSelectedColor());
-
-                draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
-
-                draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
-
-                clearInterval(checkActive);
-
-            }
-
-        }, 50); 
-
-    }
-
-});
-
-
-
-// Update colors if the user changes the dropdown while still drawing/selecting
-
-riskSelector.addEventListener('change', () => {
-
-    const selected = draw.getSelectedIds();
-
-    selected.forEach(id => {
-
-        draw.setFeatureProperty(id, 'user_color', getSelectedColor());
-
-        draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
-
-        draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
-
-    });
-
-    // Force a map refresh to apply new expression values
-
-    map.setPaintProperty('gl-draw-polygon-fill-active.hot', 'fill-color', ['coalesce', ['get', 'user_color'], getSelectedColor()]);
-
-});
-
-        map.addControl(draw);
-
-
+        const forecastText = document.getElementById('forecast-text');
+        const discussionPreview = document.getElementById('discussion-preview');
+        const discussionStats = document.getElementById('discussion-stats');
+        const discussionLines = document.getElementById('discussion-lines');
+        const discussionChars = document.getElementById('discussion-chars');
+        const statusEl = document.getElementById('status');
+        const historyList = document.getElementById('history-list');
+        const layerStack = document.getElementById('layer-stack');
+        const layerCount = document.getElementById('layer-count');
+        const saveButton = document.getElementById('save-forecast');
 
         let currentUser = null;
-
         let currentEditingDocId = null;
+        let currentEditingData = null;
+        let historyUnsubscribe = null;
 
-        let historyUnsubscribe;
+        mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
 
+        const draw = new MapboxDraw({
+            displayControlsDefault: false,
+            controls: { polygon: true, trash: true },
+            userProperties: true,
+            styles: [
+                {
+                    id: 'gl-draw-polygon-fill-active',
+                    type: 'fill',
+                    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
+                    paint: {
+                        'fill-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'fill-opacity': 0
+                    }
+                },
+                {
+                    id: 'gl-draw-polygon-fill-static',
+                    type: 'fill',
+                    filter: ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+                    paint: {
+                        'fill-color': ['coalesce', ['get', 'user_color'], '#334155'],
+                        'fill-opacity': 0
+                    }
+                },
+                {
+                    id: 'gl-draw-polygon-stroke-active',
+                    type: 'line',
+                    filter: ['all', ['==', '$type', 'Polygon']],
+                    paint: {
+                        'line-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'line-width': 3
+                    }
+                },
+                {
+                    id: 'gl-draw-point-active',
+                    type: 'circle',
+                    filter: ['all', ['==', '$type', 'Point'], ['!=', 'mode', 'static']],
+                    paint: {
+                        'circle-radius': 6,
+                        'circle-color': '#fff',
+                        'circle-stroke-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'circle-stroke-width': 2
+                    }
+                }
+            ]
+        });
 
+        const map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-2.5, 54.5],
+            zoom: 5,
+            preserveDrawingBuffer: true
+        });
 
-        onAuthStateChanged(auth, (user) => {
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-            currentUser = user;
+        map.on('load', () => {
+            map.addControl(draw, 'top-left');
+            ensurePreviewLayers();
+            refreshDrawPreview();
+        });
 
-            if (user) {
+        function getSelectedColor() {
+            return riskSelector.options[riskSelector.selectedIndex].dataset.color;
+        }
 
-                ['login-overlay', 'control-panel', 'history-panel', 'map'].forEach(id => {
+        function getSelectedRisk() {
+            return riskSelector.value;
+        }
 
-                    document.getElementById(id).style.display = (id === 'login-overlay' ? 'none' : (id === 'history-panel' ? 'flex' : 'block'));
+        function getSelectedRank() {
+            return parseInt(riskSelector.options[riskSelector.selectedIndex].dataset.rank, 10);
+        }
 
-                });
+        function getForecasterName() {
+            if (!currentUser || !currentUser.email) return 'Forecast Desk';
+            return currentUser.email.split('@')[0].replace(/[._-]+/g, ' ');
+        }
 
-                map.resize();
+        function getNextIssueVersion() {
+            return currentEditingDocId ? ((currentEditingData?.issueVersion || 1) + 1) : 1;
+        }
 
-                initHistoryListener();
+        function escapeHtml(value) {
+            return String(value || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
 
-                setDefaultDates();
+        function updateDiscussionUI() {
+            const text = forecastText.value || '';
+            const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+            const lines = text ? text.split(/\r?\n/).length : 0;
+            const chars = text.length;
 
-            } else {
+            discussionStats.textContent = `${words} words`;
+            discussionLines.textContent = `${lines} lines`;
+            discussionChars.textContent = `${chars} characters`;
 
-                document.getElementById('login-overlay').style.display = 'flex';
-
+            if (!text.trim()) {
+                discussionPreview.textContent = 'Discussion preview will appear here.';
+                discussionPreview.classList.add('is-empty');
+                return;
             }
 
-        });
+            discussionPreview.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+            discussionPreview.classList.remove('is-empty');
+        }
 
+        function insertTextAtCursor(text) {
+            const textarea = forecastText;
+            const start = textarea.selectionStart ?? textarea.value.length;
+            const end = textarea.selectionEnd ?? textarea.value.length;
+            const before = textarea.value.slice(0, start);
+            const after = textarea.value.slice(end);
+            textarea.value = before + text + after;
+            textarea.focus();
+            const nextPos = start + text.length;
+            textarea.setSelectionRange(nextPos, nextPos);
+            updateDiscussionUI();
+        }
 
-
-        // --- DYNAMIC COLOR INJECTION ---
-
-        // This ensures the color is set the moment the polygon is created
-
-        map.on('draw.create', (e) => {
-
-            e.features.forEach(f => {
-
-                draw.setFeatureProperty(f.id, 'user_color', getSelectedColor());
-
-                draw.setFeatureProperty(f.id, 'user_risk', getSelectedRisk());
-
-                draw.setFeatureProperty(f.id, 'user_rank', getSelectedRank());
-
-            });
-
-            updateLayerStackUI();
-
-        });
-
-
-
-        // This handles changing color for a polygon ALREADY selected
-
-        riskSelector.addEventListener('change', () => {
-
-            const selected = draw.getSelectedIds();
-
-            selected.forEach(id => {
-
-                draw.setFeatureProperty(id, 'user_color', getSelectedColor());
-
-                draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
-
-                draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
-
-            });
-
-            updateLayerStackUI();
-
-        });
-
-
-
-        // SAVE LOGIC
-
-        document.getElementById('save-forecast').addEventListener('click', async () => {
-
-            const allFeatures = draw.getAll();
-
-            if (allFeatures.features.length === 0) return alert("Draw a polygon first.");
-
-
-
-            const maxRank = Math.max(...allFeatures.features.map(f => f.properties.user_rank || 0));
-
-            const geoJSON = {
-
+        function createDraftGeoJSON() {
+            return {
                 type: 'FeatureCollection',
+                features: draw.getAll().features
+                    .filter(feature => feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'))
+                    .map(feature => ({
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            risk: feature.properties.user_risk,
+                            color: feature.properties.user_color,
+                            rank: feature.properties.user_rank
+                        }
+                    }))
+            };
+        }
 
-                features: allFeatures.features.map(f => ({
-
+        function createPreviewFeatures() {
+            const rawFeatures = draw.getAll().features
+                .filter(feature => feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'))
+                .map(feature => ({
                     type: 'Feature',
-
-                    geometry: f.geometry,
-
+                    geometry: feature.geometry,
                     properties: {
-
-                        risk: f.properties.user_risk,
-
-                        color: f.properties.user_color,
-
-                        rank: f.properties.user_rank
-
+                        risk: feature.properties.user_risk,
+                        color: feature.properties.user_color,
+                        rank: feature.properties.user_rank
                     }
+                }));
 
-                }))
+            return window.GenWeatherUtils
+                ? window.GenWeatherUtils.normalizeDisplayFeatures(rawFeatures)
+                : rawFeatures;
+        }
 
-            };
+        function ensurePreviewLayers() {
+            if (map.getSource(PREVIEW_SOURCE_ID)) return;
 
+            map.addSource(PREVIEW_SOURCE_ID, {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
 
+            const drawLayer = map.getStyle().layers.find(layer => layer.id.startsWith('gl-draw-'));
+            const beforeId = drawLayer ? drawLayer.id : undefined;
 
-            const data = {
+            map.addLayer({
+                id: PREVIEW_FILL_ID,
+                type: 'fill',
+                source: PREVIEW_SOURCE_ID,
+                paint: {
+                    'fill-color': ['get', 'color'],
+                    'fill-opacity': 0.42
+                }
+            }, beforeId);
 
-                geoJSON: JSON.stringify(geoJSON),
+            map.addLayer({
+                id: PREVIEW_LINE_ID,
+                type: 'line',
+                source: PREVIEW_SOURCE_ID,
+                paint: {
+                    'line-color': ['get', 'color'],
+                    'line-width': 2.5
+                }
+            }, beforeId);
+        }
 
-                validFrom: document.getElementById('valid-from').value,
+        function refreshDrawPreview() {
+            const source = map.getSource(PREVIEW_SOURCE_ID);
+            if (!source) return;
+            source.setData({
+                type: 'FeatureCollection',
+                features: createPreviewFeatures()
+            });
+        }
 
-                validTo: document.getElementById('valid-to').value,
+        function updateLayerStackUI() {
+            const features = draw.getAll().features;
+            layerStack.innerHTML = '';
+            layerCount.textContent = `${features.length} polygon${features.length === 1 ? '' : 's'}`;
 
-                description: document.getElementById('forecast-text').value,
+            if (!features.length) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'discussion-preview is-empty';
+                emptyState.style.minHeight = '0';
+                emptyState.textContent = 'No polygons drawn yet.';
+                layerStack.appendChild(emptyState);
+                return;
+            }
 
-                isActive: true,
+            features.forEach((feature, index) => {
+                const meta = window.GenWeatherUtils.getRiskMeta(feature.properties.user_rank);
+                const row = document.createElement('div');
+                row.className = 'layer-row';
+                row.innerHTML = `
+                    <div class="layer-row-left">
+                        <div class="color-preview" style="background:${feature.properties.user_color || '#94a3b8'}"></div>
+                        <div>
+                            <div class="layer-name">${feature.properties.user_risk || `Polygon ${index + 1}`}</div>
+                            <div class="layer-rank">${meta.description}</div>
+                        </div>
+                    </div>
+                    <div class="risk-badge">#${index + 1}</div>
+                `;
+                layerStack.appendChild(row);
+            });
+        }
 
-                authorEmail: currentUser.email,
+        function fitMapToFeatures(features) {
+            const collection = features || draw.getAll().features;
+            const bounds = new mapboxgl.LngLatBounds();
+            let hasBounds = false;
 
-                authorUid: currentUser.uid,
+            collection.forEach(feature => {
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(coord => {
+                        bounds.extend(coord);
+                        hasBounds = true;
+                    });
+                } else if (feature.geometry.type === 'MultiPolygon') {
+                    feature.geometry.coordinates.forEach(polygon => {
+                        polygon[0].forEach(coord => {
+                            bounds.extend(coord);
+                            hasBounds = true;
+                        });
+                    });
+                }
+            });
 
-                maxRiskRank: maxRank,
+            if (hasBounds) {
+                map.fitBounds(bounds, { padding: 70, duration: 500 });
+            }
+        }
 
+        function syncSelectedProperties() {
+            draw.getSelectedIds().forEach(id => {
+                draw.setFeatureProperty(id, 'user_color', getSelectedColor());
+                draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
+                draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
+            });
+        }
+
+        function setDefaultDates() {
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('valid-from').value = now.toISOString().slice(0, 16);
+            now.setHours(now.getHours() + 24);
+            document.getElementById('valid-to').value = now.toISOString().slice(0, 16);
+        }
+
+        function showStatus(message, color) {
+            statusEl.textContent = message;
+            statusEl.style.color = color;
+            if (message) {
+                clearTimeout(showStatus.timeoutId);
+                showStatus.timeoutId = setTimeout(() => {
+                    statusEl.textContent = '';
+                }, 3200);
+            }
+        }
+
+        function setEditorMode(editing) {
+            document.getElementById('editor-title').textContent = editing ? 'Edit Outlook' : 'New Outlook';
+            saveButton.innerHTML = editing
+                ? '<i class="fas fa-floppy-disk"></i> Update Outlook'
+                : '<i class="fas fa-bullhorn"></i> Publish Outlook';
+        }
+
+        function resetForm() {
+            currentEditingDocId = null;
+            currentEditingData = null;
+            setEditorMode(false);
+            forecastText.value = '';
+            draw.deleteAll();
+            setDefaultDates();
+            updateDiscussionUI();
+            updateLayerStackUI();
+            refreshDrawPreview();
+            initHistoryListener();
+        }
+
+        async function togglePublish(id, nextState) {
+            await updateDoc(doc(db, 'forecasts_v2', id), {
+                isActive: nextState,
                 updatedAt: new Date().toISOString()
+            });
+            showStatus(nextState ? 'Outlook published.' : 'Outlook unpublished.', nextState ? 'var(--success)' : '#475569');
+        }
 
+        function loadToEdit(id, data) {
+            currentEditingDocId = id;
+            currentEditingData = data;
+            setEditorMode(true);
+            document.getElementById('valid-from').value = data.validFrom;
+            document.getElementById('valid-to').value = data.validTo;
+            forecastText.value = data.description || '';
+            updateDiscussionUI();
+
+            draw.deleteAll();
+            const geoJSON = typeof data.geoJSON === 'string' ? JSON.parse(data.geoJSON) : data.geoJSON;
+            geoJSON.features.forEach(feature => {
+                draw.add({
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        user_color: feature.properties.color,
+                        user_risk: feature.properties.risk,
+                        user_rank: feature.properties.rank
+                    }
+                });
+            });
+
+            updateLayerStackUI();
+            refreshDrawPreview();
+            fitMapToFeatures(geoJSON.features);
+            initHistoryListener();
+        }
+
+        async function saveForecast() {
+            const draftGeoJSON = createDraftGeoJSON();
+
+            if (!draftGeoJSON.features.length) {
+                alert('Draw a polygon first.');
+                return;
+            }
+
+            const issuedAt = new Date().toISOString();
+            const maxRank = Math.max(...draftGeoJSON.features.map(feature => feature.properties.rank || 0));
+            const payload = {
+                geoJSON: JSON.stringify(draftGeoJSON),
+                validFrom: document.getElementById('valid-from').value,
+                validTo: document.getElementById('valid-to').value,
+                description: forecastText.value,
+                isActive: true,
+                authorEmail: currentUser.email,
+                authorUid: currentUser.uid,
+                forecaster: getForecasterName(),
+                issuedAt: issuedAt,
+                issueVersion: getNextIssueVersion(),
+                maxRiskRank: maxRank,
+                updatedAt: issuedAt
             };
-
-
 
             try {
-
                 if (currentEditingDocId) {
-
-                    await updateDoc(doc(db, "forecasts_v2", currentEditingDocId), data);
-
-                    showStatus("Outlook Updated!", "var(--success)");
-
+                    payload.createdAt = currentEditingData?.createdAt || issuedAt;
+                    await updateDoc(doc(db, 'forecasts_v2', currentEditingDocId), payload);
+                    showStatus('Outlook updated.', 'var(--success)');
                 } else {
-
-                    data.createdAt = new Date().toISOString();
-
-                    await addDoc(collection(db, "forecasts_v2"), data);
-
-                    showStatus("Outlook Published!", "var(--success)");
-
+                    payload.createdAt = issuedAt;
+                    await addDoc(collection(db, 'forecasts_v2'), payload);
+                    showStatus('Outlook published.', 'var(--success)');
                 }
-
                 resetForm();
+            } catch (error) {
+                console.error(error);
+                showStatus(error.message, 'var(--accent)');
+            }
+        }
 
-            } catch (e) { showStatus(e.message, "var(--accent)"); }
+        function drawImageCover(ctx, img, x, y, width, height) {
+            const scale = Math.max(width / img.width, height / img.height);
+            const drawWidth = img.width * scale;
+            const drawHeight = img.height * scale;
+            const drawX = x + (width - drawWidth) / 2;
+            const drawY = y + (height - drawHeight) / 2;
+            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
+        }
 
-        });
+        function loadCanvasImage(dataUrl) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = dataUrl;
+            });
+        }
 
+        function formatPosterDate(value) {
+            const date = new Date(value);
+            return date.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
 
+        function buildExportFileName() {
+            const fromValue = document.getElementById('valid-from').value || new Date().toISOString();
+            const datePart = new Date(fromValue).toISOString().slice(0, 10).replace(/-/g, '');
+            return `convective-outlook-${datePart}-v${getNextIssueVersion()}.png`;
+        }
 
-        // HISTORY & FILTERING
+        async function exportForecastPng() {
+            const draftGeoJSON = createDraftGeoJSON();
+            if (!draftGeoJSON.features.length) {
+                showStatus('Draw at least one polygon before exporting.', 'var(--accent)');
+                return;
+            }
+
+            try {
+                showStatus('Rendering PNG export...', '#1d4ed8');
+                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+                const mapImage = await loadCanvasImage(map.getCanvas().toDataURL('image/png'));
+                const canvas = document.createElement('canvas');
+                canvas.width = 1800;
+                canvas.height = 2400;
+
+                const ctx = canvas.getContext('2d');
+                const panelWidth = 760;
+                const discussionText = forecastText.value.trim() || 'No discussion text provided.';
+                const riskLevels = window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features);
+                const validRange = `${formatPosterDate(document.getElementById('valid-from').value)} - ${formatPosterDate(document.getElementById('valid-to').value)}`;
+                const issuedLine = `Issued at ${formatPosterDate(new Date())}  Version ${getNextIssueVersion()}`;
+
+                ctx.fillStyle = '#30406d';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, panelWidth, canvas.height);
+
+                ctx.fillStyle = '#2d3c73';
+                ctx.fillRect(panelWidth - 180, 42, 140, 140);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 28px Inter';
+                ctx.fillText('Handry', panelWidth - 146, 102);
+                ctx.fillText('Outlook', panelWidth - 146, 138);
+                ctx.font = '700 30px Inter';
+                ctx.fillText('HO', panelWidth - 164, 118);
+
+                ctx.fillStyle = '#111827';
+                ctx.font = '700 70px Inter';
+                ctx.fillText('Convective Outlook', 70, 110);
+                ctx.font = '500 34px Inter';
+                ctx.fillText(`Valid: ${validRange}`, 70, 190);
+                ctx.fillText(issuedLine, 70, 252);
+
+                let cursorY = 420;
+                riskLevels.forEach(level => {
+                    ctx.fillStyle = level.color;
+                    ctx.beginPath();
+                    ctx.arc(130, cursorY, 72, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = '800 54px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(String(level.rank), 130, cursorY + 2);
+
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'alphabetic';
+                    ctx.fillStyle = level.color;
+                    ctx.font = '700 56px Inter';
+                    ctx.fillText(level.title, 240, cursorY - 14);
+                    ctx.fillStyle = '#334155';
+                    ctx.font = '500 28px Inter';
+                    cursorY = window.GenWeatherUtils.wrapCanvasText(ctx, level.description, 240, cursorY + 18, panelWidth - 300, 38, 3) + 72;
+                });
+
+                ctx.fillStyle = '#172033';
+                ctx.font = '700 34px Inter';
+                ctx.fillText('Discussion Highlights', 70, 1600);
+                ctx.font = '500 28px Inter';
+                window.GenWeatherUtils.wrapCanvasText(ctx, discussionText, 70, 1652, panelWidth - 130, 42, 16);
+
+                ctx.font = '600 26px Inter';
+                ctx.fillStyle = '#64748b';
+                ctx.fillText(`Forecaster: ${getForecasterName()}`, 70, 2260);
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(panelWidth, 0, canvas.width - panelWidth, canvas.height);
+                ctx.clip();
+                drawImageCover(ctx, mapImage, panelWidth, 0, canvas.width - panelWidth, canvas.height);
+                ctx.restore();
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+                ctx.fillRect(panelWidth, 0, 8, canvas.height);
+
+                const anchor = document.createElement('a');
+                anchor.href = canvas.toDataURL('image/png');
+                anchor.download = buildExportFileName();
+                anchor.click();
+
+                showStatus('PNG export ready.', 'var(--success)');
+            } catch (error) {
+                console.error(error);
+                showStatus('Could not export the current map view as PNG.', 'var(--accent)');
+            }
+        }
 
         function initHistoryListener() {
-
+            if (!currentUser) return;
             if (historyUnsubscribe) historyUnsubscribe();
 
             const filter = document.getElementById('filter-author').value;
-
             const sortField = document.getElementById('sort-by').value;
+            let historyQuery = query(collection(db, 'forecasts_v2'), orderBy(sortField, 'desc'));
 
-            
+            if (filter === 'mine') {
+                historyQuery = query(
+                    collection(db, 'forecasts_v2'),
+                    where('authorUid', '==', currentUser.uid),
+                    orderBy(sortField, 'desc')
+                );
+            }
 
-            let q = query(collection(db, "forecasts_v2"), orderBy(sortField, "desc"));
-
-            if (filter === 'mine') q = query(collection(db, "forecasts_v2"), where("authorUid", "==", currentUser.uid), orderBy(sortField, "desc"));
-
-
-
-            historyUnsubscribe = onSnapshot(q, (snapshot) => {
-
-                const list = document.getElementById('history-list');
-
-                list.innerHTML = "";
+            historyUnsubscribe = onSnapshot(historyQuery, snapshot => {
+                historyList.innerHTML = '';
 
                 snapshot.forEach(docSnap => {
-
-                    const d = docSnap.data();
-
+                    const data = docSnap.data();
                     const id = docSnap.id;
-
                     const item = document.createElement('div');
-
                     item.className = `history-item ${id === currentEditingDocId ? 'active-item' : ''}`;
 
-                    
-
-                    // Click on box loads the outlook
-
-                    item.onclick = (e) => {
-
-                        if (e.target.tagName !== 'BUTTON') loadToEdit(id, d);
-
-                    };
-
-                    
-
+                    const version = data.issueVersion ? `v${data.issueVersion}` : 'v1';
                     item.innerHTML = `
-
                         <div class="history-meta">
-
-                            <span>Created: ${new Date(d.createdAt).toLocaleDateString()}</span>
-
-                            <span class="risk-badge">Max Rank: ${d.maxRiskRank || 0}</span>
-
+                            <span>${new Date(data.createdAt).toLocaleDateString('en-GB')}</span>
+                            <span class="risk-badge">Max ${data.maxRiskRank || 0}</span>
                         </div>
-
-                        <div style="font-size:12px; font-weight:600; color:var(--primary)">${d.authorEmail}</div>
-
-                        <div style="font-size:10px; color:#64748b; margin-top:2px;">Valid From: ${d.validFrom.replace('T', ' ')}</div>
-
-                        <button class="publish-btn ${d.isActive ? 'is-active' : ''}" 
-
-                            onclick="window.togglePublish('${id}', ${!d.isActive})">
-
-                            ${d.isActive ? '✓ PUBLISHED' : 'UNPUBLISHED (PUBLISH IT?)'}
-
+                        <div class="history-title">${data.authorEmail || 'Forecast Desk'} - ${version}</div>
+                        <div class="history-detail">Valid from ${String(data.validFrom || '').replace('T', ' ')}</div>
+                        <div class="history-detail">Updated ${new Date(data.updatedAt || data.createdAt).toLocaleString('en-GB')}</div>
+                        <button class="publish-btn ${data.isActive ? 'is-active' : ''}">
+                            ${data.isActive ? 'Published' : 'Publish now'}
                         </button>
-
                     `;
 
-                    list.appendChild(item);
+                    item.addEventListener('click', event => {
+                        if (event.target instanceof HTMLButtonElement) return;
+                        loadToEdit(id, data);
+                    });
 
+                    item.querySelector('.publish-btn').addEventListener('click', async event => {
+                        event.stopPropagation();
+                        await togglePublish(id, !data.isActive);
+                    });
+
+                    historyList.appendChild(item);
                 });
-
             });
-
         }
 
-
-
-        window.loadToEdit = (id, data) => {
-
-            currentEditingDocId = id;
-
-            document.getElementById('editor-title').innerText = "Edit Outlook";
-
-            document.getElementById('valid-from').value = data.validFrom;
-
-            document.getElementById('valid-to').value = data.validTo;
-
-            document.getElementById('forecast-text').value = data.description;
-
-            
-
-            draw.deleteAll();
-
-            const geo = JSON.parse(data.geoJSON);
-
-            geo.features.forEach(f => {
-
-                // Map Firebase properties back to Draw properties
-
-                f.properties.user_color = f.properties.color;
-
-                f.properties.user_risk = f.properties.risk;
-
-                f.properties.user_rank = f.properties.rank;
-
-                draw.add(f);
-
-            });
-
-            updateLayerStackUI();
-
-            initHistoryListener(); // Refresh list to show active state
-
-        };
-
-
-
-        window.togglePublish = async (id, state) => {
-
-            await updateDoc(doc(db, "forecasts_v2", id), { isActive: state, updatedAt: new Date().toISOString() });
-
-        };
-
-
-
-        function resetForm() {
-
-            currentEditingDocId = null;
-
-            document.getElementById('editor-title').innerText = "New Outlook";
-
-            document.getElementById('forecast-text').value = "";
-
-            draw.deleteAll();
-
-            updateLayerStackUI();
-
-            setDefaultDates();
-
-            initHistoryListener();
-
-        }
-
-
-
-        function updateLayerStackUI() {
-
-            const stack = document.getElementById('layer-stack');
-
-            stack.innerHTML = "";
-
-            draw.getAll().features.forEach(f => {
-
-                const div = document.createElement('div');
-
-                div.innerHTML = `<div class="color-preview" style="background:${f.properties.user_color || '#ccc'}"></div> ${f.properties.user_risk || 'New Polygon'}`;
-
-                stack.appendChild(div);
-
-            });
-
-        }
-
-
-
-        function setDefaultDates() {
-
-            const now = new Date();
-
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-
-            document.getElementById('valid-from').value = now.toISOString().slice(0,16);
-
-            now.setHours(now.getHours() + 24);
-
-            document.getElementById('valid-to').value = now.toISOString().slice(0,16);
-
-        }
-
-
-
-        function showStatus(msg, color) {
-
-            const s = document.getElementById('status');
-
-            s.innerText = msg; s.style.color = color;
-
-            setTimeout(() => s.innerText = "", 3000);
-
-        }
-
-
-
-        document.getElementById('filter-author').addEventListener('change', initHistoryListener);
-
-        document.getElementById('sort-by').addEventListener('change', initHistoryListener);
-
-        document.getElementById('new-btn').addEventListener('click', resetForm);
-
-        document.getElementById('login-btn').addEventListener('click', () => {
-
-            signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
-
-                .catch(e => document.getElementById('error-msg').innerText = e.message);
-
+        map.on('draw.modechange', event => {
+            if (event.mode !== 'draw_polygon') return;
+            const checkActive = setInterval(() => {
+                const selected = draw.getSelected();
+                if (!selected.features.length) return;
+                const id = selected.features[0].id;
+                draw.setFeatureProperty(id, 'user_color', getSelectedColor());
+                draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
+                draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
+                refreshDrawPreview();
+                clearInterval(checkActive);
+            }, 60);
+            setTimeout(() => clearInterval(checkActive), 1200);
         });
 
+        map.on('draw.create', event => {
+            event.features.forEach(feature => {
+                draw.setFeatureProperty(feature.id, 'user_color', getSelectedColor());
+                draw.setFeatureProperty(feature.id, 'user_risk', getSelectedRisk());
+                draw.setFeatureProperty(feature.id, 'user_rank', getSelectedRank());
+            });
+            updateLayerStackUI();
+            refreshDrawPreview();
+        });
+
+        map.on('draw.update', () => {
+            updateLayerStackUI();
+            refreshDrawPreview();
+        });
+
+        map.on('draw.delete', () => {
+            updateLayerStackUI();
+            refreshDrawPreview();
+        });
+
+        riskSelector.addEventListener('change', () => {
+            syncSelectedProperties();
+            updateLayerStackUI();
+            refreshDrawPreview();
+        });
+
+        forecastText.addEventListener('input', updateDiscussionUI);
+
+        document.querySelectorAll('.template-btn[data-snippet]').forEach(button => {
+            button.addEventListener('click', () => {
+                insertTextAtCursor(button.dataset.snippet);
+            });
+        });
+
+        document.getElementById('insert-utc-btn').addEventListener('click', () => {
+            const utcStamp = new Date().toUTCString().replace('GMT', 'UTC');
+            insertTextAtCursor(`${utcStamp}\n`);
+        });
+
+        document.getElementById('save-forecast').addEventListener('click', saveForecast);
+        document.getElementById('export-png').addEventListener('click', exportForecastPng);
+        document.getElementById('clear-draft').addEventListener('click', resetForm);
+        document.getElementById('new-btn').addEventListener('click', resetForm);
+        document.getElementById('fit-map-btn').addEventListener('click', () => fitMapToFeatures(draw.getAll().features));
+        document.getElementById('filter-author').addEventListener('change', initHistoryListener);
+        document.getElementById('sort-by').addEventListener('change', initHistoryListener);
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
+        document.getElementById('login-btn').addEventListener('click', () => {
+            signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
+                .catch(error => {
+                    document.getElementById('error-msg').textContent = error.message;
+                });
+        });
 
+        onAuthStateChanged(auth, user => {
+            currentUser = user;
+
+            if (user) {
+                document.getElementById('login-overlay').style.display = 'none';
+                document.getElementById('app-header').style.display = 'block';
+                document.getElementById('history-panel').style.display = 'flex';
+                document.getElementById('control-panel').style.display = 'block';
+                document.getElementById('map-wrap').style.display = 'block';
+                document.getElementById('error-msg').textContent = '';
+                requestAnimationFrame(() => map.resize());
+                initHistoryListener();
+                setDefaultDates();
+                updateDiscussionUI();
+                updateLayerStackUI();
+                refreshDrawPreview();
+            } else {
+                document.getElementById('login-overlay').style.display = 'flex';
+                document.getElementById('app-header').style.display = 'none';
+                document.getElementById('history-panel').style.display = 'none';
+                document.getElementById('control-panel').style.display = 'none';
+                document.getElementById('map-wrap').style.display = 'none';
+            }
+        });
+
+        updateDiscussionUI();
+        updateLayerStackUI();
     </script>
-
 </body>
-
-</html> 
+</html>

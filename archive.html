@@ -6,91 +6,66 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archive | Thunderstorm Outlook</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="forecast-utils.js"></script>
 
     <style>
-        /* --- VARIABLES (Synced with Main UI) --- */
         :root {
-            --primary-blue: #2c6092;
             --dark-grey: #333;
-            --light-bg: #e6e6e6;
-            --risk-1: #c29f92; /* Very Low */
-            --risk-2: #00aeef; /* Low */
-            --risk-3: #5da848; /* Slight */
-            --risk-4: #f7941d; /* Moderate */
-            --risk-5: #da2128; /* High */
-            --risk-severe: #800080; /* Severe */
+            --light-bg: #f4f7fa;
+            --risk-severe: #800080;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--light-bg);
-            margin: 0;
-            color: #333;
+            color: #334155;
         }
 
-        /* --- HEADER & NAV (Synced) --- */
-        .top-nav {
-            background-color: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            height: 40px;
-            font-size: 14px;
-        }
-
-        .nav-left { display: flex; align-items: center; }
-
-        .nav-left a {
-            color: #ccc;
-            text-decoration: none;
-            padding: 0 15px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            border-right: 1px solid #444;
-            text-transform: none; /* Matches new UI */
-        }
-
-        .nav-left a:first-child { border-left: 1px solid #444; }
-        .nav-left a:hover, .nav-left a.active { background-color: #444; color: white; }
-
-        .nav-right i { margin-left: 15px; color: #ccc; cursor: pointer; }
-
-        /* --- CONTENT CONTAINER --- */
         .archive-wrapper {
-            max-width: 1100px;
-            margin: 40px auto;
-            background: white;
+            width: 100%;
             padding: 40px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
         }
 
         .archive-header {
-            border-bottom: 2px solid var(--primary-blue);
+            border-bottom: 1px solid #e2e8f0;
             margin-bottom: 30px;
-            padding-bottom: 10px;
+            padding-bottom: 24px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
         }
 
-        h1 { font-weight: 300; font-size: 32px; color: var(--primary-blue); text-transform: uppercase; }
-        .intro-text { font-size: 14px; color: #666; margin-bottom: 30px; line-height: 1.6; }
+        h1 {
+            margin: 10px 0 0;
+            font-weight: 800;
+            font-size: clamp(30px, 4vw, 38px);
+            color: #172033;
+        }
 
-        /* --- ARCHIVE LIST --- */
+        .intro-text {
+            font-size: 15px;
+            color: #64748b;
+            margin-bottom: 30px;
+            line-height: 1.7;
+            max-width: 760px;
+        }
+
         .archive-list {
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 18px;
         }
 
         .archive-card {
             display: grid;
             grid-template-columns: 240px 100px 1fr;
             background: #fff;
-            border: 1px solid #ddd;
+            border: 1px solid #dbe4ef;
+            border-radius: 16px;
             text-decoration: none;
             color: inherit;
             transition: all 0.2s ease-in-out;
@@ -100,7 +75,7 @@
         .archive-card:hover {
             border-color: var(--primary-blue);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
         }
 
         .map-thumb {
@@ -132,7 +107,7 @@
             font-weight: 800;
             font-size: 18px;
             text-align: center;
-            box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12);
         }
 
         .badge-main span {
@@ -150,11 +125,11 @@
             justify-content: center;
         }
 
-        .info-col h3 { margin: 0 0 10px 0; font-size: 20px; color: var(--dark-grey); font-weight: 400; }
-        .info-col p { margin: 3px 0; font-size: 13px; color: #666; }
+        .info-col h3 { margin: 0 0 10px 0; font-size: 22px; color: var(--dark-grey); font-weight: 700; }
+        .info-col p { margin: 4px 0; font-size: 13px; color: #64748b; }
         .info-col strong { color: #333; }
 
-        .loading-state { text-align: center; padding: 60px; color: #999; font-style: italic; }
+        .loading-state { text-align: center; padding: 60px; color: #94a3b8; font-style: italic; }
 
         /* Risk Backgrounds (Synced) */
         .bg-low { background-color: var(--risk-2); }
@@ -165,6 +140,7 @@
         .bg-svr { background-color: var(--risk-severe); }
 
         @media (max-width: 768px) {
+            .archive-wrapper { padding: 24px; }
             .archive-card { grid-template-columns: 1fr; }
             .map-thumb { height: 150px; border-right: none; border-bottom: 1px solid #eee; }
             .risk-col { padding: 15px; border-right: none; border-bottom: 1px solid #eee; }
@@ -175,35 +151,38 @@
 <body>
 
     <header class="top-nav">
-        <nav class="nav-left">
-            <a href="index.html">About</a>
+        <nav class="nav-left" aria-label="Primary">
             <a href="index.html">Outlooks</a>
+            <a href="obs.html">Observations</a>
             <a href="archive.html" class="active">Archive</a>
-            <a href="#">Blog</a>
         </nav>
         <div class="nav-right">
-            <i class="fas fa-user"></i>
-            <i class="fab fa-facebook-f"></i>
-            <i class="fab fa-twitter"></i>
+            <a href="admin.html" class="nav-icon-link" title="Forecaster admin"><i class="fas fa-user"></i></a>
         </div>
     </header>
 
-    <div class="archive-wrapper">
-        <div class="archive-header">
-            <h1>Forecast Archive</h1>
-            <div style="color: #ccc; font-size: 18px;">
-                <i class="fab fa-facebook-square"></i> <i class="fab fa-twitter-square"></i>
+    <main class="page-shell">
+        <div class="archive-wrapper page-panel">
+            <div class="archive-header">
+                <div>
+                    <div class="page-eyebrow">Issued Outlooks</div>
+                    <h1>Forecast Archive</h1>
+                </div>
+                <div class="action-row">
+                    <a href="index.html" class="btn-ghost"><i class="fas fa-bolt"></i> Live outlook</a>
+                    <a href="obs.html" class="btn-secondary"><i class="fas fa-satellite-dish"></i> Observations</a>
+                </div>
+            </div>
+
+            <p class="intro-text">
+                Historical thunderstorm outlooks issued by the forecasting desk. Open any outlook to view the full convective discussion and map.
+            </p>
+
+            <div id="archive-list" class="archive-list">
+                <div class="loading-state">Fetching published forecasts...</div>
             </div>
         </div>
-        
-        <p class="intro-text">
-            Historical thunderstorm outlooks issued by our forecasting team. Select a forecast to view the full technical discussion and interactive map.
-        </p>
-
-        <div id="archive-list" class="archive-list">
-            <div class="loading-state">Fetching published forecasts...</div>
-        </div>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -244,8 +223,15 @@
                     const data = docSnap.data();
                     const id = docSnap.id;
                     let geoJSON = JSON.parse(data.geoJSON);
+                    const displayFeatures = window.GenWeatherUtils
+                        ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
+                        : geoJSON.features;
 
-                    // Fix for Mapbox Static Colors
+                    geoJSON = {
+                        type: 'FeatureCollection',
+                        features: displayFeatures
+                    };
+
                     geoJSON.features = geoJSON.features.map(f => {
                         const col = f.properties.color || "#cccccc";
                         return {

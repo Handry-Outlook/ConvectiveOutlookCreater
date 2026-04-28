@@ -4,179 +4,258 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forecast Detail | Convective Weather</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="forecast-utils.js"></script>
 
     <style>
         :root {
-            --primary-blue: #2c6092;
-            --light-bg: #e6e6e6;
-            --border-color: #ccc;
+            --light-bg: #f4f7fa;
+            --border-color: #d9e3ef;
         }
 
         body {
-            font-family: Arial, Helvetica, sans-serif;
             background-color: var(--light-bg);
-            margin: 0;
-            color: #333;
+            color: #1f2937;
         }
 
-        /* --- HEADER --- */
-        .top-nav {
-            background-color: #222;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            height: 45px;
-        }
-
-        .nav-left a {
-            color: #ccc;
-            text-decoration: none;
-            padding: 0 15px;
-            font-size: 14px;
-            text-transform: uppercase;
-        }
-
-        /* --- MAIN LAYOUT --- */
         .detail-container {
-            max-width: 1000px;
-            margin: 20px auto;
-            background: white;
-            padding: 30px 50px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            padding: 34px;
         }
 
         .header-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            align-items: flex-start;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 24px;
+            margin-bottom: 28px;
+            gap: 18px;
+            flex-wrap: wrap;
         }
 
-        h1 { font-size: 24px; font-weight: normal; margin: 0; color: #444; }
+        .page-title {
+            margin-top: 10px;
+        }
 
-        /* --- MAP SECTION --- */
+        .map-card {
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            overflow: hidden;
+            background: #fff;
+        }
+
         #map {
             width: 100%;
-            height: 600px;
-            border: 1px solid var(--border-color);
-            background: #f0f0f0;
+            height: 620px;
+            background: #e2e8f0;
         }
 
-        /* --- RISK LEGEND --- */
         .risk-legend {
             display: flex;
-            background: #ddd;
-            padding: 10px;
-            margin-top: -1px; /* Overlap map border slightly */
-            border: 1px solid var(--border-color);
+            background: #eef4fb;
+            padding: 14px 16px;
             align-items: center;
-            gap: 2px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
 
         .legend-item {
-            padding: 5px 12px;
-            font-size: 12px;
-            font-weight: bold;
-            border: 1px solid #888;
+            padding: 7px 12px;
+            font-size: 11px;
+            font-weight: 800;
+            border-radius: 999px;
             text-transform: uppercase;
         }
 
-        .legend-label {
+        .legend-help-btn {
             margin-left: auto;
-            font-size: 13px;
-            color: #555;
+            font-size: 12px;
+            color: #334155;
             cursor: pointer;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-weight: 700;
         }
 
-        /* --- TEXT CONTENT --- */
-        .outlook-body {
-            margin-top: 30px;
+        .legend-help {
+            padding: 0 16px 16px;
+            color: #475569;
+        }
+
+        .legend-help p {
+            margin: 0;
             line-height: 1.6;
         }
 
-        .meta-section {
-            font-size: 14px;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-            color: #444;
+        .outlook-body {
+            margin-top: 26px;
+            display: grid;
+            gap: 22px;
         }
 
-        .meta-section p { margin: 4px 0; }
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+        }
+
+        .meta-card,
+        .discussion-card {
+            border: 1px solid #dbe4ef;
+            border-radius: 16px;
+            background: #fff;
+            padding: 18px;
+        }
+
+        .meta-label {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .meta-value {
+            font-size: 14px;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        .discussion-card h2 {
+            margin: 0 0 12px;
+            font-size: 19px;
+            color: #172033;
+        }
 
         .discussion-text {
             font-size: 15px;
-            color: #222;
-            white-space: pre-wrap; /* Preserves line breaks from admin input */
-            text-align: justify;
+            color: #334155;
+            white-space: pre-wrap;
+            line-height: 1.8;
         }
 
         footer {
             text-align: center;
-            padding: 20px;
+            padding: 0 20px 28px;
             font-size: 12px;
-            color: #888;
+            color: #94a3b8;
         }
 
-        /* Risk Colors */
-        .low { background: #c29f92; color: #000; }
+        .low { background: #c29f92; color: #111827; }
         .slgt { background: #5da848; color: #fff; }
-        .mdt { background: #f7941d; color: #000; }
+        .mdt { background: #f7941d; color: #111827; }
         .high { background: #da2128; color: #fff; }
-        .svr { border: 2px dashed #000; background: transparent; color: #000; }
+        .svr { background: #800080; color: #fff; }
+
+        @media (max-width: 960px) {
+            .meta-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 720px) {
+            .detail-container {
+                padding: 22px;
+            }
+
+            #map {
+                height: 460px;
+            }
+
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .legend-help-btn {
+                margin-left: 0;
+            }
+        }
 
     </style>
 </head>
 <body>
 
-    <header class="top-nav">
-        <nav class="nav-left">
-            <a href="index.html">About</a>
-            <a href="index.html">Products</a>
-            <a href="archive.html">Archive</a>
-            <a href="#">Contact</a>
-        </nav>
-        <div style="padding-right: 20px;"><i class="fas fa-user" style="color:#666;"></i></div>
+    <header>
+        <div class="top-nav">
+            <nav class="nav-left" aria-label="Primary">
+                <a href="index.html">Outlooks</a>
+                <a href="obs.html">Observations</a>
+                <a href="archive.html" class="active">Archive</a>
+            </nav>
+            <div class="nav-right">
+                <a href="admin.html" class="nav-icon-link" title="Forecaster admin"><i class="fas fa-user"></i></a>
+            </div>
+        </div>
     </header>
 
-    <div class="detail-container">
-        <div class="header-row">
-            <h1 id="title-date">Convective Outlook: -- --- ----</h1>
-            <div style="color: #2c6092; font-size: 20px;">
-                <i class="fab fa-facebook"></i> <i class="fab fa-twitter"></i> <i class="fab fa-google-plus-g"></i> <i class="fas fa-envelope"></i>
-            </div>
-        </div>
-
-        <div id="map"></div>
-
-        <div class="risk-legend">
-            <div class="legend-item low">LOW</div>
-            <div class="legend-item slgt">SLGT</div>
-            <div class="legend-item mdt">MDT</div>
-            <div class="legend-item high">HIGH</div>
-            <div class="legend-item svr">SVR</div>
-            <div class="legend-label">What do these risk levels mean?</div>
-        </div>
-
-        <div class="outlook-body">
-            <div class="meta-section">
-                <p><strong>Convective Outlook</strong></p>
-                <p id="valid-time">VALID: --:-- UTC --- -- --- ---- - --:-- UTC --- -- --- ----</p>
-                <p id="issued-time">ISSUED: --:-- UTC --- -- --- ----</p>
-                <p id="issued-by">ISSUED BY: ---</p>
+    <main class="page-shell">
+        <div class="detail-container page-panel">
+            <div class="header-row">
+                <div>
+                    <div class="page-eyebrow">Forecast Detail</div>
+                    <h1 id="title-date" class="page-title">Convective Outlook: -- --- ----</h1>
+                    <p class="page-subtitle">Interactive outlook map, issuance timing, and the full convective discussion.</p>
+                </div>
+                <div class="action-row">
+                    <a href="archive.html" class="btn-ghost"><i class="fas fa-arrow-left"></i> Back to archive</a>
+                    <button type="button" class="btn-secondary" id="copy-link-btn"><i class="fas fa-link"></i> Copy link</button>
+                </div>
             </div>
 
-            <div class="discussion-text" id="discussion-content">
-                Loading meteorological discussion...
+            <div class="map-card">
+                <div id="map"></div>
+
+                <div class="risk-legend">
+                    <div class="legend-item low">Low</div>
+                    <div class="legend-item slgt">Slight</div>
+                    <div class="legend-item mdt">Moderate</div>
+                    <div class="legend-item high">High</div>
+                    <div class="legend-item svr">Severe</div>
+                    <button type="button" class="legend-help-btn" id="legend-help-btn">Risk guide</button>
+                </div>
+
+                <div class="legend-help" id="legend-help" hidden>
+                    <p>These categories describe increasing thunderstorm coverage and severity potential. Nested areas are shown with clipped geometry so the map opacity stays consistent even where polygons overlap.</p>
+                </div>
+            </div>
+
+            <div class="outlook-body">
+                <div class="meta-grid">
+                    <div class="meta-card">
+                        <div class="meta-label">Forecast Type</div>
+                        <div class="meta-value">Convective Outlook</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Valid Window</div>
+                        <div class="meta-value" id="valid-time">--:-- UTC --- -- --- ---- - --:-- UTC --- -- --- ----</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Issued</div>
+                        <div class="meta-value" id="issued-time">--:-- UTC --- -- --- ----</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Forecaster</div>
+                        <div class="meta-value" id="issued-by">---</div>
+                    </div>
+                </div>
+
+                <div class="discussion-card">
+                    <h2>Convective Discussion</h2>
+                    <div class="discussion-text" id="discussion-content">
+                        Loading meteorological discussion...
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
+    </main>
 
     <footer>&copy; Convective Weather</footer>
 
@@ -196,6 +275,28 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const legendHelpBtn = document.getElementById('legend-help-btn');
+        const legendHelpPanel = document.getElementById('legend-help');
+        const copyLinkBtn = document.getElementById('copy-link-btn');
+
+        legendHelpBtn.addEventListener('click', () => {
+            legendHelpPanel.hidden = !legendHelpPanel.hidden;
+            legendHelpBtn.innerHTML = legendHelpPanel.hidden
+                ? '<i class="fas fa-circle-info"></i> Risk guide'
+                : '<i class="fas fa-chevron-up"></i> Hide guide';
+        });
+
+        copyLinkBtn.addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Link copied';
+                setTimeout(() => {
+                    copyLinkBtn.innerHTML = '<i class="fas fa-link"></i> Copy link';
+                }, 1800);
+            } catch (error) {
+                window.prompt('Copy this link:', window.location.href);
+            }
+        });
 
         // --- GET DATA ID FROM URL ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -227,38 +328,48 @@
             const validFrom = new Date(data.validFrom);
             const validTo = new Date(data.validTo);
             const issuedAt = new Date(data.issuedAt || data.validFrom);
+            const forecasterName = data.forecaster
+                || (data.authorEmail ? data.authorEmail.split('@')[0].replace(/[._-]+/g, ' ') : 'Forecast Desk');
 
-            // Update Text content
             document.getElementById('title-date').innerText = `Convective Outlook: ${validFrom.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}`;
-            document.getElementById('valid-time').innerText = `VALID: ${validFrom.toUTCString().replace('GMT', 'UTC')} - ${validTo.toUTCString().replace('GMT', 'UTC')}`;
-            document.getElementById('issued-time').innerText = `ISSUED: ${issuedAt.toUTCString().replace('GMT', 'UTC')}`;
-            document.getElementById('issued-by').innerText = `ISSUED BY: ${data.forecaster || 'DAN'}`;
+            document.getElementById('valid-time').innerText = `${validFrom.toUTCString().replace('GMT', 'UTC')} - ${validTo.toUTCString().replace('GMT', 'UTC')}`;
+            document.getElementById('issued-time').innerText = data.issueVersion
+                ? `${issuedAt.toUTCString().replace('GMT', 'UTC')} (Version ${data.issueVersion})`
+                : issuedAt.toUTCString().replace('GMT', 'UTC');
+            document.getElementById('issued-by').innerText = forecasterName;
             document.getElementById('discussion-content').innerText = data.description;
 
-            // Initialize Mapbox
+            const displayFeatures = window.GenWeatherUtils
+                ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
+                : geoJSON.features;
+
             mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
             const map = new mapboxgl.Map({
                 container: 'map',
-                style: 'mapbox://styles/mapbox/light-v11', // Clean style similar to image
+                style: 'mapbox://styles/mapbox/light-v11',
                 center: [-2, 54.5],
                 zoom: 5.5
             });
 
             map.on('load', () => {
-                map.addSource('forecast-data', { type: 'geojson', data: geoJSON });
+                map.addSource('forecast-data', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: displayFeatures
+                    }
+                });
 
-                // Fill Layer
                 map.addLayer({
                     'id': 'risk-fill',
                     'type': 'fill',
                     'source': 'forecast-data',
                     'paint': {
                         'fill-color': ['get', 'color'],
-                        'fill-opacity': 0.4
+                        'fill-opacity': 0.42
                     }
                 });
 
-                // Outline Layer
                 map.addLayer({
                     'id': 'risk-outline',
                     'type': 'line',
@@ -269,11 +380,14 @@
                     }
                 });
 
-                // Auto-zoom to fit the polygons
                 const bounds = new mapboxgl.LngLatBounds();
                 geoJSON.features.forEach(feature => {
                     if (feature.geometry.type === 'Polygon') {
                         feature.geometry.coordinates[0].forEach(coord => bounds.extend(coord));
+                    } else if (feature.geometry.type === 'MultiPolygon') {
+                        feature.geometry.coordinates.forEach(polygon => {
+                            polygon[0].forEach(coord => bounds.extend(coord));
+                        });
                     }
                 });
                 if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 50 });
