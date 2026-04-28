@@ -464,10 +464,30 @@
             letter-spacing: 0.04em;
         }
 
-        .admin-hoco-actions {
+        .forecast-layer-toggle-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: repeat(3, 1fr);
             gap: 10px;
+            margin-top: 12px;
+        }
+
+        .forecast-layer-toggle {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #475569;
+            border-radius: 12px;
+            padding: 10px 8px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .forecast-layer-toggle.active {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
         }
 
         .admin-hoco-note {
@@ -986,9 +1006,10 @@
                             </div>
                         </div>
 
-                        <div class="admin-hoco-actions">
-                            <button type="button" class="btn-secondary" id="load-hoco-auto"><i class="fas fa-cloud-bolt"></i> Load Selected AUTO</button>
-                            <button type="button" class="btn-secondary" id="load-hoco-ensemble"><i class="fas fa-object-group"></i> Load Ensemble</button>
+                        <div class="forecast-layer-toggle-row">
+                            <button type="button" class="forecast-layer-toggle active" data-layer-toggle="manual">Manual</button>
+                            <button type="button" class="forecast-layer-toggle" data-layer-toggle="auto">Auto</button>
+                            <button type="button" class="forecast-layer-toggle" data-layer-toggle="ensemble">Ensemble</button>
                         </div>
 
                         <div class="admin-hoco-note">Loading HOCO replaces the current draft polygons after confirmation. The imported draft keeps your discussion text and converts HOCO probabilities into `1 Low` through `5 High` categories so you can edit them manually.</div>
@@ -1167,11 +1188,22 @@
         const adminHocoEnsemblePeriod = document.getElementById('hoco-admin-ensemble-period');
         const adminHocoEnsembleIssued = document.getElementById('hoco-admin-ensemble-issued');
         const adminHocoEnsembleStatus = document.getElementById('hoco-admin-ensemble-status');
-        const loadHocoAutoButton = document.getElementById('load-hoco-auto');
-        const loadHocoEnsembleButton = document.getElementById('load-hoco-ensemble');
+        const layerToggleButtons = document.querySelectorAll('[data-layer-toggle]');
 
         let currentUser = null;
         let currentEditingDocId = null;
+        const HOCO_AUTO_SOURCE_ID = 'admin-hoco-auto-source';
+        const HOCO_AUTO_FILL_ID = 'admin-hoco-auto-fill';
+        const HOCO_AUTO_LINE_ID = 'admin-hoco-auto-line';
+        const HOCO_ENSEMBLE_SOURCE_ID = 'admin-hoco-ensemble-source';
+        const HOCO_ENSEMBLE_FILL_ID = 'admin-hoco-ensemble-fill';
+        const HOCO_ENSEMBLE_LINE_ID = 'admin-hoco-ensemble-line';
+
+        let layerVisibilityState = {
+            manual: true,
+            auto: true,
+            ensemble: false
+        };
         let currentEditingData = null;
         let historyUnsubscribe = null;
         let adminHocoUnsubscribe = null;
@@ -1245,7 +1277,15 @@
         map.on('load', () => {
             map.addControl(draw, 'top-left');
             ensurePreviewLayers();
+            updateLayerToggleButtons();
             refreshDrawPreview();
+        });
+
+        map.on('style.load', () => {
+            ensurePreviewLayers();
+            if (adminActiveHocoAutoGeojson) renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, adminActiveHocoAutoGeojson, 0.24, 1.8);
+            if (adminActiveHocoEnsembleGeojson) renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, adminActiveHocoEnsembleGeojson, 0.22, 2.4);
+            applyLayerVisibility();
         });
 
         function getSelectedColor() {
@@ -1576,23 +1616,84 @@
             updateAdminHocoPreview(adminVisibleHocoRuns.find(run => run.id === adminSelectedHocoRunId) || fallbackRun);
         }
 
+        function renderGuidanceLayer(sourceId, fillId, lineId, geojsonData, fillOpacity, lineWidth) {
+            if (!geojsonData) return;
+            if (!map.getSource(sourceId)) {
+                map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+            } else {
+                map.getSource(sourceId).setData(geojsonData);
+            }
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+            if (!map.getLayer(fillId)) {
+                map.addLayer({
+                    id: fillId,
+                    type: 'fill',
+                    source: sourceId,
+                    paint: {
+                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#38bdf8'],
+                        'fill-opacity': fillOpacity
+                    }
+                }, firstSymbol?.id);
+            }
+            if (!map.getLayer(lineId)) {
+                map.addLayer({
+                    id: lineId,
+                    type: 'line',
+                    source: sourceId,
+                    paint: {
+                        'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
+                        'line-width': lineWidth,
+                        'line-opacity': 0.8
+                    }
+                }, firstSymbol?.id);
+            }
+        }
+
+        function clearGuidanceLayer(sourceId, fillId, lineId) {
+            if (map.getLayer(lineId)) map.removeLayer(lineId);
+            if (map.getLayer(fillId)) map.removeLayer(fillId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+        }
+
+        function applyLayerVisibility() {
+            const setVis = (id, visible) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none'); };
+            setVis(PREVIEW_FILL_ID, layerVisibilityState.manual);
+            setVis(PREVIEW_LINE_ID, layerVisibilityState.manual);
+            setVis(PREVIEW_SEVERE_LINE_ID, layerVisibilityState.manual);
+            setVis(HOCO_AUTO_FILL_ID, layerVisibilityState.auto && !!adminActiveHocoAutoGeojson);
+            setVis(HOCO_AUTO_LINE_ID, layerVisibilityState.auto && !!adminActiveHocoAutoGeojson);
+            setVis(HOCO_ENSEMBLE_FILL_ID, layerVisibilityState.ensemble && !!adminActiveHocoEnsembleGeojson);
+            setVis(HOCO_ENSEMBLE_LINE_ID, layerVisibilityState.ensemble && !!adminActiveHocoEnsembleGeojson);
+        }
+
+        function updateLayerToggleButtons() {
+            layerToggleButtons.forEach(button => {
+                button.classList.toggle('active', !!layerVisibilityState[button.dataset.layerToggle]);
+            });
+        }
+
         async function loadSelectedAdminHocoRun() {
             const run = adminVisibleHocoRuns.find(item => item.id === adminSelectedHocoRunId) || adminVisibleHocoRuns[adminVisibleHocoRuns.length - 1] || null;
             updateAdminHocoPreview(run);
 
             if (!run) {
                 adminActiveHocoAutoGeojson = null;
-                loadHocoAutoButton.disabled = true;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyLayerVisibility();
                 return;
             }
 
             try {
-                adminActiveHocoAutoGeojson = await fetchAdminHocoGeojson(run);
-                loadHocoAutoButton.disabled = !adminActiveHocoAutoGeojson.features.length;
+                const geojson = await fetchAdminHocoGeojson(run);
+                adminActiveHocoAutoGeojson = geojson;
+                renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, geojson, 0.24, 1.8);
+                applyLayerVisibility();
             } catch (error) {
                 console.error('Admin AUTO-HOCO load error:', error);
                 adminActiveHocoAutoGeojson = null;
-                loadHocoAutoButton.disabled = true;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyLayerVisibility();
                 adminHocoAutoSummary.textContent = `Could not load this automated run. ${error.message || ''}`.trim();
             }
         }
@@ -1600,8 +1701,9 @@
         async function loadSelectedAdminHocoEnsemble() {
             if (!adminVisibleHocoRuns.length) {
                 adminActiveHocoEnsembleGeojson = null;
-                loadHocoEnsembleButton.disabled = true;
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
                 updateAdminHocoEnsemblePreview('Idle', [], null);
+                applyLayerVisibility();
                 return;
             }
 
@@ -1631,13 +1733,19 @@
                 }
 
                 adminActiveHocoEnsembleGeojson = ensembleGeojson;
-                loadHocoEnsembleButton.disabled = !ensembleGeojson.features.length;
+                if (ensembleGeojson.features.length) {
+                    renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, ensembleGeojson, 0.22, 2.4);
+                } else {
+                    clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                }
                 updateAdminHocoEnsemblePreview(ensembleGeojson.features.length ? 'Ready' : 'No polygons', adminVisibleHocoRuns, ensembleGeojson);
+                applyLayerVisibility();
             } catch (error) {
                 console.error('Admin HOCO ensemble build error:', error);
                 adminActiveHocoEnsembleGeojson = null;
-                loadHocoEnsembleButton.disabled = true;
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
                 updateAdminHocoEnsemblePreview('Blend failed', adminVisibleHocoRuns, null);
+                applyLayerVisibility();
             }
         }
 
@@ -1668,8 +1776,6 @@
                 adminHocoAutoTitle.textContent = 'HOCO archive unavailable';
                 adminHocoAutoSummary.textContent = 'Could not connect to the HOCO archive right now.';
                 adminHocoEnsembleStatus.textContent = 'Unavailable';
-                loadHocoAutoButton.disabled = true;
-                loadHocoEnsembleButton.disabled = true;
             });
         }
 
@@ -1685,50 +1791,6 @@
                 label: meta.label,
                 color: meta.color
             };
-        }
-
-        function loadHocoGeojsonIntoDraft(geojson, sourceLabel) {
-            if (!geojson?.features?.length) {
-                showStatus('There are no polygons available to import from this HOCO source.', 'var(--accent)');
-                return;
-            }
-
-            if (draw.getAll().features.length) {
-                const shouldReplace = window.confirm('Replace the current draft polygons with this HOCO guidance?');
-                if (!shouldReplace) return;
-            }
-
-            draw.deleteAll();
-            const importedFeatures = geojson.features.map(feature => {
-                const riskValue = window.GenWeatherUtils?.parseRiskPercent
-                    ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
-                    : Number(feature?.properties?.riskValue || feature?.properties?.risk || 0);
-                const manualRisk = getManualRiskFromProbability(riskValue);
-                return {
-                    type: 'Feature',
-                    geometry: feature.geometry,
-                    properties: {
-                        user_color: manualRisk.color,
-                        user_risk: manualRisk.label,
-                        user_rank: manualRisk.rank,
-                        user_severe: false,
-                        imported_source: sourceLabel,
-                        imported_probability: riskValue
-                    }
-                };
-            });
-
-            importedFeatures.forEach(feature => draw.add(feature));
-
-            if (adminSelectedHocoWindow?.start && adminSelectedHocoWindow?.end) {
-                validFromInput.value = toLocalInputValue(adminSelectedHocoWindow.start);
-                validToInput.value = toLocalInputValue(adminSelectedHocoWindow.end);
-            }
-
-            updateLayerStackUI();
-            refreshDrawPreview();
-            fitMapToFeatures(importedFeatures);
-            showStatus(`${sourceLabel} loaded into the draft as editable 1 to 5 risk polygons.`, '#1d4ed8');
         }
 
         function createDiscussionPreviewText(text) {
@@ -2300,7 +2362,7 @@
             const ctx = canvas.getContext('2d');
             const riskLevels = window.GenWeatherUtils?.summarizeAllRiskLevels
                 ? window.GenWeatherUtils.summarizeAllRiskLevels(draftGeoJSON.features)
-                : window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features);
+                : window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features).map(r => ({ ...r, issued: true }));
             const issuedRiskLevels = riskLevels.filter(level => level.issued);
             const validRange = `${formatPosterDate(validFromInput.value)} - ${formatPosterDate(validToInput.value)}`;
             const issuedLine = `${formatPosterDate(issuedAt)} Version ${issueVersion}`;
@@ -2308,8 +2370,8 @@
                 title: 'No issued risk',
                 color: '#94a3b8'
             };
-            const footerTop = canvas.height - 168;
-            const brandCardX = panelWidth - 248;
+            const footerTop = canvas.height - 180;
+            let brandCardX = panelWidth - 248;
             const legendTop = 338;
             const rowSpacing = 126;
             const circleX = 130;
@@ -2332,13 +2394,14 @@
             ctx.fillRect(panelWidth - 1, 0, 2, canvas.height);
 
             ctx.fillStyle = '#0f172a';
-            ctx.font = '700 76px Inter';
-            ctx.fillText('Convective Outlook', 54, 102);
+            ctx.font = '700 70px Inter';
+            ctx.fillText('Convective Outlook', 54, 110);
             ctx.font = '500 28px Inter';
             ctx.fillStyle = '#334155';
-            ctx.fillText(`Valid: ${validRange}`, 54, 158);
-            ctx.fillText(`Issued at ${issuedLine}`, 54, 204);
+            ctx.fillText(`Valid: ${validRange}`, 54, 164);
+            ctx.fillText(`Issued at ${issuedLine}`, 54, 210);
 
+            brandCardX = panelWidth - 224;
             drawRoundedRect(ctx, brandCardX, 30, 194, 118, 24);
             ctx.fillStyle = '#2f427f';
             ctx.fill();
@@ -2355,7 +2418,7 @@
                 ctx.fillText('Outlook', brandCardX + 90, 102);
             }
 
-            drawRoundedRect(ctx, 54, 234, 230, 54, 18);
+            drawRoundedRect(ctx, 54, 244, 230, 54, 18);
             ctx.fillStyle = '#f8fafc';
             ctx.fill();
             ctx.strokeStyle = highestRisk.color;
@@ -2363,9 +2426,9 @@
             ctx.stroke();
             ctx.fillStyle = highestRisk.color;
             ctx.font = '700 18px Inter';
-            ctx.fillText(`Highest risk: ${highestRisk.title}`, 76, 267);
+            ctx.fillText(`Highest risk: ${highestRisk.title}`, 76, 277);
 
-            drawRoundedRect(ctx, 306, 234, panelWidth - 360, 54, 18);
+            drawRoundedRect(ctx, 306, 244, panelWidth - 360, 54, 18);
             ctx.fillStyle = '#ffffff';
             ctx.fill();
             ctx.strokeStyle = '#111111';
@@ -2377,7 +2440,7 @@
             ctx.stroke();
             ctx.fillStyle = '#1f2937';
             ctx.font = '600 17px Inter';
-            ctx.fillText('Black outline represents severe weather possible.', 388, 267);
+            ctx.fillText('Black outline represents severe weather possible.', 388, 277);
 
             ctx.strokeStyle = '#ff7a21';
             ctx.lineWidth = 8;
@@ -2726,11 +2789,12 @@
                 loadSelectedAdminHocoRun();
             }
         });
-        loadHocoAutoButton.addEventListener('click', () => {
-            loadHocoGeojsonIntoDraft(adminActiveHocoAutoGeojson, 'Selected AUTO-HOCO');
-        });
-        loadHocoEnsembleButton.addEventListener('click', () => {
-            loadHocoGeojsonIntoDraft(adminActiveHocoEnsembleGeojson, 'HOCO Ensemble');
+        layerToggleButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                layerVisibilityState[button.dataset.layerToggle] = !layerVisibilityState[button.dataset.layerToggle];
+                updateLayerToggleButtons();
+                applyLayerVisibility();
+            });
         });
         document.getElementById('filter-author').addEventListener('change', initHistoryListener);
         document.getElementById('sort-by').addEventListener('change', initHistoryListener);
@@ -2777,8 +2841,6 @@
             }
         });
 
-        loadHocoAutoButton.disabled = true;
-        loadHocoEnsembleButton.disabled = true;
         updateDiscussionUI();
         updateLayerStackUI();
     </script>

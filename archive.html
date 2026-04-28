@@ -318,7 +318,22 @@
                     const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
                     const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
 
-                    const encodedGeo = encodeURIComponent(JSON.stringify(geoJSON));
+                    let encodedGeo = '';
+                    try {
+                        // Simplify GeoJSON for static map URL limits
+                        const simplified = turf.simplify(geoJSON, { tolerance: 0.015, highPrecision: false });
+                        const geoStr = JSON.stringify(simplified);
+                        if (geoStr.length < 7800) {
+                            encodedGeo = encodeURIComponent(geoStr);
+                        } else {
+                            // Too big for Mapbox Static, fallback to empty to avoid broken image
+                            encodedGeo = '{"type":"FeatureCollection","features":[]}';
+                        }
+                    } catch (e) {
+                        console.warn("GeoJSON simplify failed for static map", e);
+                        encodedGeo = '{"type":"FeatureCollection","features":[]}';
+                    }
+                    
                     const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
                     const previewUrl = data.posterUrl || staticMapUrl;
                     const previewClass = data.posterUrl ? 'map-thumb poster-thumb' : 'map-thumb';
