@@ -75,18 +75,15 @@
 
         .map-toolbar {
             position: absolute;
-            top: 16px;
-            left: 16px;
             right: 16px;
+            bottom: 16px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            justify-content: flex-end;
             gap: 12px;
             z-index: 3;
             pointer-events: none;
         }
 
-        .map-toolbar .status-pill,
         .map-toolbar .action-row {
             pointer-events: auto;
         }
@@ -316,6 +313,14 @@
             margin-bottom: 14px;
         }
 
+        .section-head-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
         .section-title {
             font-size: 11px;
             font-weight: 800;
@@ -375,8 +380,20 @@
             cursor: pointer;
         }
 
+        .editor-link-btn,
+        .modal-close-btn {
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            color: #334155;
+            border-radius: 999px;
+            padding: 8px 13px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
         #forecast-text {
-            min-height: 240px;
+            min-height: 100%;
             resize: vertical;
             line-height: 1.7;
         }
@@ -397,7 +414,7 @@
             background: #f8fafc;
             border-radius: 14px;
             padding: 14px;
-            min-height: 120px;
+            min-height: 96px;
             white-space: pre-wrap;
             line-height: 1.7;
             color: #334155;
@@ -406,6 +423,13 @@
         .discussion-preview.is-empty {
             color: #94a3b8;
             font-style: italic;
+        }
+
+        .discussion-hint {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.6;
         }
 
         .editor-actions {
@@ -482,6 +506,95 @@
             box-shadow: 0 14px 28px rgba(15, 23, 42, 0.15);
         }
 
+        .modal-shell[hidden] {
+            display: none !important;
+        }
+
+        .modal-shell {
+            position: fixed;
+            inset: 0;
+            z-index: 70;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.48);
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-card {
+            width: min(920px, 100%);
+            max-height: min(88vh, 980px);
+            background: #fff;
+            border-radius: 22px;
+            border: 1px solid rgba(148, 163, 184, 0.28);
+            box-shadow: 0 28px 80px rgba(15, 23, 42, 0.28);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .modal-header {
+            padding: 20px 22px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .modal-title {
+            margin: 8px 0 0;
+            font-size: 28px;
+            color: #172033;
+        }
+
+        .modal-body {
+            padding: 18px 22px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 16px 22px 22px;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .modal-footer-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .modal-meta-note {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .modal-editor-shell {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-editor-shell textarea {
+            flex: 1;
+            min-height: 360px;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
         @media (max-width: 1400px) {
             #control-panel {
                 width: 380px;
@@ -530,6 +643,13 @@
             .login-box {
                 padding: 24px;
             }
+
+            .modal-header,
+            .modal-body,
+            .modal-footer {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
         }
     </style>
 </head>
@@ -548,6 +668,10 @@
 
     <header id="app-header">
         <div class="top-nav">
+            <a href="index.html" class="nav-brand">
+                <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+                <span>Handry Outlook</span>
+            </a>
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html">Outlooks</a>
                 <a href="obs.html">Observations</a>
@@ -595,12 +719,12 @@
             <div class="editor-card">
                 <label for="risk-level-selector">Risk tool</label>
                 <select id="risk-level-selector">
-                    <option value="1 Very Low" data-color="#c29f92" data-rank="1">1 Very Low</option>
-                    <option value="2 Low" data-color="#00aeef" data-rank="2">2 Low</option>
-                    <option value="3 Slight" data-color="#5da848" data-rank="3">3 Slight</option>
-                    <option value="4 Moderate" data-color="#f7941d" data-rank="4">4 Moderate</option>
-                    <option value="5 High" data-color="#da2128" data-rank="5">5 High</option>
-                    <option value="6 Severe" data-color="#800080" data-rank="6">6 Severe</option>
+                    <option value="1 Low" data-color="#67c6ac" data-rank="1">1 Low</option>
+                    <option value="2 Slight" data-color="#ffea00" data-rank="2">2 Slight</option>
+                    <option value="3 Enhanced" data-color="#ff7a21" data-rank="3">3 Enhanced</option>
+                    <option value="4 Moderate" data-color="#f91522" data-rank="4">4 Moderate</option>
+                    <option value="5 High" data-color="#b23cc7" data-rank="5">5 High</option>
+                    <option value="SEVERE" data-color="#111111" data-rank="0" data-severe="true">SEVERE Outline</option>
                 </select>
             </div>
 
@@ -624,22 +748,31 @@
             <div class="editor-card">
                 <div class="section-head">
                     <div class="section-title">Convective Discussion</div>
-                    <div class="section-note" id="discussion-stats">0 words</div>
+                    <div class="section-head-actions">
+                        <div class="section-note" id="discussion-stats">0 words</div>
+                        <button type="button" class="editor-link-btn" id="open-discussion-modal"><i class="fas fa-up-right-and-down-left-from-center"></i> Open editor</button>
+                    </div>
                 </div>
                 <div class="discussion-toolbar">
                     <button type="button" class="template-btn" data-snippet="SYNOPSIS&#10;&#10;">Synopsis</button>
+                    <button type="button" class="template-btn" data-snippet="SETUP&#10;&#10;">Setup</button>
                     <button type="button" class="template-btn" data-snippet="ENVIRONMENT&#10;&#10;">Environment</button>
                     <button type="button" class="template-btn" data-snippet="TIMING&#10;&#10;">Timing</button>
                     <button type="button" class="template-btn" data-snippet="HAZARDS&#10;- ">Hazards</button>
+                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional Focus</button>
+                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting Factors</button>
+                    <button type="button" class="template-btn" data-snippet="IMPACTS&#10;- ">Impacts</button>
                     <button type="button" class="template-btn" data-snippet="CONFIDENCE&#10;&#10;">Confidence</button>
+                    <button type="button" class="template-btn" data-snippet="UNCERTAINTY&#10;&#10;">Uncertainty</button>
+                    <button type="button" class="template-btn" data-snippet="KEY MESSAGES&#10;- ">Key Messages</button>
                     <button type="button" class="template-btn" id="insert-utc-btn">Insert UTC stamp</button>
                 </div>
-                <textarea id="forecast-text" placeholder="Write the forecast discussion here..."></textarea>
+                <div class="discussion-preview is-empty" id="discussion-preview">Discussion preview will appear here.</div>
                 <div class="discussion-meta">
                     <span id="discussion-lines">0 lines</span>
                     <span id="discussion-chars">0 characters</span>
                 </div>
-                <div class="discussion-preview is-empty" id="discussion-preview">Discussion preview will appear here.</div>
+                <div class="discussion-hint">Preview is intentionally capped so long discussions do not stretch the page. Open the popup editor to write the full text.</div>
             </div>
 
             <div class="editor-actions">
@@ -661,7 +794,6 @@
 
         <section id="map-wrap">
             <div class="map-toolbar">
-                <div class="status-pill"><i class="fas fa-map"></i> Outlook preview</div>
                 <div class="action-row">
                     <button type="button" class="small-btn" id="fit-map-btn"><i class="fas fa-expand"></i> Fit polygons</button>
                 </div>
@@ -670,6 +802,48 @@
         </section>
     </main>
 
+    <div class="modal-shell" id="discussion-modal" hidden>
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="discussion-modal-title">
+            <div class="modal-header">
+                <div>
+                    <div class="page-eyebrow">Forecast Discussion</div>
+                    <h3 class="modal-title" id="discussion-modal-title">Write the full discussion</h3>
+                    <p class="editor-subtitle" style="margin-top:10px;">Use the forecast structure buttons, keep the main editor tidy, and close the window when you are happy with the wording.</p>
+                </div>
+                <button type="button" class="modal-close-btn" id="close-discussion-modal"><i class="fas fa-xmark"></i> Close</button>
+            </div>
+            <div class="modal-body">
+                <div class="discussion-toolbar">
+                    <button type="button" class="template-btn" data-snippet="SYNOPSIS&#10;&#10;">Synopsis</button>
+                    <button type="button" class="template-btn" data-snippet="SETUP&#10;&#10;">Setup</button>
+                    <button type="button" class="template-btn" data-snippet="ENVIRONMENT&#10;&#10;">Environment</button>
+                    <button type="button" class="template-btn" data-snippet="TIMING&#10;&#10;">Timing</button>
+                    <button type="button" class="template-btn" data-snippet="HAZARDS&#10;- ">Hazards</button>
+                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional Focus</button>
+                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting Factors</button>
+                    <button type="button" class="template-btn" data-snippet="IMPACTS&#10;- ">Impacts</button>
+                    <button type="button" class="template-btn" data-snippet="CONFIDENCE&#10;&#10;">Confidence</button>
+                    <button type="button" class="template-btn" data-snippet="UNCERTAINTY&#10;&#10;">Uncertainty</button>
+                    <button type="button" class="template-btn" data-snippet="KEY MESSAGES&#10;- ">Key Messages</button>
+                    <button type="button" class="template-btn" id="insert-utc-btn-modal">Insert UTC stamp</button>
+                </div>
+                <div class="modal-editor-shell">
+                    <textarea id="forecast-text" placeholder="Write the forecast discussion here..."></textarea>
+                </div>
+                <div class="discussion-meta">
+                    <span id="discussion-lines-modal">0 lines</span>
+                    <span id="discussion-chars-modal">0 characters</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="modal-meta-note">The admin page keeps only a short preview. The full text is still saved and exported.</div>
+                <div class="modal-footer-actions">
+                    <button type="button" class="btn-secondary" id="discussion-done-btn"><i class="fas fa-check"></i> Done</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.js"></script>
     <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.js"></script>
 
@@ -677,6 +851,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
         import { addDoc, collection, doc, getFirestore, onSnapshot, orderBy, query, updateDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getStorage, getDownloadURL, ref, uploadString } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
@@ -690,10 +865,14 @@
         const PREVIEW_SOURCE_ID = 'outlook-preview-source';
         const PREVIEW_FILL_ID = 'outlook-preview-fill';
         const PREVIEW_LINE_ID = 'outlook-preview-line';
+        const PREVIEW_SEVERE_LINE_ID = 'outlook-preview-severe-line';
+        const HANDRY_LOGO_SRC = 'assets/handry-outlook-logo.png';
+        const HANDRY_LOGO_FALLBACK = 'https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/refs/heads/main/Handry_outlook_icon_pride_small.png';
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
+        const storage = getStorage(app);
 
         const riskSelector = document.getElementById('risk-level-selector');
         const forecastText = document.getElementById('forecast-text');
@@ -701,11 +880,16 @@
         const discussionStats = document.getElementById('discussion-stats');
         const discussionLines = document.getElementById('discussion-lines');
         const discussionChars = document.getElementById('discussion-chars');
+        const discussionLinesModal = document.getElementById('discussion-lines-modal');
+        const discussionCharsModal = document.getElementById('discussion-chars-modal');
+        const discussionModal = document.getElementById('discussion-modal');
         const statusEl = document.getElementById('status');
         const historyList = document.getElementById('history-list');
         const layerStack = document.getElementById('layer-stack');
         const layerCount = document.getElementById('layer-count');
         const saveButton = document.getElementById('save-forecast');
+        const validFromInput = document.getElementById('valid-from');
+        const validToInput = document.getElementById('valid-to');
 
         let currentUser = null;
         let currentEditingDocId = null;
@@ -788,6 +972,40 @@
             return parseInt(riskSelector.options[riskSelector.selectedIndex].dataset.rank, 10);
         }
 
+        function getSelectedIsSevere() {
+            return riskSelector.options[riskSelector.selectedIndex].dataset.severe === 'true';
+        }
+
+        function getOutlookFeatureState(feature) {
+            const sourceFeature = feature?.properties ? feature : { properties: feature || {} };
+            const severe = window.GenWeatherUtils?.isSevereFeature?.(sourceFeature) || Boolean(sourceFeature.properties.user_severe);
+            const meta = severe
+                ? (window.GenWeatherUtils?.SEVERE_META || {
+                    label: 'SEVERE',
+                    title: 'Severe',
+                    color: '#111111',
+                    description: 'Black outline represents severe weather possible.'
+                })
+                : (window.GenWeatherUtils?.getFeatureMeta?.(sourceFeature)
+                    || window.GenWeatherUtils?.getRiskMeta?.(sourceFeature.properties.user_rank ?? sourceFeature.properties.rank)
+                    || {
+                        label: 'Outlook',
+                        title: 'Outlook',
+                        color: '#94a3b8',
+                        description: 'Thunderstorm outlook information.'
+                    });
+            const rank = severe ? 0 : (window.GenWeatherUtils?.getFeatureRank?.(sourceFeature) || 0);
+
+            return {
+                risk: severe ? 'SEVERE' : meta.label,
+                color: meta.color,
+                rank: rank,
+                severe: severe,
+                title: meta.title || meta.label,
+                description: meta.description || 'Thunderstorm outlook information.'
+            };
+        }
+
         function getForecasterName() {
             if (!currentUser || !currentUser.email) return 'Forecast Desk';
             return currentUser.email.split('@')[0].replace(/[._-]+/g, ' ');
@@ -806,6 +1024,60 @@
                 .replace(/'/g, '&#39;');
         }
 
+        function toLocalInputValue(value) {
+            const date = value instanceof Date ? new Date(value.getTime()) : new Date(value);
+            if (Number.isNaN(date.getTime())) return '';
+            const local = new Date(date.getTime() - (date.getTimezoneOffset() * 60000));
+            return local.toISOString().slice(0, 16);
+        }
+
+        function createDiscussionPreviewText(text) {
+            const cleaned = String(text || '').replace(/\r/g, '').trim();
+            if (!cleaned) return '';
+
+            const sentences = (cleaned.replace(/\n+/g, ' ').match(/[^.!?]+[.!?]*/g) || [])
+                .map(segment => segment.trim())
+                .filter(Boolean);
+
+            const picked = [];
+            let totalLength = 0;
+
+            for (const sentence of sentences) {
+                if (picked.length >= 3) break;
+                if (totalLength && totalLength + sentence.length > 420) break;
+                picked.push(sentence);
+                totalLength += sentence.length;
+            }
+
+            let preview = picked.join(' ');
+            if (!preview) {
+                preview = cleaned.split(/\n+/).slice(0, 3).join(' ');
+            }
+
+            preview = preview.trim();
+            if (preview.length < cleaned.length) {
+                preview = preview.replace(/[.\s]+$/, '') + '...';
+            }
+
+            return preview;
+        }
+
+        function openDiscussionModal() {
+            discussionModal.hidden = false;
+            document.body.classList.add('modal-open');
+
+            requestAnimationFrame(() => {
+                forecastText.focus();
+                const pos = forecastText.value.length;
+                forecastText.setSelectionRange(pos, pos);
+            });
+        }
+
+        function closeDiscussionModal() {
+            discussionModal.hidden = true;
+            document.body.classList.remove('modal-open');
+        }
+
         function updateDiscussionUI() {
             const text = forecastText.value || '';
             const words = text.trim() ? text.trim().split(/\s+/).length : 0;
@@ -815,6 +1087,8 @@
             discussionStats.textContent = `${words} words`;
             discussionLines.textContent = `${lines} lines`;
             discussionChars.textContent = `${chars} characters`;
+            discussionLinesModal.textContent = `${lines} lines`;
+            discussionCharsModal.textContent = `${chars} characters`;
 
             if (!text.trim()) {
                 discussionPreview.textContent = 'Discussion preview will appear here.';
@@ -822,11 +1096,15 @@
                 return;
             }
 
-            discussionPreview.innerHTML = escapeHtml(text).replace(/\n/g, '<br>');
+            discussionPreview.innerHTML = escapeHtml(createDiscussionPreviewText(text)).replace(/\n/g, '<br>');
             discussionPreview.classList.remove('is-empty');
         }
 
         function insertTextAtCursor(text) {
+            if (discussionModal.hidden) {
+                openDiscussionModal();
+            }
+
             const textarea = forecastText;
             const start = textarea.selectionStart ?? textarea.value.length;
             const end = textarea.selectionEnd ?? textarea.value.length;
@@ -839,39 +1117,53 @@
             updateDiscussionUI();
         }
 
+        function buildRawDisplayFeatures(features) {
+            const rawFeatures = (features || [])
+                .filter(feature => feature && feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'))
+                .map(feature => {
+                    const state = getOutlookFeatureState(feature);
+                    return {
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            rank: state.rank,
+                            color: state.color,
+                            risk: state.risk,
+                            severe: state.severe,
+                            isSevere: state.severe
+                        }
+                    };
+                });
+
+            return window.GenWeatherUtils
+                ? window.GenWeatherUtils.normalizeDisplayFeatures(rawFeatures)
+                : rawFeatures;
+        }
+
         function createDraftGeoJSON() {
             return {
                 type: 'FeatureCollection',
                 features: draw.getAll().features
                     .filter(feature => feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'))
-                    .map(feature => ({
-                        type: 'Feature',
-                        geometry: feature.geometry,
-                        properties: {
-                            risk: feature.properties.user_risk,
-                            color: feature.properties.user_color,
-                            rank: feature.properties.user_rank
-                        }
-                    }))
+                    .map(feature => {
+                        const state = getOutlookFeatureState(feature);
+                        return {
+                            type: 'Feature',
+                            geometry: feature.geometry,
+                            properties: {
+                                risk: state.risk,
+                                color: state.color,
+                                rank: state.rank,
+                                severe: state.severe,
+                                isSevere: state.severe
+                            }
+                        };
+                    })
             };
         }
 
         function createPreviewFeatures() {
-            const rawFeatures = draw.getAll().features
-                .filter(feature => feature.geometry && (feature.geometry.type === 'Polygon' || feature.geometry.type === 'MultiPolygon'))
-                .map(feature => ({
-                    type: 'Feature',
-                    geometry: feature.geometry,
-                    properties: {
-                        risk: feature.properties.user_risk,
-                        color: feature.properties.user_color,
-                        rank: feature.properties.user_rank
-                    }
-                }));
-
-            return window.GenWeatherUtils
-                ? window.GenWeatherUtils.normalizeDisplayFeatures(rawFeatures)
-                : rawFeatures;
+            return buildRawDisplayFeatures(draw.getAll().features);
         }
 
         function ensurePreviewLayers() {
@@ -889,6 +1181,7 @@
                 id: PREVIEW_FILL_ID,
                 type: 'fill',
                 source: PREVIEW_SOURCE_ID,
+                filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                 paint: {
                     'fill-color': ['get', 'color'],
                     'fill-opacity': 0.42
@@ -899,9 +1192,21 @@
                 id: PREVIEW_LINE_ID,
                 type: 'line',
                 source: PREVIEW_SOURCE_ID,
+                filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                 paint: {
                     'line-color': ['get', 'color'],
                     'line-width': 2.5
+                }
+            }, beforeId);
+
+            map.addLayer({
+                id: PREVIEW_SEVERE_LINE_ID,
+                type: 'line',
+                source: PREVIEW_SOURCE_ID,
+                filter: ['==', ['coalesce', ['get', 'isSevere'], false], true],
+                paint: {
+                    'line-color': '#111111',
+                    'line-width': 3.3
                 }
             }, beforeId);
         }
@@ -930,18 +1235,18 @@
             }
 
             features.forEach((feature, index) => {
-                const meta = window.GenWeatherUtils.getRiskMeta(feature.properties.user_rank);
+                const state = getOutlookFeatureState(feature);
                 const row = document.createElement('div');
                 row.className = 'layer-row';
                 row.innerHTML = `
                     <div class="layer-row-left">
-                        <div class="color-preview" style="background:${feature.properties.user_color || '#94a3b8'}"></div>
+                        <div class="color-preview" style="background:${state.severe ? '#ffffff' : state.color}; border:${state.severe ? '2px solid #111111' : 'none'}"></div>
                         <div>
-                            <div class="layer-name">${feature.properties.user_risk || `Polygon ${index + 1}`}</div>
-                            <div class="layer-rank">${meta.description}</div>
+                            <div class="layer-name">${state.risk || `Polygon ${index + 1}`}</div>
+                            <div class="layer-rank">${state.description}</div>
                         </div>
                     </div>
-                    <div class="risk-badge">#${index + 1}</div>
+                    <div class="risk-badge">${state.severe ? 'SVR' : '#' + (index + 1)}</div>
                 `;
                 layerStack.appendChild(row);
             });
@@ -978,15 +1283,21 @@
                 draw.setFeatureProperty(id, 'user_color', getSelectedColor());
                 draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
                 draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
+                draw.setFeatureProperty(id, 'user_severe', getSelectedIsSevere());
             });
         }
 
         function setDefaultDates() {
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            document.getElementById('valid-from').value = now.toISOString().slice(0, 16);
-            now.setHours(now.getHours() + 24);
-            document.getElementById('valid-to').value = now.toISOString().slice(0, 16);
+            const validFrom = new Date();
+            validFrom.setSeconds(0, 0);
+            validFrom.setHours(6, 0, 0, 0);
+
+            const validTo = new Date(validFrom);
+            validTo.setDate(validTo.getDate() + 1);
+            validTo.setHours(5, 59, 0, 0);
+
+            validFromInput.value = toLocalInputValue(validFrom);
+            validToInput.value = toLocalInputValue(validTo);
         }
 
         function showStatus(message, color) {
@@ -1018,6 +1329,31 @@
             updateLayerStackUI();
             refreshDrawPreview();
             initHistoryListener();
+            closeDiscussionModal();
+        }
+
+        function hasDraftContent() {
+            return Boolean(
+                currentEditingDocId ||
+                forecastText.value.trim() ||
+                draw.getAll().features.length
+            );
+        }
+
+        function requestDraftReset() {
+            if (!hasDraftContent()) {
+                resetForm();
+                return;
+            }
+
+            const confirmation = window.prompt('Type Clear Draft to confirm deleting the current draft.');
+            if (confirmation !== 'Clear Draft') {
+                showStatus('Draft kept. Type "Clear Draft" exactly if you still want to wipe it.', '#475569');
+                return;
+            }
+
+            resetForm();
+            showStatus('Draft cleared.', '#475569');
         }
 
         async function togglePublish(id, nextState) {
@@ -1032,21 +1368,23 @@
             currentEditingDocId = id;
             currentEditingData = data;
             setEditorMode(true);
-            document.getElementById('valid-from').value = data.validFrom;
-            document.getElementById('valid-to').value = data.validTo;
+            validFromInput.value = data.validFrom;
+            validToInput.value = data.validTo;
             forecastText.value = data.description || '';
             updateDiscussionUI();
 
             draw.deleteAll();
             const geoJSON = typeof data.geoJSON === 'string' ? JSON.parse(data.geoJSON) : data.geoJSON;
             geoJSON.features.forEach(feature => {
+                const state = getOutlookFeatureState(feature);
                 draw.add({
                     type: 'Feature',
                     geometry: feature.geometry,
                     properties: {
-                        user_color: feature.properties.color,
-                        user_risk: feature.properties.risk,
-                        user_rank: feature.properties.rank
+                        user_color: state.color,
+                        user_risk: state.risk,
+                        user_rank: state.rank,
+                        user_severe: state.severe
                     }
                 });
             });
@@ -1057,41 +1395,539 @@
             initHistoryListener();
         }
 
-        async function saveForecast() {
-            const draftGeoJSON = createDraftGeoJSON();
+        function loadCanvasImage(source) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                if (/^https?:/i.test(source)) {
+                    img.crossOrigin = 'anonymous';
+                }
+                img.onload = () => resolve(img);
+                img.onerror = reject;
+                img.src = source;
+            });
+        }
+
+        async function loadPosterLogo() {
+            const sources = [HANDRY_LOGO_SRC, HANDRY_LOGO_FALLBACK];
+            for (const source of sources) {
+                try {
+                    return await loadCanvasImage(source);
+                } catch (error) {
+                    console.warn('Could not load logo source for poster.', source, error);
+                }
+            }
+            return null;
+        }
+
+        function formatPosterDate(value) {
+            return window.GenWeatherUtils
+                ? window.GenWeatherUtils.formatUtc(value)
+                : `${new Date(value).toISOString()} UTC`;
+        }
+
+        function buildExportFileName(issueVersion = getNextIssueVersion()) {
+            const fromValue = validFromInput.value || new Date().toISOString();
+            const datePart = String(fromValue).split('T')[0].replace(/-/g, '');
+            return `convective-outlook-${datePart}-v${issueVersion}.png`;
+        }
+
+        function validateDraftGeoJSON(draftGeoJSON) {
+            const errors = [];
 
             if (!draftGeoJSON.features.length) {
-                alert('Draw a polygon first.');
+                errors.push('Draw at least one polygon before saving or exporting.');
+            }
+
+            const validFrom = new Date(validFromInput.value);
+            const validTo = new Date(validToInput.value);
+
+            if (Number.isNaN(validFrom.getTime()) || Number.isNaN(validTo.getTime())) {
+                errors.push('Set both validity times before continuing.');
+            } else if (validTo <= validFrom) {
+                errors.push('Valid to must be later than valid from.');
+            }
+
+            const containmentCheck = window.GenWeatherUtils?.validateRiskContainment?.(draftGeoJSON.features);
+            if (containmentCheck?.errors?.length) {
+                errors.push(...containmentCheck.errors);
+            }
+
+            return errors;
+        }
+
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height - r);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+            ctx.lineTo(x + r, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function splitCanvasTextIntoLines(ctx, text, maxWidth) {
+            const lines = [];
+            const paragraphs = String(text || '').replace(/\r/g, '').split('\n');
+
+            paragraphs.forEach(paragraph => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) {
+                    lines.push('');
+                    return;
+                }
+
+                const words = trimmed.split(/\s+/);
+                let line = '';
+
+                words.forEach(word => {
+                    const candidate = line ? `${line} ${word}` : word;
+                    if (ctx.measureText(candidate).width > maxWidth && line) {
+                        lines.push(line);
+                        line = word;
+                    } else {
+                        line = candidate;
+                    }
+                });
+
+                if (line) {
+                    lines.push(line);
+                }
+            });
+
+            return lines;
+        }
+
+        function ellipsizeCanvasLine(ctx, line, maxWidth) {
+            let trimmed = String(line || '').trim();
+            while (trimmed && ctx.measureText(`${trimmed}...`).width > maxWidth) {
+                trimmed = trimmed.slice(0, -1).trimEnd();
+            }
+            return trimmed ? `${trimmed}...` : '...';
+        }
+
+        function drawCanvasTextBlock(ctx, text, x, y, maxWidth, lineHeight, maxHeight) {
+            const allLines = splitCanvasTextIntoLines(ctx, text, maxWidth);
+            const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+            const visibleLines = allLines.slice(0, maxLines);
+            const truncated = allLines.length > maxLines;
+
+            visibleLines.forEach((line, index) => {
+                const isLastVisibleLine = index === visibleLines.length - 1;
+                const output = truncated && isLastVisibleLine
+                    ? ellipsizeCanvasLine(ctx, line || allLines[index] || '', maxWidth)
+                    : line;
+                ctx.fillText(output, x, y + (index * lineHeight));
+            });
+
+            return {
+                bottomY: y + (visibleLines.length * lineHeight),
+                truncated: truncated
+            };
+        }
+
+        function getFeatureBounds(features) {
+            const bounds = new mapboxgl.LngLatBounds();
+            let hasBounds = false;
+
+            (features || []).forEach(feature => {
+                if (!feature?.geometry) return;
+
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(coord => {
+                        bounds.extend(coord);
+                        hasBounds = true;
+                    });
+                } else if (feature.geometry.type === 'MultiPolygon') {
+                    feature.geometry.coordinates.forEach(polygon => {
+                        polygon[0].forEach(coord => {
+                            bounds.extend(coord);
+                            hasBounds = true;
+                        });
+                    });
+                }
+            });
+
+            return { bounds, hasBounds };
+        }
+
+        async function renderPosterMapImage(features, width, height) {
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.left = '-99999px';
+            container.style.top = '0';
+            container.style.width = `${width}px`;
+            container.style.height = `${height}px`;
+            container.style.opacity = '0.01';
+            container.style.pointerEvents = 'none';
+            document.body.appendChild(container);
+
+            const exportMap = new mapboxgl.Map({
+                container: container,
+                style: 'mapbox://styles/mapbox/outdoors-v12',
+                center: [-2.5, 54.5],
+                zoom: 5,
+                interactive: false,
+                attributionControl: false,
+                preserveDrawingBuffer: true,
+                fadeDuration: 0
+            });
+
+            const cleanup = () => {
+                try {
+                    exportMap.remove();
+                } catch (error) {
+                    console.warn('Could not fully remove poster map.', error);
+                }
+                container.remove();
+            };
+
+            return new Promise((resolve, reject) => {
+                exportMap.once('error', (event) => {
+                    cleanup();
+                    reject(event?.error || new Error('Poster map render failed.'));
+                });
+
+                exportMap.once('load', () => {
+                    try {
+                        const sourceData = {
+                            type: 'FeatureCollection',
+                            features: buildRawDisplayFeatures(features)
+                        };
+
+                        exportMap.addSource('poster-forecast-data', {
+                            type: 'geojson',
+                            data: sourceData
+                        });
+
+                        const labelLayer = exportMap.getStyle().layers.find(layer => layer.type === 'symbol' && layer.layout?.['text-field']);
+
+                        exportMap.addLayer({
+                            id: 'poster-forecast-fill',
+                            type: 'fill',
+                            source: 'poster-forecast-data',
+                            filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
+                            paint: {
+                                'fill-color': ['get', 'color'],
+                                'fill-opacity': 0.24
+                            }
+                        }, labelLayer?.id);
+
+                        exportMap.addLayer({
+                            id: 'poster-forecast-line',
+                            type: 'line',
+                            source: 'poster-forecast-data',
+                            filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
+                            paint: {
+                                'line-color': ['get', 'color'],
+                                'line-width': 4,
+                                'line-opacity': 0.92
+                            }
+                        }, labelLayer?.id);
+
+                        exportMap.addLayer({
+                            id: 'poster-forecast-severe-line',
+                            type: 'line',
+                            source: 'poster-forecast-data',
+                            filter: ['==', ['coalesce', ['get', 'isSevere'], false], true],
+                            paint: {
+                                'line-color': '#111111',
+                                'line-width': 4.8,
+                                'line-opacity': 1
+                            }
+                        }, labelLayer?.id);
+
+                        const { bounds, hasBounds } = getFeatureBounds(features);
+                        if (hasBounds) {
+                            exportMap.fitBounds(bounds, {
+                                padding: { top: 90, right: 90, bottom: 90, left: 90 },
+                                maxZoom: 6.2,
+                                duration: 0
+                            });
+                        }
+
+                        let captureTriggered = false;
+                        const capturePosterMap = async () => {
+                            if (captureTriggered) return;
+                            captureTriggered = true;
+                            try {
+                                await new Promise(resolveFrame => requestAnimationFrame(() => requestAnimationFrame(resolveFrame)));
+                                const image = await loadCanvasImage(exportMap.getCanvas().toDataURL('image/png'));
+                                cleanup();
+                                resolve(image);
+                            } catch (error) {
+                                cleanup();
+                                reject(error);
+                            }
+                        };
+
+                        exportMap.once('idle', capturePosterMap);
+                        window.setTimeout(capturePosterMap, 2600);
+                    } catch (error) {
+                        cleanup();
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        async function renderForecastPoster(draftGeoJSON, options = {}) {
+            const issueVersion = options.issueVersion ?? getNextIssueVersion();
+            const issuedAt = options.issuedAt ?? new Date().toISOString();
+            const canvas = document.createElement('canvas');
+            canvas.width = 2200;
+            canvas.height = 1300;
+
+            const panelWidth = 920;
+            const mapWidth = canvas.width - panelWidth;
+            const [mapImage, logoImage] = await Promise.all([
+                renderPosterMapImage(draftGeoJSON.features, mapWidth, canvas.height),
+                loadPosterLogo()
+            ]);
+            const ctx = canvas.getContext('2d');
+            const riskLevels = window.GenWeatherUtils?.summarizeAllRiskLevels
+                ? window.GenWeatherUtils.summarizeAllRiskLevels(draftGeoJSON.features)
+                : window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features);
+            const issuedRiskLevels = riskLevels.filter(level => level.issued);
+            const validRange = `${formatPosterDate(validFromInput.value)} - ${formatPosterDate(validToInput.value)}`;
+            const issuedLine = `${formatPosterDate(issuedAt)} Version ${issueVersion}`;
+            const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || {
+                title: 'No issued risk',
+                color: '#94a3b8'
+            };
+            const footerTop = canvas.height - 168;
+            const brandCardX = panelWidth - 248;
+            const legendTop = 338;
+            const rowSpacing = 126;
+            const circleX = 130;
+            const circleRadius = 50;
+            const textX = 216;
+
+            ctx.fillStyle = '#eef2f7';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(mapImage, panelWidth, 0, mapWidth, canvas.height);
+
+            const overlayGradient = ctx.createLinearGradient(panelWidth, 0, canvas.width, canvas.height);
+            overlayGradient.addColorStop(0, 'rgba(15, 23, 42, 0.06)');
+            overlayGradient.addColorStop(1, 'rgba(15, 23, 42, 0.18)');
+            ctx.fillStyle = overlayGradient;
+            ctx.fillRect(panelWidth, 0, mapWidth, canvas.height);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, panelWidth, canvas.height);
+            ctx.fillStyle = '#dae2ef';
+            ctx.fillRect(panelWidth - 1, 0, 2, canvas.height);
+
+            ctx.fillStyle = '#0f172a';
+            ctx.font = '700 76px Inter';
+            ctx.fillText('Convective Outlook', 54, 102);
+            ctx.font = '500 28px Inter';
+            ctx.fillStyle = '#334155';
+            ctx.fillText(`Valid: ${validRange}`, 54, 158);
+            ctx.fillText(`Issued at ${issuedLine}`, 54, 204);
+
+            drawRoundedRect(ctx, brandCardX, 30, 194, 118, 24);
+            ctx.fillStyle = '#2f427f';
+            ctx.fill();
+            if (logoImage) {
+                ctx.drawImage(logoImage, brandCardX + 14, 36, 166, 94);
+            } else {
+                ctx.fillStyle = '#f8fafc';
+                ctx.beginPath();
+                ctx.arc(brandCardX + 48, 74, 22, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '700 24px Inter';
+                ctx.fillText('Handry', brandCardX + 90, 72);
+                ctx.fillText('Outlook', brandCardX + 90, 102);
+            }
+
+            drawRoundedRect(ctx, 54, 234, 230, 54, 18);
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+            ctx.strokeStyle = highestRisk.color;
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = highestRisk.color;
+            ctx.font = '700 18px Inter';
+            ctx.fillText(`Highest risk: ${highestRisk.title}`, 76, 267);
+
+            drawRoundedRect(ctx, 306, 234, panelWidth - 360, 54, 18);
+            ctx.fillStyle = '#ffffff';
+            ctx.fill();
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            drawRoundedRect(ctx, 330, 247, 40, 26, 8);
+            ctx.strokeStyle = '#111111';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            ctx.fillStyle = '#1f2937';
+            ctx.font = '600 17px Inter';
+            ctx.fillText('Black outline represents severe weather possible.', 388, 267);
+
+            ctx.strokeStyle = '#ff7a21';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(circleX, legendTop - 40);
+            ctx.lineTo(circleX, legendTop + (rowSpacing * (riskLevels.length - 1)) + 40);
+            ctx.stroke();
+
+            riskLevels.forEach((level, index) => {
+                const isIssued = level.issued !== false;
+                const rowY = legendTop + (index * rowSpacing);
+
+                ctx.globalAlpha = isIssued ? 1 : 0.28;
+                ctx.strokeStyle = index === riskLevels.length - 1 ? '#cbd5e1' : '#ff7a21';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.moveTo(circleX, rowY);
+                ctx.lineTo(textX - 24, rowY);
+                ctx.stroke();
+                ctx.globalAlpha = isIssued ? 1 : 0.38;
+                ctx.fillStyle = level.color;
+                ctx.beginPath();
+                ctx.arc(circleX, rowY, circleRadius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = level.rank === 2 ? '#172033' : '#ffffff';
+                ctx.font = '800 34px Inter';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(String(level.rank), circleX, rowY + 2);
+
+                ctx.textAlign = 'left';
+                ctx.textBaseline = 'alphabetic';
+                ctx.fillStyle = isIssued ? (level.rank === 2 ? '#c69200' : level.color) : '#94a3b8';
+                ctx.font = '700 40px Inter';
+                ctx.fillText(level.title, textX, rowY - 8);
+                ctx.fillStyle = '#475569';
+                ctx.font = '500 18px Inter';
+                drawCanvasTextBlock(
+                    ctx,
+                    isIssued ? level.description : 'Not issued in this outlook.',
+                    textX,
+                    rowY + 20,
+                    panelWidth - textX - 60,
+                    24,
+                    56
+                );
+                ctx.globalAlpha = 1;
+            });
+
+            ctx.fillStyle = '#24386f';
+            ctx.beginPath();
+            ctx.moveTo(0, footerTop + 26);
+            ctx.lineTo(panelWidth, footerTop - 12);
+            ctx.lineTo(panelWidth, canvas.height);
+            ctx.lineTo(0, canvas.height);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '700 24px Inter';
+            ctx.fillText('Poster notes', 54, footerTop + 58);
+            ctx.font = '500 17px Inter';
+            drawCanvasTextBlock(
+                ctx,
+                'Risk levels run from 1 Low through 5 High. Black outlines highlight areas where severe weather is possible.',
+                54,
+                footerTop + 92,
+                panelWidth - 108,
+                24,
+                60
+            );
+            ctx.font = '600 18px Inter';
+            ctx.fillText(`Forecaster: ${getForecasterName()}`, 54, canvas.height - 38);
+            ctx.textAlign = 'right';
+            ctx.fillText(buildExportFileName(issueVersion), panelWidth - 54, canvas.height - 38);
+            ctx.textAlign = 'left';
+
+            return {
+                dataUrl: canvas.toDataURL('image/png'),
+                fileName: buildExportFileName(issueVersion)
+            };
+        }
+
+        async function uploadPosterForForecast(docId, issueVersion, dataUrl) {
+            const storagePath = `forecast-posters/${docId}/${buildExportFileName(issueVersion)}`;
+            const storageRef = ref(storage, storagePath);
+            await uploadString(storageRef, dataUrl, 'data_url');
+            return getDownloadURL(storageRef);
+        }
+
+        async function saveForecast() {
+            const draftGeoJSON = createDraftGeoJSON();
+            const validationErrors = validateDraftGeoJSON(draftGeoJSON);
+
+            if (validationErrors.length) {
+                showStatus(validationErrors[0], 'var(--accent)');
+                alert(validationErrors.join('\n'));
                 return;
             }
 
             const issuedAt = new Date().toISOString();
+            const issueVersion = getNextIssueVersion();
             const maxRank = Math.max(...draftGeoJSON.features.map(feature => feature.properties.rank || 0));
+            let posterArtifact = null;
+
+            showStatus('Publishing outlook and building archive poster...', '#1d4ed8');
+
+            try {
+                posterArtifact = await renderForecastPoster(draftGeoJSON, { issueVersion, issuedAt });
+            } catch (error) {
+                console.error('Poster render failed before publish.', error);
+                showStatus('Publishing outlook. Poster rendering failed, so the archive PNG may be missing for this issue.', '#f59e0b');
+            }
+
             const payload = {
                 geoJSON: JSON.stringify(draftGeoJSON),
-                validFrom: document.getElementById('valid-from').value,
-                validTo: document.getElementById('valid-to').value,
+                validFrom: validFromInput.value,
+                validTo: validToInput.value,
                 description: forecastText.value,
                 isActive: true,
                 authorEmail: currentUser.email,
                 authorUid: currentUser.uid,
                 forecaster: getForecasterName(),
                 issuedAt: issuedAt,
-                issueVersion: getNextIssueVersion(),
+                issueVersion: issueVersion,
                 maxRiskRank: maxRank,
                 updatedAt: issuedAt
             };
 
             try {
+                let docId = currentEditingDocId;
+
                 if (currentEditingDocId) {
                     payload.createdAt = currentEditingData?.createdAt || issuedAt;
                     await updateDoc(doc(db, 'forecasts_v2', currentEditingDocId), payload);
-                    showStatus('Outlook updated.', 'var(--success)');
                 } else {
                     payload.createdAt = issuedAt;
-                    await addDoc(collection(db, 'forecasts_v2'), payload);
-                    showStatus('Outlook published.', 'var(--success)');
+                    const docRef = await addDoc(collection(db, 'forecasts_v2'), payload);
+                    docId = docRef.id;
                 }
+
+                if (posterArtifact) {
+                    try {
+                        const posterUrl = await uploadPosterForForecast(docId, issueVersion, posterArtifact.dataUrl);
+                        await updateDoc(doc(db, 'forecasts_v2', docId), {
+                            posterUrl,
+                            posterFileName: posterArtifact.fileName,
+                            posterUpdatedAt: issuedAt
+                        });
+                        showStatus(currentEditingDocId ? 'Outlook updated and poster synced.' : 'Outlook published and poster synced.', 'var(--success)');
+                    } catch (error) {
+                        console.error('Poster upload failed.', error);
+                        showStatus(currentEditingDocId ? 'Outlook updated, but poster upload failed.' : 'Outlook published, but poster upload failed.', '#f59e0b');
+                    }
+                } else {
+                    showStatus(currentEditingDocId ? 'Outlook updated, but poster could not be rendered.' : 'Outlook published, but poster could not be rendered.', '#f59e0b');
+                }
+
                 resetForm();
             } catch (error) {
                 console.error(error);
@@ -1099,137 +1935,34 @@
             }
         }
 
-        function drawImageCover(ctx, img, x, y, width, height) {
-            const scale = Math.max(width / img.width, height / img.height);
-            const drawWidth = img.width * scale;
-            const drawHeight = img.height * scale;
-            const drawX = x + (width - drawWidth) / 2;
-            const drawY = y + (height - drawHeight) / 2;
-            ctx.drawImage(img, drawX, drawY, drawWidth, drawHeight);
-        }
-
-        function loadCanvasImage(dataUrl) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = dataUrl;
-            });
-        }
-
-        function formatPosterDate(value) {
-            const date = new Date(value);
-            return date.toLocaleString('en-GB', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-        }
-
-        function buildExportFileName() {
-            const fromValue = document.getElementById('valid-from').value || new Date().toISOString();
-            const datePart = new Date(fromValue).toISOString().slice(0, 10).replace(/-/g, '');
-            return `convective-outlook-${datePart}-v${getNextIssueVersion()}.png`;
-        }
-
         async function exportForecastPng() {
             const draftGeoJSON = createDraftGeoJSON();
-            if (!draftGeoJSON.features.length) {
-                showStatus('Draw at least one polygon before exporting.', 'var(--accent)');
+            const validationErrors = validateDraftGeoJSON(draftGeoJSON);
+
+            if (validationErrors.length) {
+                showStatus(validationErrors[0], 'var(--accent)');
+                alert(validationErrors.join('\n'));
                 return;
             }
 
             try {
                 showStatus('Rendering PNG export...', '#1d4ed8');
-                await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-
-                const mapImage = await loadCanvasImage(map.getCanvas().toDataURL('image/png'));
-                const canvas = document.createElement('canvas');
-                canvas.width = 1800;
-                canvas.height = 2400;
-
-                const ctx = canvas.getContext('2d');
-                const panelWidth = 760;
-                const discussionText = forecastText.value.trim() || 'No discussion text provided.';
-                const riskLevels = window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features);
-                const validRange = `${formatPosterDate(document.getElementById('valid-from').value)} - ${formatPosterDate(document.getElementById('valid-to').value)}`;
-                const issuedLine = `Issued at ${formatPosterDate(new Date())}  Version ${getNextIssueVersion()}`;
-
-                ctx.fillStyle = '#30406d';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, panelWidth, canvas.height);
-
-                ctx.fillStyle = '#2d3c73';
-                ctx.fillRect(panelWidth - 180, 42, 140, 140);
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '700 28px Inter';
-                ctx.fillText('Handry', panelWidth - 146, 102);
-                ctx.fillText('Outlook', panelWidth - 146, 138);
-                ctx.font = '700 30px Inter';
-                ctx.fillText('HO', panelWidth - 164, 118);
-
-                ctx.fillStyle = '#111827';
-                ctx.font = '700 70px Inter';
-                ctx.fillText('Convective Outlook', 70, 110);
-                ctx.font = '500 34px Inter';
-                ctx.fillText(`Valid: ${validRange}`, 70, 190);
-                ctx.fillText(issuedLine, 70, 252);
-
-                let cursorY = 420;
-                riskLevels.forEach(level => {
-                    ctx.fillStyle = level.color;
-                    ctx.beginPath();
-                    ctx.arc(130, cursorY, 72, 0, Math.PI * 2);
-                    ctx.fill();
-
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = '800 54px Inter';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText(String(level.rank), 130, cursorY + 2);
-
-                    ctx.textAlign = 'left';
-                    ctx.textBaseline = 'alphabetic';
-                    ctx.fillStyle = level.color;
-                    ctx.font = '700 56px Inter';
-                    ctx.fillText(level.title, 240, cursorY - 14);
-                    ctx.fillStyle = '#334155';
-                    ctx.font = '500 28px Inter';
-                    cursorY = window.GenWeatherUtils.wrapCanvasText(ctx, level.description, 240, cursorY + 18, panelWidth - 300, 38, 3) + 72;
+                const posterArtifact = await renderForecastPoster(draftGeoJSON, {
+                    issueVersion: getNextIssueVersion(),
+                    issuedAt: new Date().toISOString()
                 });
 
-                ctx.fillStyle = '#172033';
-                ctx.font = '700 34px Inter';
-                ctx.fillText('Discussion Highlights', 70, 1600);
-                ctx.font = '500 28px Inter';
-                window.GenWeatherUtils.wrapCanvasText(ctx, discussionText, 70, 1652, panelWidth - 130, 42, 16);
-
-                ctx.font = '600 26px Inter';
-                ctx.fillStyle = '#64748b';
-                ctx.fillText(`Forecaster: ${getForecasterName()}`, 70, 2260);
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.rect(panelWidth, 0, canvas.width - panelWidth, canvas.height);
-                ctx.clip();
-                drawImageCover(ctx, mapImage, panelWidth, 0, canvas.width - panelWidth, canvas.height);
-                ctx.restore();
-
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
-                ctx.fillRect(panelWidth, 0, 8, canvas.height);
-
                 const anchor = document.createElement('a');
-                anchor.href = canvas.toDataURL('image/png');
-                anchor.download = buildExportFileName();
+                anchor.href = posterArtifact.dataUrl;
+                anchor.download = posterArtifact.fileName;
+                document.body.appendChild(anchor);
                 anchor.click();
+                anchor.remove();
 
-                showStatus('PNG export ready.', 'var(--success)');
+                showStatus('PNG export ready. Publish or update the outlook to sync this poster into the archive.', 'var(--success)');
             } catch (error) {
                 console.error(error);
-                showStatus('Could not export the current map view as PNG.', 'var(--accent)');
+                showStatus('Could not render the archive poster PNG.', 'var(--accent)');
             }
         }
 
@@ -1296,6 +2029,7 @@
                 draw.setFeatureProperty(id, 'user_color', getSelectedColor());
                 draw.setFeatureProperty(id, 'user_risk', getSelectedRisk());
                 draw.setFeatureProperty(id, 'user_rank', getSelectedRank());
+                draw.setFeatureProperty(id, 'user_severe', getSelectedIsSevere());
                 refreshDrawPreview();
                 clearInterval(checkActive);
             }, 60);
@@ -1307,6 +2041,7 @@
                 draw.setFeatureProperty(feature.id, 'user_color', getSelectedColor());
                 draw.setFeatureProperty(feature.id, 'user_risk', getSelectedRisk());
                 draw.setFeatureProperty(feature.id, 'user_rank', getSelectedRank());
+                draw.setFeatureProperty(feature.id, 'user_severe', getSelectedIsSevere());
             });
             updateLayerStackUI();
             refreshDrawPreview();
@@ -1336,15 +2071,31 @@
             });
         });
 
-        document.getElementById('insert-utc-btn').addEventListener('click', () => {
-            const utcStamp = new Date().toUTCString().replace('GMT', 'UTC');
-            insertTextAtCursor(`${utcStamp}\n`);
+        [document.getElementById('insert-utc-btn'), document.getElementById('insert-utc-btn-modal')].forEach(button => {
+            button.addEventListener('click', () => {
+                const utcStamp = new Date().toUTCString().replace('GMT', 'UTC');
+                insertTextAtCursor(`${utcStamp}\n`);
+            });
+        });
+
+        document.getElementById('open-discussion-modal').addEventListener('click', openDiscussionModal);
+        document.getElementById('close-discussion-modal').addEventListener('click', closeDiscussionModal);
+        document.getElementById('discussion-done-btn').addEventListener('click', closeDiscussionModal);
+        discussionModal.addEventListener('click', event => {
+            if (event.target === discussionModal) {
+                closeDiscussionModal();
+            }
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !discussionModal.hidden) {
+                closeDiscussionModal();
+            }
         });
 
         document.getElementById('save-forecast').addEventListener('click', saveForecast);
         document.getElementById('export-png').addEventListener('click', exportForecastPng);
-        document.getElementById('clear-draft').addEventListener('click', resetForm);
-        document.getElementById('new-btn').addEventListener('click', resetForm);
+        document.getElementById('clear-draft').addEventListener('click', requestDraftReset);
+        document.getElementById('new-btn').addEventListener('click', requestDraftReset);
         document.getElementById('fit-map-btn').addEventListener('click', () => fitMapToFeatures(draw.getAll().features));
         document.getElementById('filter-author').addEventListener('change', initHistoryListener);
         document.getElementById('sort-by').addEventListener('change', initHistoryListener);
@@ -1368,7 +2119,9 @@
                 document.getElementById('error-msg').textContent = '';
                 requestAnimationFrame(() => map.resize());
                 initHistoryListener();
-                setDefaultDates();
+                if (!validFromInput.value || !validToInput.value) {
+                    setDefaultDates();
+                }
                 updateDiscussionUI();
                 updateLayerStackUI();
                 refreshDrawPreview();
@@ -1378,6 +2131,7 @@
                 document.getElementById('history-panel').style.display = 'none';
                 document.getElementById('control-panel').style.display = 'none';
                 document.getElementById('map-wrap').style.display = 'none';
+                closeDiscussionModal();
             }
         });
 

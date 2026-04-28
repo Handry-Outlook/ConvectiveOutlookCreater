@@ -135,6 +135,24 @@
             color: #172033;
         }
 
+        .poster-card {
+            display: grid;
+            gap: 14px;
+        }
+
+        .poster-preview-shell {
+            border: 1px solid #dbe4ef;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+
+        .poster-preview-shell img {
+            display: block;
+            width: 100%;
+            height: auto;
+        }
+
         .discussion-text {
             font-size: 15px;
             color: #334155;
@@ -149,11 +167,12 @@
             color: #94a3b8;
         }
 
-        .low { background: #c29f92; color: #111827; }
-        .slgt { background: #5da848; color: #fff; }
-        .mdt { background: #f7941d; color: #111827; }
-        .high { background: #da2128; color: #fff; }
-        .svr { background: #800080; color: #fff; }
+        .low { background: #67c6ac; color: #fff; }
+        .slgt { background: #ffea00; color: #172033; }
+        .enh { background: #ff7a21; color: #fff; }
+        .mdt { background: #f91522; color: #fff; }
+        .high { background: #b23cc7; color: #fff; }
+        .svr { background: #111111; color: #fff; }
 
         @media (max-width: 960px) {
             .meta-grid {
@@ -185,6 +204,10 @@
 
     <header>
         <div class="top-nav">
+            <a href="index.html" class="nav-brand">
+                <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+                <span>Handry Outlook</span>
+            </a>
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html">Outlooks</a>
                 <a href="obs.html">Observations</a>
@@ -207,6 +230,7 @@
                 <div class="action-row">
                     <a href="archive.html" class="btn-ghost"><i class="fas fa-arrow-left"></i> Back to archive</a>
                     <button type="button" class="btn-secondary" id="copy-link-btn"><i class="fas fa-link"></i> Copy link</button>
+                    <a href="#" class="btn-secondary" id="poster-link-btn" hidden><i class="fas fa-image"></i> Poster PNG</a>
                 </div>
             </div>
 
@@ -247,6 +271,16 @@
                     </div>
                 </div>
 
+                <div class="discussion-card poster-card" id="poster-card" hidden>
+                    <div>
+                        <h2>Archive Poster PNG</h2>
+                        <div class="meta-value">This is the synced export image stored with the published outlook for archive use.</div>
+                    </div>
+                    <div class="poster-preview-shell">
+                        <img id="poster-preview-img" alt="Archived forecast poster preview">
+                    </div>
+                </div>
+
                 <div class="discussion-card">
                     <h2>Convective Discussion</h2>
                     <div class="discussion-text" id="discussion-content">
@@ -278,6 +312,9 @@
         const legendHelpBtn = document.getElementById('legend-help-btn');
         const legendHelpPanel = document.getElementById('legend-help');
         const copyLinkBtn = document.getElementById('copy-link-btn');
+        const posterLinkBtn = document.getElementById('poster-link-btn');
+        const posterCard = document.getElementById('poster-card');
+        const posterPreviewImg = document.getElementById('poster-preview-img');
 
         legendHelpBtn.addEventListener('click', () => {
             legendHelpPanel.hidden = !legendHelpPanel.hidden;
@@ -339,6 +376,22 @@
             document.getElementById('issued-by').innerText = forecasterName;
             document.getElementById('discussion-content').innerText = data.description;
 
+            if (data.posterUrl) {
+                posterLinkBtn.hidden = false;
+                posterLinkBtn.href = data.posterUrl;
+                posterLinkBtn.target = '_blank';
+                posterLinkBtn.rel = 'noopener';
+                if (data.posterFileName) {
+                    posterLinkBtn.download = data.posterFileName;
+                }
+
+                posterCard.hidden = false;
+                posterPreviewImg.src = data.posterUrl;
+            } else {
+                posterLinkBtn.hidden = true;
+                posterCard.hidden = true;
+            }
+
             const displayFeatures = window.GenWeatherUtils
                 ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
                 : geoJSON.features;
@@ -364,6 +417,7 @@
                     'id': 'risk-fill',
                     'type': 'fill',
                     'source': 'forecast-data',
+                    'filter': ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                     'paint': {
                         'fill-color': ['get', 'color'],
                         'fill-opacity': 0.42
@@ -374,9 +428,21 @@
                     'id': 'risk-outline',
                     'type': 'line',
                     'source': 'forecast-data',
+                    'filter': ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                     'paint': {
                         'line-color': ['get', 'color'],
                         'line-width': 2
+                    }
+                });
+
+                map.addLayer({
+                    'id': 'risk-severe-outline',
+                    'type': 'line',
+                    'source': 'forecast-data',
+                    'filter': ['==', ['coalesce', ['get', 'isSevere'], false], true],
+                    'paint': {
+                        'line-color': '#111111',
+                        'line-width': 3
                     }
                 });
 

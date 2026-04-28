@@ -10,12 +10,13 @@
     --danger: #da2128;
     --success: #10b981;
     --shadow-soft: 0 18px 45px rgba(15, 23, 42, 0.08);
-    --risk-1: #c29f92;
-    --risk-2: #00aeef;
-    --risk-3: #5da848;
-    --risk-4: #f7941d;
-    --risk-5: #da2128;
-    --risk-6: #800080;
+    --risk-1: #67c6ac;
+    --risk-2: #ffea00;
+    --risk-3: #ff7a21;
+    --risk-4: #f91522;
+    --risk-5: #b23cc7;
+    --risk-severe: #111111;
+    --risk-6: #111111;
 }
 
 * {
@@ -56,6 +57,32 @@ textarea {
     display: flex;
     align-items: stretch;
     min-height: 50px;
+}
+
+.nav-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    padding-right: 16px;
+    margin-right: 4px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.nav-brand img {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    padding: 2px;
+}
+
+.nav-brand span {
+    font-size: 14px;
+    letter-spacing: 0.01em;
 }
 
 .nav-left a,
@@ -230,6 +257,10 @@ textarea {
         padding: 0 10px;
     }
 
+    .nav-brand span {
+        display: none;
+    }
+
     .nav-left a,
     .nav-icon-link {
         padding: 0 12px;
@@ -246,6 +277,18 @@ textarea {
         padding: 0;
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .nav-brand {
+        min-height: 46px;
+        padding: 10px 14px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        margin-right: 0;
+    }
+
+    .nav-brand span {
+        display: inline;
     }
 
     .nav-left {

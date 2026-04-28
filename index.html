@@ -31,12 +31,12 @@
             --primary-blue: #2c6092;
             --dark-grey: #333;
             --light-bg: #f4f7fa;
-            --risk-1: #c29f92;
-            --risk-2: #00aeef;
-            --risk-3: #5da848;
-            --risk-4: #f7941d;
-            --risk-5: #da2128;
-            --risk-severe: #800080;
+            --risk-1: #67c6ac;
+            --risk-2: #ffea00;
+            --risk-3: #ff7a21;
+            --risk-4: #f91522;
+            --risk-5: #b23cc7;
+            --risk-severe: #111111;
         }
 
         body {
@@ -286,6 +286,11 @@
             background-color: var(--risk-severe);
         }
 
+        .rl-2 .risk-desc,
+        .rl-2 .risk-num {
+            color: #172033;
+        }
+
         .lightning-note {
             font-size: 12px;
             color: rgba(255, 255, 255, 0.7);
@@ -322,6 +327,247 @@
             text-transform: uppercase;
         }
 
+        .outlook-mode-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 18px;
+        }
+
+        .mode-tab {
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.85);
+            border-radius: 999px;
+            padding: 12px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .mode-tab.active {
+            background: #ffffff;
+            color: var(--primary-blue);
+            border-color: #ffffff;
+        }
+
+        .forecast-layer-toggle-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .forecast-layer-toggle {
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.86);
+            border-radius: 12px;
+            padding: 12px 10px;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s, border-color 0.2s;
+        }
+
+        .forecast-layer-toggle.active {
+            background: #ffffff;
+            color: var(--primary-blue);
+            border-color: #ffffff;
+        }
+
+        .outlook-sidebar-panel[hidden] {
+            display: none !important;
+        }
+
+        .hoco-preview-card,
+        .hoco-control-card {
+            background: rgba(0, 0, 0, 0.16);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .hoco-badge-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .hoco-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px 10px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .hoco-badge.auto {
+            background: #0ea5e9;
+            color: #ffffff;
+        }
+
+        .hoco-badge.ensemble {
+            background: #0f766e;
+            color: #ffffff;
+        }
+
+        .hoco-badge.neutral {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+        }
+
+        .hoco-preview-card h3 {
+            margin: 0 0 8px;
+            font-size: 20px;
+            line-height: 1.3;
+        }
+
+        .hoco-preview-card p,
+        .hoco-meta-list div,
+        .hoco-control-card p {
+            font-size: 12px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.82);
+        }
+
+        .hoco-day-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin-bottom: 12px;
+        }
+
+        .hoco-meta-list {
+            display: grid;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .hoco-section-title {
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.72);
+            margin-bottom: 8px;
+        }
+
+        .hoco-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 8px;
+        }
+
+        .hoco-date-input {
+            width: 100%;
+            border: none;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #172033;
+            margin-bottom: 14px;
+        }
+
+        .hoco-filter-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .hoco-filter-btn {
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            border-radius: 10px;
+            padding: 10px 8px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .hoco-filter-btn.active {
+            background: #ffffff;
+            color: var(--primary-blue);
+        }
+
+        .hoco-run-list {
+            display: grid;
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .hoco-run-card {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            padding: 12px;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.2s;
+        }
+
+        .hoco-run-card:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .hoco-run-card.active {
+            border-color: rgba(255, 255, 255, 0.7);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .hoco-run-title {
+            font-size: 13px;
+            font-weight: 800;
+            margin: 0 0 6px;
+        }
+
+        .hoco-run-meta {
+            font-size: 11px;
+            line-height: 1.5;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .hoco-empty {
+            padding: 14px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.08);
+            font-size: 12px;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.74);
+        }
+
+        .hoco-ensemble-card {
+            margin-top: 12px;
+        }
+
         /* Map Styling */
         .map-wrapper {
             background: #fff;
@@ -347,6 +593,10 @@
             z-index: 10;
         }
 
+        .time-control[hidden] {
+            display: none !important;
+        }
+
         .slider-container {
             flex: 1;
             margin: 0 20px;
@@ -366,6 +616,26 @@
             background: #eef4fb;
             padding: 4px 10px;
             border-radius: 4px;
+        }
+
+        .hoco-time-copy {
+            display: flex;
+            flex-direction: column;
+            min-width: 132px;
+            gap: 4px;
+            color: #334155;
+        }
+
+        .hoco-time-copy span {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.06em;
+        }
+
+        .hoco-time-copy strong {
+            font-size: 13px;
+            color: #172033;
         }
 
         #map {
@@ -648,6 +918,11 @@
                 order: 3;
                 width: 100%;
             }
+
+            .hoco-filter-row,
+            .outlook-mode-tabs {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -656,6 +931,10 @@
 
     <header>
         <div class="top-nav">
+            <a href="index.html" class="nav-brand">
+                <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+                <span>Handry Outlook</span>
+            </a>
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html" class="active">Outlooks <span class="badge" id="outlook-count">0</span></a>
                 <a href="obs.html">Observations</a>
@@ -695,8 +974,7 @@
             <span class="close-modal">&times;</span>
             <h2 style="margin-bottom: 15px; border-bottom: 2px solid var(--risk-5); padding-bottom: 10px;">Severe
                 Criteria</h2>
-            <p style="margin-bottom: 10px; font-size: 14px;">A <strong>Severe</strong> thunderstorm is defined as
-                meeting one or more of the following:</p>
+            <p style="margin-bottom: 10px; font-size: 14px;">Black outlines on the map mark areas where <strong>severe weather is possible</strong>. A severe thunderstorm is defined as meeting one or more of the following:</p>
             <ul style="list-style: disc; padding-left: 20px; line-height: 1.6; font-size: 13px;">
                 <li><strong>Wind:</strong> Gusts of 50 knots (58 mph) or greater.</li>
                 <li><strong>Hail:</strong> 2.0 cm (approx 0.75 inch) diameter or larger.</li>
@@ -710,47 +988,113 @@
         <div class="container outlook-grid">
 
             <div class="outlook-sidebar">
-                <h1>Thunderstorm outlook</h1>
-                <h2 id="sidebar-date">LOADING...</h2>
-
-                <div class="risk-table">
-                    <div class="risk-row rl-1">
-                        <div class="risk-num">1</div>
-                        <div class="risk-desc"><strong>Very Low</strong><span>&ge; 5% chance</span></div>
-                    </div>
-                    <div class="risk-row rl-2">
-                        <div class="risk-num">2</div>
-                        <div class="risk-desc"><strong>Low</strong><span>&ge; 15% chance</span></div>
-                    </div>
-                    <div class="risk-row rl-3">
-                        <div class="risk-num">3</div>
-                        <div class="risk-desc"><strong>Slight</strong><span>&ge; 30% chance</span></div>
-                    </div>
-                    <div class="risk-row rl-4">
-                        <div class="risk-num">4</div>
-                        <div class="risk-desc"><strong>Moderate</strong><span>&ge; 45% chance</span></div>
-                    </div>
-                    <div class="risk-row rl-5">
-                        <div class="risk-num">5</div>
-                        <div class="risk-desc"><strong>High</strong><span>&ge; 60% chance</span></div>
-                    </div>
+                <div class="outlook-mode-tabs">
+                    <button type="button" class="mode-tab active" data-forecast-mode="official">Official Outlook</button>
+                    <button type="button" class="mode-tab" data-forecast-mode="hoco">HOCO</button>
                 </div>
 
-                <div class="lightning-note">Probability of lightning within 25 miles</div>
+                <div class="forecast-layer-toggle-row">
+                    <button type="button" class="forecast-layer-toggle active" data-layer-toggle="manual">Manual</button>
+                    <button type="button" class="forecast-layer-toggle" data-layer-toggle="auto">Auto</button>
+                    <button type="button" class="forecast-layer-toggle" data-layer-toggle="ensemble">Ensemble</button>
+                </div>
 
-                <button class="severe-btn" id="severe-btn-trigger">
-                    SEVERE <br>
-                    <span>view criteria &rarr;</span>
-                </button>
+                <div id="official-sidebar-panel" class="outlook-sidebar-panel">
+                    <h1>Thunderstorm outlook</h1>
+                    <h2 id="sidebar-date">LOADING...</h2>
+
+                    <div class="risk-table">
+                        <div class="risk-row rl-1">
+                            <div class="risk-num">1</div>
+                            <div class="risk-desc"><strong>Low</strong><span>&ge; 5% chance</span></div>
+                        </div>
+                        <div class="risk-row rl-2">
+                            <div class="risk-num">2</div>
+                            <div class="risk-desc"><strong>Slight</strong><span>&ge; 15% chance</span></div>
+                        </div>
+                        <div class="risk-row rl-3">
+                            <div class="risk-num">3</div>
+                            <div class="risk-desc"><strong>Enhanced</strong><span>&ge; 30% chance</span></div>
+                        </div>
+                        <div class="risk-row rl-4">
+                            <div class="risk-num">4</div>
+                            <div class="risk-desc"><strong>Moderate</strong><span>&ge; 45% chance</span></div>
+                        </div>
+                        <div class="risk-row rl-5">
+                            <div class="risk-num">5</div>
+                            <div class="risk-desc"><strong>High</strong><span>&ge; 60% chance</span></div>
+                        </div>
+                    </div>
+
+                    <div class="lightning-note">Probability of lightning within 25 miles</div>
+
+                    <button class="severe-btn" id="severe-btn-trigger">
+                        SEVERE OUTLINE <br>
+                        <span>black outline + criteria &rarr;</span>
+                    </button>
+                </div>
+
+                <div id="hoco-sidebar-panel" class="outlook-sidebar-panel" hidden>
+                    <div class="hoco-day-chip"><i class="fas fa-calendar-day"></i> <span id="hoco-selected-day-label">Selected day</span></div>
+
+                    <div class="hoco-preview-card">
+                        <div class="hoco-section-title">Latest automated guidance</div>
+                        <div class="hoco-badge-row">
+                            <span class="hoco-badge neutral" id="hoco-preview-badge">WAITING</span>
+                            <span class="hoco-badge neutral" id="hoco-preview-count">0 RUNS</span>
+                        </div>
+                        <h3 id="hoco-preview-title">Loading HOCO guidance...</h3>
+                        <p id="hoco-preview-summary">The latest automated guidance or client-side ensemble for the selected valid day will appear here.</p>
+                        <div class="hoco-meta-list">
+                            <div><strong>Valid:</strong> <span id="hoco-preview-period">--</span></div>
+                            <div><strong>Issued:</strong> <span id="hoco-preview-issued">--</span></div>
+                            <div><strong>Hazards:</strong> <span id="hoco-preview-hazards">--</span></div>
+                        </div>
+                    </div>
+
+                    <div class="hoco-preview-card hoco-ensemble-card">
+                        <div class="hoco-section-title">Client Ensemble</div>
+                        <div class="hoco-badge-row">
+                            <span class="hoco-badge ensemble">ENSEMBLE</span>
+                            <span class="hoco-badge neutral" id="ensemble-preview-count">0 SOURCES</span>
+                        </div>
+                        <h3 id="ensemble-preview-title">Waiting for automated source runs...</h3>
+                        <p id="ensemble-preview-summary">When automated runs exist for the selected valid day, the ensemble is blended in the browser immediately.</p>
+                        <div class="hoco-meta-list">
+                            <div><strong>Valid:</strong> <span id="ensemble-preview-period">--</span></div>
+                            <div><strong>Issued span:</strong> <span id="ensemble-preview-issued">--</span></div>
+                            <div><strong>Status:</strong> <span id="ensemble-preview-status">Idle</span></div>
+                        </div>
+                    </div>
+
+                    <div class="hoco-control-card">
+                        <div class="hoco-section-title">Issued runs for this day</div>
+                        <p>Use the list below or the issue-time slider above the map to step through automated runs for the same 06:00 to next-day 05:59 window.</p>
+                        <div class="hoco-run-list" id="hoco-run-list">
+                            <div class="hoco-empty">Loading HOCO runs...</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="map-wrapper">
-                <div class="time-control">
-                    <span id="label-left-hint">Past</span>
+                <div class="time-control" id="official-time-control">
+                    <span id="label-left-hint">Forecast Day</span>
                     <div class="slider-container">
                         <input type="range" id="day-slider" min="-1" max="4" value="0" step="1">
                     </div>
                     <span class="date-display" id="slider-date-display">Today</span>
+                </div>
+
+                <div class="time-control" id="hoco-time-control" hidden>
+                    <div class="hoco-time-copy">
+                        <span>Valid Day</span>
+                        <strong id="hoco-current-date-label">--</strong>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="hoco-run-slider" min="0" max="0" value="0" step="1" disabled>
+                    </div>
+                    <span class="date-display" id="hoco-run-issued-label">No run</span>
                 </div>
 
                 <div id="map"></div>
@@ -843,7 +1187,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, limit, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -858,6 +1202,16 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const hocoConfig = {
+            apiKey: "AIzaSyA8IYTApDl8vhZENPJXIw48rR_SUhfFPVQ",
+            authDomain: "hoco-3b23e.firebaseapp.com",
+            projectId: "hoco-3b23e",
+            storageBucket: "hoco-3b23e.firebasestorage.app",
+            messagingSenderId: "409513272369",
+            appId: "1:409513272369:web:a857d9b039d53710f8a110"
+        };
+        const hocoApp = initializeApp(hocoConfig, 'hoco-live-forecast');
+        const hocoDb = getFirestore(hocoApp);
 
         // --- MAPBOX & AERIS CONFIG ---
         mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
@@ -879,6 +1233,7 @@
             mapsglController = new aerisweather.mapsgl.MapboxMapController(map, { account: account });
             autoLocateUser();
             initForecasts();
+            initHocoRuns();
         });
 
         const geolocate = new mapboxgl.GeolocateControl({
@@ -937,6 +1292,598 @@
             'xweather-lightning': { type: 'mapsgl', id: 'lightning-strikes' },
             'lightning-density': { type: 'mapsgl', id: 'lightning-density' }
         };
+
+        const slider = document.getElementById('day-slider');
+        const dateDisplay = document.getElementById('slider-date-display');
+        const sidebarDate = document.getElementById('sidebar-date');
+        const outlookBadge = document.getElementById('outlook-count');
+        const severeBtn = document.getElementById('severe-btn-trigger');
+        const modal = document.getElementById('severeModal');
+        const closeModal = document.querySelector('.close-modal');
+        const cityDisplay = document.getElementById('user-city');
+        const officialSidebarPanel = document.getElementById('official-sidebar-panel');
+        const hocoSidebarPanel = document.getElementById('hoco-sidebar-panel');
+        const officialTimeControl = document.getElementById('official-time-control');
+        const hocoTimeControl = document.getElementById('hoco-time-control');
+        const hocoRunList = document.getElementById('hoco-run-list');
+        const hocoRunSlider = document.getElementById('hoco-run-slider');
+        const hocoRunIssuedLabel = document.getElementById('hoco-run-issued-label');
+        const hocoCurrentDateLabel = document.getElementById('hoco-current-date-label');
+        const hocoSelectedDayLabel = document.getElementById('hoco-selected-day-label');
+        const hocoPreviewBadge = document.getElementById('hoco-preview-badge');
+        const hocoPreviewCount = document.getElementById('hoco-preview-count');
+        const hocoPreviewTitle = document.getElementById('hoco-preview-title');
+        const hocoPreviewSummary = document.getElementById('hoco-preview-summary');
+        const hocoPreviewPeriod = document.getElementById('hoco-preview-period');
+        const hocoPreviewIssued = document.getElementById('hoco-preview-issued');
+        const hocoPreviewHazards = document.getElementById('hoco-preview-hazards');
+        const ensemblePreviewCount = document.getElementById('ensemble-preview-count');
+        const ensemblePreviewTitle = document.getElementById('ensemble-preview-title');
+        const ensemblePreviewSummary = document.getElementById('ensemble-preview-summary');
+        const ensemblePreviewPeriod = document.getElementById('ensemble-preview-period');
+        const ensemblePreviewIssued = document.getElementById('ensemble-preview-issued');
+        const ensemblePreviewStatus = document.getElementById('ensemble-preview-status');
+        const forecastModeButtons = document.querySelectorAll('[data-forecast-mode]');
+        const layerToggleButtons = document.querySelectorAll('[data-layer-toggle]');
+
+        const HOCO_AUTO_SOURCE_ID = 'live-hoco-auto-source';
+        const HOCO_AUTO_FILL_ID = 'live-hoco-auto-fill';
+        const HOCO_AUTO_LINE_ID = 'live-hoco-auto-line';
+        const HOCO_ENSEMBLE_SOURCE_ID = 'live-hoco-ensemble-source';
+        const HOCO_ENSEMBLE_FILL_ID = 'live-hoco-ensemble-fill';
+        const HOCO_ENSEMBLE_LINE_ID = 'live-hoco-ensemble-line';
+
+        let allFeatures = [];
+        let currentVisibleFeatures = [];
+        let userLocation = null;
+        let activeForecastMode = 'official';
+        let hocoRuns = [];
+        let visibleAutoRuns = [];
+        let selectedAutoRunId = null;
+        let selectedForecastWindow = window.GenWeatherUtils
+            ? window.GenWeatherUtils.getForecastDayWindow(new Date(), 0)
+            : null;
+        let activeAutoGeojson = null;
+        let activeEnsembleGeojson = null;
+        let activeEnsembleSourceIds = [];
+        let layerVisibilityState = {
+            manual: true,
+            auto: false,
+            ensemble: false
+        };
+        const hocoGeojsonCache = new Map();
+        const hocoEnsembleCache = new Map();
+
+        function formatDateKey(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function formatShortDay(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+        }
+
+        function formatShortTime(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function parseHocoTime(timeStr) {
+            if (!timeStr) return null;
+            const match = String(timeStr).trim().match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})\s+(\d{1,2}):(\d{2})/);
+            if (!match) return null;
+            const [, dd, mm, yyyy, hh, min] = match;
+            const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getHocoCreatedDate(run) {
+            if (!run?.createdAt) return null;
+            if (typeof run.createdAt.toDate === 'function') {
+                return run.createdAt.toDate();
+            }
+            const date = new Date(run.createdAt);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getHocoStartDate(run) {
+            return parseHocoTime(run?.startTime) || getHocoCreatedDate(run);
+        }
+
+        function getHocoEndDate(run) {
+            return parseHocoTime(run?.endTime || run?.startTime) || getHocoStartDate(run);
+        }
+
+        function formatHocoPeriod(run) {
+            const normalized = getNormalizedAutoValidPeriod(run);
+            const start = normalized?.start || getHocoStartDate(run);
+            const end = normalized?.end || getHocoEndDate(run);
+            if (!start || !end) return 'Valid period unavailable';
+            return `${formatShortDay(start)} ${formatShortTime(start)} - ${formatShortDay(end)} ${formatShortTime(end)}`;
+        }
+
+        function getNormalizedAutoValidPeriod(run) {
+            if (run?.type !== 'automated') return null;
+            const start = getHocoStartDate(run);
+            const end = getHocoEndDate(run);
+            if (!start || !end) return null;
+            if (end.getHours() !== 5 || end.getMinutes() !== 59) return null;
+
+            const normalizedStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 6, 0, 0, 0);
+            const normalizedEnd = new Date(normalizedStart);
+            normalizedEnd.setDate(normalizedEnd.getDate() + 1);
+            normalizedEnd.setHours(5, 59, 0, 0);
+
+            if (Math.abs(end.getTime() - normalizedEnd.getTime()) > 60000) return null;
+
+            return {
+                start: normalizedStart,
+                end: normalizedEnd,
+                key: formatDateKey(normalizedStart)
+            };
+        }
+
+        function getHocoRunBadge(run) {
+            return run?.type === 'automated' ? 'AUTO' : 'HOCO';
+        }
+
+        function decodeInlineGeojson(value) {
+            if (!value) return null;
+            if (typeof value === 'string') {
+                return JSON.parse(value);
+            }
+            return value;
+        }
+
+        async function fetchHocoGeojson(run) {
+            if (!run?.id) throw new Error('Missing HOCO run identifier.');
+            if (hocoGeojsonCache.has(run.id)) return hocoGeojsonCache.get(run.id);
+
+            let geojsonData = null;
+            if (run.inlineGeojson || run.inlineGeojsonText || run.geojson || run.ensembleGeojson) {
+                geojsonData = decodeInlineGeojson(run.inlineGeojson ?? run.inlineGeojsonText ?? run.geojson ?? run.ensembleGeojson);
+            } else if (run.geojsonUrl) {
+                const response = await fetch(run.geojsonUrl);
+                if (!response.ok) {
+                    throw new Error(`Could not fetch HOCO GeoJSON (${response.status}).`);
+                }
+                geojsonData = await response.json();
+            } else {
+                throw new Error('This AUTO-HOCO run does not include GeoJSON yet.');
+            }
+
+            const featureCollection = {
+                type: 'FeatureCollection',
+                features: (geojsonData?.features || []).map((feature, index) => {
+                    const riskValue = window.GenWeatherUtils?.parseRiskPercent
+                        ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
+                        : Number(feature?.properties?.risk || 0);
+                    const meta = window.GenWeatherUtils?.getRiskMeta?.(
+                        riskValue >= 60 ? 5 : riskValue >= 45 ? 4 : riskValue >= 30 ? 3 : riskValue >= 15 ? 2 : 1
+                    ) || { color: '#38bdf8' };
+                    return {
+                        ...feature,
+                        properties: {
+                            ...feature.properties,
+                            fill: feature?.properties?.fill || feature?.properties?.color || meta.color,
+                            color: feature?.properties?.color || feature?.properties?.fill || meta.color,
+                            hocoId: `${run.id}-${index}`
+                        }
+                    };
+                })
+            };
+
+            hocoGeojsonCache.set(run.id, featureCollection);
+            return featureCollection;
+        }
+
+        function ensureForecastLayers() {
+            const sourceData = {
+                type: 'FeatureCollection',
+                features: window.GenWeatherUtils
+                    ? window.GenWeatherUtils.normalizeDisplayFeatures(currentVisibleFeatures)
+                    : currentVisibleFeatures
+            };
+
+            if (!map.getSource('forecasts')) {
+                map.addSource('forecasts', { type: 'geojson', data: sourceData });
+            } else {
+                map.getSource('forecasts').setData(sourceData);
+            }
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+
+            if (!map.getLayer('forecast-fill')) {
+                map.addLayer({
+                    id: 'forecast-fill',
+                    type: 'fill',
+                    source: 'forecasts',
+                    filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
+                    paint: { 'fill-color': ['get', 'color'], 'fill-opacity': 0.34 }
+                }, firstSymbol?.id);
+            }
+
+            if (!map.getLayer('forecast-line')) {
+                map.addLayer({
+                    id: 'forecast-line',
+                    type: 'line',
+                    source: 'forecasts',
+                    filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
+                    paint: { 'line-color': ['get', 'color'], 'line-width': 2.2 }
+                }, firstSymbol?.id);
+            }
+
+            if (!map.getLayer('forecast-severe-line')) {
+                map.addLayer({
+                    id: 'forecast-severe-line',
+                    type: 'line',
+                    source: 'forecasts',
+                    filter: ['==', ['coalesce', ['get', 'isSevere'], false], true],
+                    paint: { 'line-color': '#111111', 'line-width': 3.2 }
+                }, firstSymbol?.id);
+            }
+        }
+
+        function setLayerVisibility(layerId, visible) {
+            if (map.getLayer(layerId)) {
+                map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+            }
+        }
+
+        function getFeatureBounds(features) {
+            const bounds = new mapboxgl.LngLatBounds();
+            let hasBounds = false;
+
+            (features || []).forEach(feature => {
+                if (!feature?.geometry) return;
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates[0].forEach(coord => {
+                        bounds.extend(coord);
+                        hasBounds = true;
+                    });
+                } else if (feature.geometry.type === 'MultiPolygon') {
+                    feature.geometry.coordinates.forEach(polygon => {
+                        polygon[0].forEach(coord => {
+                            bounds.extend(coord);
+                            hasBounds = true;
+                        });
+                    });
+                }
+            });
+
+            return { bounds, hasBounds };
+        }
+
+        function renderGuidanceLayer(sourceId, fillId, lineId, geojsonData, fillOpacity, lineWidth) {
+            if (!geojsonData) return;
+
+            if (!map.getSource(sourceId)) {
+                map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+            } else {
+                map.getSource(sourceId).setData(geojsonData);
+            }
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+
+            if (!map.getLayer(fillId)) {
+                map.addLayer({
+                    id: fillId,
+                    type: 'fill',
+                    source: sourceId,
+                    paint: {
+                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#38bdf8'],
+                        'fill-opacity': fillOpacity
+                    }
+                }, firstSymbol?.id);
+            }
+
+            if (!map.getLayer(lineId)) {
+                map.addLayer({
+                    id: lineId,
+                    type: 'line',
+                    source: sourceId,
+                    paint: {
+                        'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
+                        'line-width': lineWidth,
+                        'line-opacity': 0.92
+                    }
+                }, firstSymbol?.id);
+            }
+        }
+
+        function clearGuidanceLayer(sourceId, fillId, lineId) {
+            if (map.getLayer(lineId)) map.removeLayer(lineId);
+            if (map.getLayer(fillId)) map.removeLayer(fillId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+        }
+
+        function applyLayerVisibility() {
+            setLayerVisibility('forecast-fill', layerVisibilityState.manual);
+            setLayerVisibility('forecast-line', layerVisibilityState.manual);
+            setLayerVisibility('forecast-severe-line', layerVisibilityState.manual);
+            setLayerVisibility(HOCO_AUTO_FILL_ID, layerVisibilityState.auto && !!activeAutoGeojson);
+            setLayerVisibility(HOCO_AUTO_LINE_ID, layerVisibilityState.auto && !!activeAutoGeojson);
+            setLayerVisibility(HOCO_ENSEMBLE_FILL_ID, layerVisibilityState.ensemble && !!activeEnsembleGeojson);
+            setLayerVisibility(HOCO_ENSEMBLE_LINE_ID, layerVisibilityState.ensemble && !!activeEnsembleGeojson);
+        }
+
+        function updateLayerToggleButtons() {
+            layerToggleButtons.forEach(button => {
+                const key = button.dataset.layerToggle;
+                button.classList.toggle('active', !!layerVisibilityState[key]);
+            });
+        }
+
+        function buildFallbackForecastWindow(referenceValue, dayOffset) {
+            const reference = new Date(referenceValue || Date.now());
+            if (Number.isNaN(reference.getTime())) return null;
+
+            const base = new Date(reference);
+            if (base.getHours() < 6) {
+                base.setDate(base.getDate() - 1);
+            }
+            base.setHours(6, 0, 0, 0);
+            base.setDate(base.getDate() + (Number(dayOffset) || 0));
+
+            const end = new Date(base);
+            end.setDate(end.getDate() + 1);
+            end.setHours(5, 59, 59, 999);
+
+            return {
+                start: base,
+                end,
+                key: formatDateKey(base)
+            };
+        }
+
+        function getSelectedWindowRangeText(windowData) {
+            if (!windowData?.start || !windowData?.end) return '--';
+            return `${formatShortDay(windowData.start)} 06:00 - ${formatShortDay(windowData.end)} 05:59`;
+        }
+
+        function getRelativeDayLabel(dayOffset, windowData) {
+            if (dayOffset === 0) return 'Today';
+            if (dayOffset === -1) return 'Yesterday';
+            if (dayOffset === 1) return 'Tomorrow';
+            return windowData?.start?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) || '--';
+        }
+
+        function updateSelectedForecastWindow(dayOffset) {
+            selectedForecastWindow = window.GenWeatherUtils?.getForecastDayWindow
+                ? window.GenWeatherUtils.getForecastDayWindow(new Date(), dayOffset)
+                : buildFallbackForecastWindow(new Date(), dayOffset);
+            hocoCurrentDateLabel.textContent = formatShortDay(selectedForecastWindow.start);
+            hocoSelectedDayLabel.textContent = getSelectedWindowRangeText(selectedForecastWindow);
+        }
+
+        function getAutoRunsForSelectedWindow() {
+            if (!selectedForecastWindow) return [];
+
+            return hocoRuns
+                .filter(run => run.type === 'automated')
+                .filter(run => {
+                    const weather = String(run.weather || '').toLowerCase();
+                    return !weather || weather.includes('lightning') || weather.includes('thunder');
+                })
+                .filter(run => {
+                    const normalized = getNormalizedAutoValidPeriod(run);
+                    return normalized && normalized.key === selectedForecastWindow.key;
+                })
+                .sort((a, b) => (getHocoCreatedDate(a)?.getTime?.() || 0) - (getHocoCreatedDate(b)?.getTime?.() || 0));
+        }
+
+        function updateHocoPreview(run) {
+            hocoPreviewCount.textContent = `${visibleAutoRuns.length} RUN${visibleAutoRuns.length === 1 ? '' : 'S'}`;
+
+            if (!run) {
+                hocoPreviewBadge.className = 'hoco-badge neutral';
+                hocoPreviewBadge.textContent = 'EMPTY';
+                hocoPreviewTitle.textContent = 'No automated runs for this forecast day';
+                hocoPreviewSummary.textContent = 'Use the day slider above the map to step through forecast windows ending the next day at 05:59.';
+                hocoPreviewPeriod.textContent = '--';
+                hocoPreviewIssued.textContent = '--';
+                hocoPreviewHazards.textContent = '--';
+                hocoRunIssuedLabel.textContent = 'No run';
+                return;
+            }
+
+            hocoPreviewBadge.className = 'hoco-badge auto';
+            hocoPreviewBadge.textContent = getHocoRunBadge(run);
+            hocoPreviewTitle.textContent = `${run.region || 'UK'} automated guidance`;
+            hocoPreviewSummary.textContent = 'The latest automated run is selected by default. Use the issue-time slider or card list to step through earlier runs for the same forecast day.';
+            hocoPreviewPeriod.textContent = formatHocoPeriod(run);
+            hocoPreviewIssued.textContent = getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown';
+            hocoPreviewHazards.textContent = run.weather || 'Lightning';
+            hocoRunIssuedLabel.textContent = hocoPreviewIssued.textContent;
+        }
+
+        function updateEnsemblePreview(status, runEntries, ensembleGeojson) {
+            const sourceCount = runEntries.length;
+            ensemblePreviewCount.textContent = `${sourceCount} SOURCE${sourceCount === 1 ? '' : 'S'}`;
+            ensemblePreviewPeriod.textContent = selectedForecastWindow
+                ? `${formatShortDay(selectedForecastWindow.start)} 06:00 - ${formatShortDay(selectedForecastWindow.end)} 05:59`
+                : '--';
+
+            if (!sourceCount) {
+                ensemblePreviewTitle.textContent = 'Waiting for automated source runs...';
+                ensemblePreviewSummary.textContent = 'When automated runs exist for the selected valid day, the ensemble is blended in the browser immediately.';
+                ensemblePreviewIssued.textContent = '--';
+                ensemblePreviewStatus.textContent = 'Idle';
+                return;
+            }
+
+            const earliest = getHocoCreatedDate(runEntries[0]);
+            const latest = getHocoCreatedDate(runEntries[runEntries.length - 1]);
+            ensemblePreviewTitle.textContent = `${runEntries[runEntries.length - 1]?.region || 'UK'} HOCO Ensemble`;
+            ensemblePreviewSummary.textContent = ensembleGeojson?.features?.length
+                ? 'This blend is generated locally from all automated runs available for the selected forecast day.'
+                : 'Source runs were found, but the blend has not produced any polygons yet.';
+            ensemblePreviewIssued.textContent = `${earliest ? earliest.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '--'} to ${latest ? latest.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '--'}`;
+            ensemblePreviewStatus.textContent = status;
+        }
+
+        function renderAutoRunList() {
+            const activeIndex = visibleAutoRuns.findIndex(run => run.id === selectedAutoRunId);
+            const fallbackRun = visibleAutoRuns[visibleAutoRuns.length - 1] || null;
+
+            if (activeIndex === -1 && fallbackRun) {
+                selectedAutoRunId = fallbackRun.id;
+            }
+
+            const selectedIndex = visibleAutoRuns.findIndex(run => run.id === selectedAutoRunId);
+            hocoRunSlider.max = String(Math.max(visibleAutoRuns.length - 1, 0));
+            hocoRunSlider.disabled = visibleAutoRuns.length <= 1;
+            hocoRunSlider.value = String(Math.max(selectedIndex, 0));
+
+            if (!visibleAutoRuns.length) {
+                selectedAutoRunId = null;
+                hocoRunList.innerHTML = '<div class="hoco-empty">No automated runs are available for the selected forecast day.</div>';
+                updateHocoPreview(null);
+                return;
+            }
+
+            hocoRunList.innerHTML = visibleAutoRuns.map((run, index) => `
+                <div class="hoco-run-card ${run.id === selectedAutoRunId ? 'active' : ''}" data-hoco-run-id="${run.id}" data-hoco-run-index="${index}">
+                    <div class="hoco-badge-row">
+                        <span class="hoco-badge auto">AUTO</span>
+                    </div>
+                    <div class="hoco-run-title">${run.region || 'UK'} automated guidance</div>
+                    <div class="hoco-run-meta">
+                        ${formatHocoPeriod(run)}<br>
+                        Issued: ${getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown'}<br>
+                        Hazards: ${run.weather || 'Lightning'}
+                    </div>
+                </div>
+            `).join('');
+
+            hocoRunList.querySelectorAll('[data-hoco-run-id]').forEach(card => {
+                card.addEventListener('click', () => {
+                    selectedAutoRunId = card.dataset.hocoRunId;
+                    hocoRunSlider.value = card.dataset.hocoRunIndex;
+                    renderAutoRunList();
+                    loadSelectedAutoRun();
+                });
+            });
+
+            updateHocoPreview(visibleAutoRuns.find(run => run.id === selectedAutoRunId) || fallbackRun);
+        }
+
+        async function loadSelectedAutoRun() {
+            const run = visibleAutoRuns.find(item => item.id === selectedAutoRunId) || visibleAutoRuns[visibleAutoRuns.length - 1] || null;
+            updateHocoPreview(run);
+
+            if (!run) {
+                activeAutoGeojson = null;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyLayerVisibility();
+                return;
+            }
+
+            try {
+                const geojson = await fetchHocoGeojson(run);
+                activeAutoGeojson = geojson;
+                renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, geojson, 0.24, 1.8);
+                applyLayerVisibility();
+            } catch (error) {
+                console.error('AUTO-HOCO load error:', error);
+                hocoRunList.innerHTML = `<div class="hoco-empty">Could not load this automated run. ${error.message || ''}</div>`;
+                activeAutoGeojson = null;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyLayerVisibility();
+            }
+        }
+
+        async function loadSelectedDayEnsemble() {
+            if (!visibleAutoRuns.length) {
+                activeEnsembleGeojson = null;
+                activeEnsembleSourceIds = [];
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                updateEnsemblePreview('Idle', [], null);
+                applyLayerVisibility();
+                return;
+            }
+
+            const cacheKey = `${selectedForecastWindow?.key || 'day'}|${visibleAutoRuns.map(run => `${run.id}:${getHocoCreatedDate(run)?.getTime?.() || 0}`).join('|')}`;
+            updateEnsemblePreview('Blending', visibleAutoRuns, null);
+
+            try {
+                let ensembleGeojson = hocoEnsembleCache.get(cacheKey);
+                if (!ensembleGeojson) {
+                    const loadedRuns = await Promise.all(visibleAutoRuns.map(async run => ({
+                        createdAt: getHocoCreatedDate(run)?.toISOString?.() || null,
+                        geojson: await fetchHocoGeojson(run)
+                    })));
+                    ensembleGeojson = window.GenWeatherUtils?.buildClientEnsembleGeojson
+                        ? window.GenWeatherUtils.buildClientEnsembleGeojson(loadedRuns, { anomalyAware: true, noiseFilter: true })
+                        : { type: 'FeatureCollection', features: [] };
+                    hocoEnsembleCache.set(cacheKey, ensembleGeojson);
+                }
+
+                activeEnsembleGeojson = ensembleGeojson;
+                activeEnsembleSourceIds = visibleAutoRuns.map(run => run.id);
+
+                if (ensembleGeojson.features.length) {
+                    renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, ensembleGeojson, 0.22, 2.4);
+                    updateEnsemblePreview('Ready', visibleAutoRuns, ensembleGeojson);
+                } else {
+                    clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                    updateEnsemblePreview('No polygons', visibleAutoRuns, ensembleGeojson);
+                }
+            } catch (error) {
+                console.error('HOCO ensemble build error:', error);
+                activeEnsembleGeojson = null;
+                activeEnsembleSourceIds = [];
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                updateEnsemblePreview('Blend failed', visibleAutoRuns, null);
+            }
+
+            applyLayerVisibility();
+        }
+
+        async function refreshGuidanceForSelectedDay() {
+            visibleAutoRuns = getAutoRunsForSelectedWindow();
+            if (visibleAutoRuns.length && !visibleAutoRuns.some(run => run.id === selectedAutoRunId)) {
+                selectedAutoRunId = visibleAutoRuns[visibleAutoRuns.length - 1].id;
+            }
+
+            renderAutoRunList();
+            await Promise.all([loadSelectedAutoRun(), loadSelectedDayEnsemble()]);
+        }
+
+        function setForecastMode(mode) {
+            activeForecastMode = mode;
+            const isHoco = mode === 'hoco';
+
+            forecastModeButtons.forEach(button => {
+                button.classList.toggle('active', button.dataset.forecastMode === mode);
+            });
+
+            officialSidebarPanel.hidden = isHoco;
+            hocoSidebarPanel.hidden = !isHoco;
+            hocoTimeControl.hidden = !isHoco;
+        }
+
+        function initHocoRuns() {
+            const runsQuery = query(collection(hocoDb, 'hoco_requests'), orderBy('createdAt', 'desc'), limit(180));
+
+            onSnapshot(runsQuery, snapshot => {
+                hocoRuns = [];
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.type !== 'automated') return;
+                    hocoRuns.push({ id: docSnap.id, ...data });
+                });
+
+                refreshGuidanceForSelectedDay();
+            }, error => {
+                console.error('HOCO snapshot error:', error);
+                hocoRunList.innerHTML = '<div class="hoco-empty">Could not connect to the HOCO archive right now.</div>';
+            });
+        }
 
         // --- LAYER LOGIC ---
         window.switchBaseMap = (style) => {
@@ -1127,19 +2074,6 @@
         };
 
         // --- OUTLOOK / FIREBASE LOGIC ---
-        const slider = document.getElementById('day-slider');
-        const dateDisplay = document.getElementById('slider-date-display');
-        const sidebarDate = document.getElementById('sidebar-date');
-        const outlookBadge = document.getElementById('outlook-count');
-        const severeBtn = document.getElementById('severe-btn-trigger');
-        const modal = document.getElementById('severeModal');
-        const closeModal = document.querySelector('.close-modal');
-        const cityDisplay = document.getElementById('user-city');
-
-        let allFeatures = [];
-        let currentVisibleFeatures = [];
-        let userLocation = null;
-
         // Modal
         severeBtn.onclick = () => modal.style.display = "flex";
         closeModal.onclick = () => modal.style.display = "none";
@@ -1176,9 +2110,12 @@
         function updateWeatherWidget() {
             if (!userLocation) return;
             [0, 1, 2].forEach(dayOffset => {
-                const targetDate = getTargetDate(dayOffset);
-                const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
-                const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
+                const forecastWindow = window.GenWeatherUtils?.getForecastDayWindow
+                    ? window.GenWeatherUtils.getForecastDayWindow(new Date(), dayOffset)
+                    : buildFallbackForecastWindow(new Date(), dayOffset);
+                const startOfDay = forecastWindow?.start;
+                const endOfDay = forecastWindow?.end;
+                if (!startOfDay || !endOfDay) return;
 
                 const daysFeatures = allFeatures.filter(f => {
                     const validFrom = new Date(f.properties.validFrom);
@@ -1192,58 +2129,55 @@
                 daysFeatures.forEach(feature => {
                     if (feature.geometry.type === 'Polygon') {
                         if (inside([userLocation.lng, userLocation.lat], feature.geometry.coordinates[0])) {
-                            const r = parseInt(feature.properties.risk);
+                            const r = window.GenWeatherUtils?.getFeatureRank?.(feature) || feature.properties.rank || 0;
                             if (r > maxRisk) { maxRisk = r; riskColor = feature.properties.color; }
                         }
                     } else if (feature.geometry.type === 'MultiPolygon') {
                         feature.geometry.coordinates.forEach(poly => {
                             if (inside([userLocation.lng, userLocation.lat], poly[0])) {
-                                const r = parseInt(feature.properties.risk);
+                                const r = window.GenWeatherUtils?.getFeatureRank?.(feature) || feature.properties.rank || 0;
                                 if (r > maxRisk) { maxRisk = r; riskColor = feature.properties.color; }
                             }
                         });
                     }
                 });
 
-                const riskLabels = { 0: "No Risk", 1: "1 Very Low", 2: "2 Low", 3: "3 Slight", 4: "4 Moderate", 5: "5 High" };
+                const riskLabels = { 0: "No Risk", 1: "1 Low", 2: "2 Slight", 3: "3 Enhanced", 4: "4 Moderate", 5: "5 High" };
                 const label = riskLabels[maxRisk] || "No Risk";
 
                 const dayEl = document.getElementById(`widget-day-${dayOffset}`);
                 if (dayEl) {
-                    const dateStr = targetDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
+                    const dateStr = startOfDay.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' });
                     dayEl.querySelector('.day-name').textContent = dateStr;
                     const badge = dayEl.querySelector('.risk-badge');
                     badge.textContent = label.toUpperCase();
                     badge.style.backgroundColor = maxRisk > 0 ? riskColor : '#ccc';
+                    badge.style.color = maxRisk === 2 ? '#172033' : (maxRisk > 0 ? '#fff' : '#555');
                 }
             });
         }
 
-        function getTargetDate(offset) {
-            const date = new Date();
-            date.setDate(date.getDate() + parseInt(offset));
-            return date;
-        }
-
         function updateDateLabels() {
-            const val = parseInt(slider.value);
-            const targetDate = getTargetDate(val);
+            const dayOffset = parseInt(slider.value, 10) || 0;
+            updateSelectedForecastWindow(dayOffset);
+            dateDisplay.textContent = getRelativeDayLabel(dayOffset, selectedForecastWindow);
 
-            if (val === 0) dateDisplay.textContent = "Today";
-            else if (val === -1) dateDisplay.textContent = "Yesterday";
-            else if (val === 1) dateDisplay.textContent = "Tomorrow";
-            else dateDisplay.textContent = targetDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+            const fullFormatted = selectedForecastWindow?.start?.toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            }) || '--';
+            sidebarDate.textContent = `${fullFormatted.toUpperCase()}  06:00 - NEXT DAY 05:59`;
 
-            const fullFormatted = targetDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-            sidebarDate.textContent = fullFormatted.toUpperCase();
-
-            filterMapData(targetDate);
+            filterMapData();
+            refreshGuidanceForSelectedDay();
         }
 
-        function filterMapData(targetDate) {
-            if (!map.getSource('forecasts')) return;
-            const startOfDay = new Date(targetDate); startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(targetDate); endOfDay.setHours(23, 59, 59, 999);
+        function filterMapData() {
+            if (!selectedForecastWindow?.start || !selectedForecastWindow?.end) return;
+            const startOfDay = selectedForecastWindow.start;
+            const endOfDay = selectedForecastWindow.end;
 
             currentVisibleFeatures = allFeatures.filter(f => {
                 const validFrom = new Date(f.properties.validFrom);
@@ -1251,14 +2185,8 @@
                 return (validFrom <= endOfDay && validTo >= startOfDay);
             });
 
-            const displayFeatures = window.GenWeatherUtils
-                ? window.GenWeatherUtils.normalizeDisplayFeatures(currentVisibleFeatures)
-                : currentVisibleFeatures;
-
-            map.getSource('forecasts').setData({
-                type: 'FeatureCollection',
-                features: displayFeatures
-            });
+            ensureForecastLayers();
+            applyLayerVisibility();
         }
 
         function updateOutlookBadge() {
@@ -1285,6 +2213,25 @@
             }
         }
 
+        function openForecastPopup(selectedFeature, lngLat) {
+            if (!selectedFeature) return;
+            const props = selectedFeature.properties;
+            const toDate = new Date(props.validTo).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const popupTitle = props.isSevere ? 'SEVERE OUTLINE' : `${props.risk} RISK`;
+            const popupBody = props.isSevere
+                ? 'Black outlines highlight areas where severe weather is possible.'
+                : (props.description || 'Official convective outlook area.');
+
+            new mapboxgl.Popup()
+                .setLngLat(lngLat)
+                .setHTML(`
+                    <div class="popup-header" style="color:${props.color}; font-weight:800; font-size:14px;">${popupTitle}</div>
+                    <div class="popup-meta" style="font-size:11px; color:#555;">Valid until: ${toDate}</div>
+                    <p style="font-size:12px; line-height:1.4; margin-top:5px;">${popupBody}</p>
+                `)
+                .addTo(map);
+        }
+
         function initForecasts() {
             onSnapshot(collection(db, "forecasts_v2"), (snapshot) => {
                 allFeatures = [];
@@ -1295,13 +2242,24 @@
                         const geoJSON = typeof data.geoJSON === 'string' ? JSON.parse(data.geoJSON) : data.geoJSON;
                         if (geoJSON.features) {
                             geoJSON.features.forEach(f => {
+                                const sourceFeature = {
+                                    type: 'Feature',
+                                    geometry: f.geometry,
+                                    properties: f.properties || {}
+                                };
+                                const severe = window.GenWeatherUtils?.isSevereFeature?.(sourceFeature) || false;
+                                const meta = window.GenWeatherUtils?.getFeatureMeta?.(sourceFeature)
+                                    || window.GenWeatherUtils?.getRiskMeta?.(sourceFeature.properties.risk)
+                                    || { label: sourceFeature.properties.risk || 'Outlook', color: sourceFeature.properties.color || '#94a3b8' };
                                 allFeatures.push({
                                     type: 'Feature',
                                     geometry: f.geometry,
                                     properties: {
                                         docId: doc.id,
-                                        color: f.properties.color,
-                                        risk: f.properties.risk,
+                                        color: meta.color,
+                                        risk: severe ? 'SEVERE' : meta.label,
+                                        rank: severe ? 0 : (window.GenWeatherUtils?.getFeatureRank?.(sourceFeature) || 0),
+                                        isSevere: severe,
                                         description: data.description,
                                         validFrom: data.validFrom,
                                         validTo: data.validTo
@@ -1312,44 +2270,74 @@
                     } catch (e) { console.error("Error parsing GeoJSON", e); }
                 });
 
-                if (!map.getSource('forecasts')) {
-                    map.addSource('forecasts', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-                    // Fills
-                    map.addLayer({ 'id': 'forecast-fill', 'type': 'fill', 'source': 'forecasts', 'paint': { 'fill-color': ['get', 'color'], 'fill-opacity': 0.4 } });
-                    // Outlines
-                    map.addLayer({ 'id': 'forecast-line', 'type': 'line', 'source': 'forecasts', 'paint': { 'line-color': ['get', 'color'], 'line-width': 2 } });
-                }
-
                 updateDateLabels();
                 updateOutlookBadge();
                 updateWeatherWidget();
             });
 
             // Popups for Outlooks
-            map.on('click', 'forecast-fill', (e) => {
+            const handleForecastClick = (e) => {
                 const selectedFeature = window.GenWeatherUtils
                     ? window.GenWeatherUtils.getTopRiskFeatureAtLngLat([e.lngLat.lng, e.lngLat.lat], currentVisibleFeatures)
                     : e.features[0];
 
-                if (!selectedFeature) return;
+                openForecastPopup(selectedFeature, e.lngLat);
+            };
 
-                const props = selectedFeature.properties;
-                const toDate = new Date(props.validTo).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                new mapboxgl.Popup()
-                    .setLngLat(e.lngLat)
-                    .setHTML(`
-                        <div class="popup-header" style="color:${props.color}; font-weight:800; font-size:14px;">${props.risk} RISK</div>
-                        <div class="popup-meta" style="font-size:11px; color:#555;">Valid until: ${toDate}</div>
-                        <p style="font-size:12px; line-height:1.4; margin-top:5px;">${props.description}</p>
-                    `)
-                    .addTo(map);
-            });
+            map.on('click', 'forecast-fill', handleForecastClick);
+            map.on('click', 'forecast-severe-line', handleForecastClick);
 
             map.on('mouseenter', 'forecast-fill', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseenter', 'forecast-severe-line', () => map.getCanvas().style.cursor = 'pointer');
             map.on('mouseleave', 'forecast-fill', () => map.getCanvas().style.cursor = '');
+            map.on('mouseleave', 'forecast-severe-line', () => map.getCanvas().style.cursor = '');
         }
 
         slider.addEventListener('input', updateDateLabels);
+        hocoRunSlider.addEventListener('input', () => {
+            const index = parseInt(hocoRunSlider.value, 10);
+            const run = visibleAutoRuns[index];
+            if (run) {
+                selectedAutoRunId = run.id;
+                renderAutoRunList();
+                loadSelectedAutoRun();
+            }
+        });
+
+        layerToggleButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const key = button.dataset.layerToggle;
+                layerVisibilityState[key] = !layerVisibilityState[key];
+                updateLayerToggleButtons();
+                applyLayerVisibility();
+            });
+        });
+
+        forecastModeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                setForecastMode(button.dataset.forecastMode);
+            });
+        });
+
+        map.on('style.load', () => {
+            if (allFeatures.length) {
+                ensureForecastLayers();
+            }
+            if (activeAutoGeojson) {
+                renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, activeAutoGeojson, 0.24, 1.8);
+            }
+            if (activeEnsembleGeojson) {
+                renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, activeEnsembleGeojson, 0.22, 2.4);
+            }
+            applyLayerVisibility();
+
+            if (document.getElementById('radarToggle').checked) radarLayerTypeHandler();
+            if (document.getElementById('satelliteToggle').checked) satelliteLayerTypeHandler();
+            if (document.getElementById('lightningToggle').checked) lightningLayerTypeHandler();
+        });
+
+        updateLayerToggleButtons();
+        setForecastMode('official');
     </script>
 </body>
 

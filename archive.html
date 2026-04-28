@@ -15,7 +15,7 @@
         :root {
             --dark-grey: #333;
             --light-bg: #f4f7fa;
-            --risk-severe: #800080;
+            --risk-severe: #111111;
         }
 
         body {
@@ -61,12 +61,9 @@
         }
 
         .archive-card {
-            display: grid;
-            grid-template-columns: 240px 100px 1fr;
             background: #fff;
             border: 1px solid #dbe4ef;
             border-radius: 16px;
-            text-decoration: none;
             color: inherit;
             transition: all 0.2s ease-in-out;
             overflow: hidden;
@@ -78,12 +75,28 @@
             box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
         }
 
+        .archive-card-main {
+            display: grid;
+            grid-template-columns: 240px 100px 1fr;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            z-index: 1;
+        }
+
         .map-thumb {
             width: 100%;
             height: 100%;
             object-fit: cover;
             background: #eee;
             border-right: 1px solid #eee;
+        }
+
+        .poster-thumb {
+            object-fit: contain;
+            object-position: center top;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            padding: 8px;
         }
 
         /* Risk Badge Column */
@@ -129,6 +142,47 @@
         .info-col p { margin: 4px 0; font-size: 13px; color: #64748b; }
         .info-col strong { color: #333; }
 
+        .archive-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #fcfdff;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .poster-link,
+        .detail-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 10px 14px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .detail-link {
+            background: #eef4fb;
+            color: var(--primary-blue);
+        }
+
+        .poster-link {
+            background: #172033;
+            color: #fff;
+        }
+
+        .poster-pending {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
         .loading-state { text-align: center; padding: 60px; color: #94a3b8; font-style: italic; }
 
         /* Risk Backgrounds (Synced) */
@@ -141,9 +195,10 @@
 
         @media (max-width: 768px) {
             .archive-wrapper { padding: 24px; }
-            .archive-card { grid-template-columns: 1fr; }
+            .archive-card-main { grid-template-columns: 1fr; }
             .map-thumb { height: 150px; border-right: none; border-bottom: 1px solid #eee; }
             .risk-col { padding: 15px; border-right: none; border-bottom: 1px solid #eee; }
+            .archive-card-actions { padding: 14px 16px 18px; }
         }
     </style>
 </head>
@@ -151,6 +206,10 @@
 <body>
 
     <header class="top-nav">
+        <a href="index.html" class="nav-brand">
+            <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+            <span>Handry Outlook</span>
+        </a>
         <nav class="nav-left" aria-label="Primary">
             <a href="index.html">Outlooks</a>
             <a href="obs.html">Observations</a>
@@ -234,14 +293,15 @@
 
                     geoJSON.features = geoJSON.features.map(f => {
                         const col = f.properties.color || "#cccccc";
+                        const isSevere = !!f.properties.isSevere;
                         return {
                             ...f,
                             properties: {
                                 ...f.properties,
-                                "fill": col,
-                                "fill-opacity": 0.6,
-                                "stroke": col,
-                                "stroke-width": 2
+                                "fill": isSevere ? "rgba(0,0,0,0)" : col,
+                                "fill-opacity": isSevere ? 0 : 0.6,
+                                "stroke": isSevere ? "#111111" : col,
+                                "stroke-width": isSevere ? 3 : 2
                             }
                         };
                     });
@@ -250,29 +310,33 @@
                     const authorName = data.authorEmail ? data.authorEmail.split('@')[0] : "Forecaster";
 
                     // Determine Primary Risk for Badge
-                    const risks = geoJSON.features.map(f => (f.properties.risk || 'LOW').toUpperCase());
-                    let primaryRisk = 'LOW';
-                    let riskNum = '2';
-                    
-                    if (risks.some(r => r.includes('SEVERE'))) { primaryRisk = 'SVR'; riskNum = '!'; }
-                    else if (risks.some(r => r.includes('HIGH'))) { primaryRisk = 'HIGH'; riskNum = '5'; }
-                    else if (risks.some(r => r.includes('MODERATE'))) { primaryRisk = 'MDT'; riskNum = '4'; }
-                    else if (risks.some(r => r.includes('SLIGHT'))) { primaryRisk = 'SLGT'; riskNum = '3'; }
-                    else if (risks.some(r => r.includes('LOW'))) { primaryRisk = 'LOW'; riskNum = '2'; }
-                    else { primaryRisk = 'VLOW'; riskNum = '1'; }
+                    const issuedRiskLevels = window.GenWeatherUtils?.summarizeRiskLevels?.(geoJSON.features) || [];
+                    const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || null;
+                    const hasSevere = geoJSON.features.some(f => !!f.properties.isSevere);
+                    const riskBadgeShort = highestRisk ? highestRisk.short : (hasSevere ? 'SEV' : 'RISK');
+                    const riskNum = highestRisk ? String(highestRisk.rank) : (hasSevere ? '!' : '--');
+                    const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
+                    const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
 
                     const encodedGeo = encodeURIComponent(JSON.stringify(geoJSON));
                     const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
+                    const previewUrl = data.posterUrl || staticMapUrl;
+                    const previewClass = data.posterUrl ? 'map-thumb poster-thumb' : 'map-thumb';
 
                     const dateTitle = new Date(data.validFrom).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 
+                    const posterAction = data.posterUrl
+                        ? `<a href="${data.posterUrl}" target="_blank" rel="noopener" class="poster-link"><i class="fas fa-image"></i> Poster PNG</a>`
+                        : `<span class="poster-pending">Poster PNG not synced yet</span>`;
+
                     const card = `
-                        <a href="forecast-detail.html?id=${id}" class="archive-card">
-                            <img src="${staticMapUrl}" class="map-thumb" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'">
+                        <article class="archive-card">
+                            <a href="forecast-detail.html?id=${id}" class="archive-card-main">
+                            <img src="${previewUrl}" class="${previewClass}" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'; this.className='map-thumb';">
                             <div class="risk-col">
-                                <div class="badge-main bg-${primaryRisk.toLowerCase()}">
+                                <div class="badge-main" style="background-color:${badgeColor}; color:${badgeTextColor};">
                                     ${riskNum}
-                                    <span>${primaryRisk}</span>
+                                    <span>${riskBadgeShort}</span>
                                 </div>
                             </div>
                             <div class="info-col">
@@ -280,7 +344,12 @@
                                 <p><strong>Period:</strong> ${data.validFrom.replace('T', ' ')} &rarr; ${data.validTo.replace('T', ' ')}</p>
                                 <p><strong>Forecaster:</strong> <span style="text-transform: capitalize;">${authorName}</span></p>
                             </div>
-                        </a>
+                            </a>
+                            <div class="archive-card-actions">
+                                <a href="forecast-detail.html?id=${id}" class="detail-link"><i class="fas fa-arrow-right"></i> Open detail</a>
+                                ${posterAction}
+                            </div>
+                        </article>
                     `;
                     listContainer.insertAdjacentHTML('beforeend', card);
                 });
