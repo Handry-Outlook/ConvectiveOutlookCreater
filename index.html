@@ -568,6 +568,38 @@
             margin-top: 12px;
         }
 
+        .hoco-legend {
+            margin-top: 12px;
+        }
+
+        .hoco-legend-bar {
+            height: 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: linear-gradient(90deg,
+                    #ffffff 0%,
+                    #d0cece 5%,
+                    #bea497 10%,
+                    #66c2a4 30%,
+                    #fff200 50%,
+                    #ff7f27 70%,
+                    #ec1c24 85%,
+                    #b83dba 100%);
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+        }
+
+        .hoco-legend-labels {
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            margin-top: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: rgba(255, 255, 255, 0.68);
+            text-transform: uppercase;
+        }
+
         /* Map Styling */
         .map-wrapper {
             background: #fff;
@@ -609,13 +641,15 @@
         }
 
         .date-display {
-            min-width: 110px;
-            text-align: right;
+            min-width: 300px;
+            text-align: center;
             color: var(--primary-blue);
             font-weight: 800;
             background: #eef4fb;
-            padding: 4px 10px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            white-space: nowrap;
+            font-size: 12px;
         }
 
         .hoco-time-copy {
@@ -707,7 +741,7 @@
         /* --- LAYER CONTROLS (Floating) --- */
         .map-controls-overlay {
             position: absolute;
-            top: 60px;
+            bottom: 92px;
             left: 10px;
             z-index: 100;
         }
@@ -847,9 +881,93 @@
 
         .mapboxgl-popup-content {
             padding: 0;
-            border-radius: 8px;
+            border-radius: 18px;
             overflow: hidden;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.24);
+        }
+
+        .outlook-popup {
+            min-width: 250px;
+            max-width: 320px;
+            background: #ffffff;
+            color: #172033;
+        }
+
+        .outlook-popup-top {
+            padding: 14px 16px 12px;
+            color: #ffffff;
+        }
+
+        .outlook-popup-kicker {
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.9;
+            margin-bottom: 6px;
+        }
+
+        .outlook-popup-title {
+            font-size: 20px;
+            font-weight: 800;
+            line-height: 1.15;
+        }
+
+        .outlook-popup-subtitle {
+            margin-top: 6px;
+            font-size: 12px;
+            line-height: 1.45;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .outlook-popup-body {
+            padding: 15px 16px 16px;
+        }
+
+        .outlook-popup-pill-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .outlook-popup-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            background: #eef4fb;
+            color: #1e293b;
+        }
+
+        .outlook-popup-pill.primary {
+            color: #ffffff;
+        }
+
+        .outlook-popup-meta {
+            display: grid;
+            gap: 7px;
+            font-size: 12px;
+            color: #475569;
+            line-height: 1.45;
+        }
+
+        .outlook-popup-note {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 12px;
+            line-height: 1.55;
+            color: #334155;
+        }
+
+        .outlook-popup-note strong {
+            color: #0f172a;
         }
 
         /* Modal & Footer */
@@ -917,6 +1035,16 @@
             .radar-slider-wrapper {
                 order: 3;
                 width: 100%;
+            }
+
+            .date-display {
+                min-width: 0;
+                width: 100%;
+                white-space: normal;
+            }
+
+            .map-controls-overlay {
+                bottom: 104px;
             }
 
             .hoco-filter-row,
@@ -1067,11 +1195,19 @@
                         </div>
                     </div>
 
-                    <div class="hoco-control-card">
-                        <div class="hoco-section-title">Issued runs for this day</div>
-                        <p>Use the list below or the issue-time slider above the map to step through automated runs for the same 06:00 to next-day 05:59 window.</p>
-                        <div class="hoco-run-list" id="hoco-run-list">
-                            <div class="hoco-empty">Loading HOCO runs...</div>
+                    <div class="hoco-preview-card hoco-ensemble-card">
+                        <div class="hoco-section-title">Lightning Probability Scale</div>
+                        <p>HOCO polygons use a lightning-probability scale rather than the manual `1` to `5` convective risk categories.</p>
+                        <div class="hoco-legend">
+                            <div class="hoco-legend-bar"></div>
+                            <div class="hoco-legend-labels">
+                                <span>0%</span>
+                                <span>15%</span>
+                                <span>30%</span>
+                                <span>50%</span>
+                                <span>70%</span>
+                                <span>100%</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1083,7 +1219,7 @@
                     <div class="slider-container">
                         <input type="range" id="day-slider" min="-1" max="4" value="0" step="1">
                     </div>
-                    <span class="date-display" id="slider-date-display">Today</span>
+                    <span class="date-display" id="slider-date-display">Today | 06:00 to next day 05:59</span>
                 </div>
 
                 <div class="time-control" id="hoco-time-control" hidden>
@@ -1134,7 +1270,7 @@
                             <div class="control-row">
                                 <label>Radar</label>
                                 <label class="switch">
-                                    <input type="checkbox" id="radarToggle"
+                                    <input type="checkbox" id="radarToggle" checked
                                         onchange="toggleLayer('radar', this.checked)">
                                     <span class="slider round"></span>
                                 </label>
@@ -1150,7 +1286,7 @@
                             <div class="control-row">
                                 <label>Satellite</label>
                                 <label class="switch">
-                                    <input type="checkbox" id="satelliteToggle"
+                                    <input type="checkbox" id="satelliteToggle" checked
                                         onchange="toggleLayer('satellite', this.checked)">
                                     <span class="slider round"></span>
                                 </label>
@@ -1166,14 +1302,15 @@
                             <div class="control-row">
                                 <label>Lightning</label>
                                 <label class="switch">
-                                    <input type="checkbox" id="lightningToggle"
+                                    <input type="checkbox" id="lightningToggle" checked
                                         onchange="toggleLayer('lightning', this.checked)">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
                             <select id="lightningLayer" onchange="lightningLayerTypeHandler()">
+                                <option value="uk-lightning">UK Lightning</option>
                                 <option value="xweather-lightning">Live Strikes (Global)</option>
-
+                                
                             </select>
                         </div>
 
@@ -1234,6 +1371,9 @@
             autoLocateUser();
             initForecasts();
             initHocoRuns();
+            if (document.getElementById('radarToggle').checked) radarLayerTypeHandler();
+            if (document.getElementById('satelliteToggle').checked) satelliteLayerTypeHandler();
+            if (document.getElementById('lightningToggle').checked) lightningLayerTypeHandler();
         });
 
         const geolocate = new mapboxgl.GeolocateControl({
@@ -1289,8 +1429,9 @@
         };
 
         const lightningOptions = {
+            'uk-lightning': { type: 'custom-uk' },
             'xweather-lightning': { type: 'mapsgl', id: 'lightning-strikes' },
-            'lightning-density': { type: 'mapsgl', id: 'lightning-density' }
+            
         };
 
         const slider = document.getElementById('day-slider');
@@ -1332,6 +1473,10 @@
         const HOCO_ENSEMBLE_SOURCE_ID = 'live-hoco-ensemble-source';
         const HOCO_ENSEMBLE_FILL_ID = 'live-hoco-ensemble-fill';
         const HOCO_ENSEMBLE_LINE_ID = 'live-hoco-ensemble-line';
+        const UK_LIGHTNING_SOURCE_ID = 'uk-lightning-source';
+        const UK_LIGHTNING_GLOW_ID = 'uk-lightning-glow';
+        const UK_LIGHTNING_CORE_ID = 'uk-lightning-core';
+        const UK_LIGHTNING_LOOKBACK_MINUTES = 360;
 
         let allFeatures = [];
         let currentVisibleFeatures = [];
@@ -1346,6 +1491,9 @@
         let activeAutoGeojson = null;
         let activeEnsembleGeojson = null;
         let activeEnsembleSourceIds = [];
+        let ukLightningStrikes = [];
+        let ukLightningLastUpdate = null;
+        let ukLightningRefreshTimer = null;
         let layerVisibilityState = {
             manual: true,
             auto: false,
@@ -1370,6 +1518,50 @@
         function formatShortTime(date) {
             if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '--';
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function formatPopupDate(value) {
+            if (!value) return '--';
+            const date = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleString('en-GB', {
+                weekday: 'short',
+                day: 'numeric',
+                month: 'short',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function getHocoLightningColor(value) {
+            return window.GenWeatherUtils?.getHocoLightningColor?.(value) || '#66c2a4';
+        }
+
+        function getHocoProbabilityLabel(value) {
+            const numeric = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+            return `${numeric}% lightning`;
+        }
+
+        function getContrastingTextColor(color) {
+            const raw = String(color || '').replace('#', '').trim();
+            if (!(raw.length === 3 || raw.length === 6)) return '#ffffff';
+            const hex = raw.length === 3
+                ? raw.split('').map(char => char + char).join('')
+                : raw;
+            const red = parseInt(hex.slice(0, 2), 16);
+            const green = parseInt(hex.slice(2, 4), 16);
+            const blue = parseInt(hex.slice(4, 6), 16);
+            const luminance = ((0.299 * red) + (0.587 * green) + (0.114 * blue)) / 255;
+            return luminance > 0.7 ? '#172033' : '#ffffff';
         }
 
         function parseHocoTime(timeStr) {
@@ -1439,6 +1631,40 @@
             return value;
         }
 
+        function decorateHocoGuidanceGeojson(geojsonData, metadata = {}) {
+            return {
+                type: 'FeatureCollection',
+                features: (geojsonData?.features || []).map((feature, index) => {
+                    const riskValue = window.GenWeatherUtils?.parseRiskPercent
+                        ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
+                        : Number(feature?.properties?.risk || feature?.properties?.peak_risk || 0);
+                    const hocoColor = getHocoLightningColor(riskValue || feature?.properties?.peak_risk || 0);
+                    return {
+                        ...feature,
+                        properties: {
+                            ...feature.properties,
+                            riskValue: riskValue,
+                            probabilityLabel: getHocoProbabilityLabel(riskValue),
+                            fill: hocoColor,
+                            color: hocoColor,
+                            stroke: hocoColor,
+                            hocoId: `${metadata.runId || metadata.sourceType || 'hoco'}-${index}`,
+                            sourceType: 'hoco',
+                            hocoSourceType: metadata.sourceType || 'auto',
+                            popupKicker: metadata.sourceType === 'ensemble' ? 'HOCO Ensemble' : 'HOCO Automated Guidance',
+                            validFrom: metadata.validFrom || feature?.properties?.validFrom || null,
+                            validTo: metadata.validTo || feature?.properties?.validTo || null,
+                            issuedAt: metadata.issuedAt || feature?.properties?.issuedAt || null,
+                            issuedStart: metadata.issuedStart || null,
+                            issuedEnd: metadata.issuedEnd || null,
+                            sourceCount: metadata.sourceCount || null,
+                            runLabel: metadata.runLabel || null
+                        }
+                    };
+                })
+            };
+        }
+
         async function fetchHocoGeojson(run) {
             if (!run?.id) throw new Error('Missing HOCO run identifier.');
             if (hocoGeojsonCache.has(run.id)) return hocoGeojsonCache.get(run.id);
@@ -1456,26 +1682,14 @@
                 throw new Error('This AUTO-HOCO run does not include GeoJSON yet.');
             }
 
-            const featureCollection = {
-                type: 'FeatureCollection',
-                features: (geojsonData?.features || []).map((feature, index) => {
-                    const riskValue = window.GenWeatherUtils?.parseRiskPercent
-                        ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
-                        : Number(feature?.properties?.risk || 0);
-                    const meta = window.GenWeatherUtils?.getRiskMeta?.(
-                        riskValue >= 60 ? 5 : riskValue >= 45 ? 4 : riskValue >= 30 ? 3 : riskValue >= 15 ? 2 : 1
-                    ) || { color: '#38bdf8' };
-                    return {
-                        ...feature,
-                        properties: {
-                            ...feature.properties,
-                            fill: feature?.properties?.fill || feature?.properties?.color || meta.color,
-                            color: feature?.properties?.color || feature?.properties?.fill || meta.color,
-                            hocoId: `${run.id}-${index}`
-                        }
-                    };
-                })
-            };
+            const featureCollection = decorateHocoGuidanceGeojson(geojsonData, {
+                runId: run.id,
+                sourceType: 'auto',
+                validFrom: getNormalizedAutoValidPeriod(run)?.start?.toISOString?.() || getHocoStartDate(run)?.toISOString?.() || null,
+                validTo: getNormalizedAutoValidPeriod(run)?.end?.toISOString?.() || getHocoEndDate(run)?.toISOString?.() || null,
+                issuedAt: getHocoCreatedDate(run)?.toISOString?.() || null,
+                runLabel: `${run.region || 'UK'} automated guidance`
+            });
 
             hocoGeojsonCache.set(run.id, featureCollection);
             return featureCollection;
@@ -1652,6 +1866,12 @@
             return windowData?.start?.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) || '--';
         }
 
+        function getSliderWindowDisplay(dayOffset, windowData) {
+            const relativeLabel = getRelativeDayLabel(dayOffset, windowData);
+            if (!windowData?.start || !windowData?.end) return relativeLabel;
+            return `${relativeLabel} | ${formatShortDay(windowData.start)} 06:00 to ${formatShortDay(windowData.end)} 05:59`;
+        }
+
         function updateSelectedForecastWindow(dayOffset) {
             selectedForecastWindow = window.GenWeatherUtils?.getForecastDayWindow
                 ? window.GenWeatherUtils.getForecastDayWindow(new Date(), dayOffset)
@@ -1694,7 +1914,7 @@
             hocoPreviewBadge.className = 'hoco-badge auto';
             hocoPreviewBadge.textContent = getHocoRunBadge(run);
             hocoPreviewTitle.textContent = `${run.region || 'UK'} automated guidance`;
-            hocoPreviewSummary.textContent = 'The latest automated run is selected by default. Use the issue-time slider or card list to step through earlier runs for the same forecast day.';
+            hocoPreviewSummary.textContent = 'The latest automated run is selected by default. Use the issue-time slider above the map to step through earlier runs for the same forecast day.';
             hocoPreviewPeriod.textContent = formatHocoPeriod(run);
             hocoPreviewIssued.textContent = getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown';
             hocoPreviewHazards.textContent = run.weather || 'Lightning';
@@ -1741,33 +1961,9 @@
 
             if (!visibleAutoRuns.length) {
                 selectedAutoRunId = null;
-                hocoRunList.innerHTML = '<div class="hoco-empty">No automated runs are available for the selected forecast day.</div>';
                 updateHocoPreview(null);
                 return;
             }
-
-            hocoRunList.innerHTML = visibleAutoRuns.map((run, index) => `
-                <div class="hoco-run-card ${run.id === selectedAutoRunId ? 'active' : ''}" data-hoco-run-id="${run.id}" data-hoco-run-index="${index}">
-                    <div class="hoco-badge-row">
-                        <span class="hoco-badge auto">AUTO</span>
-                    </div>
-                    <div class="hoco-run-title">${run.region || 'UK'} automated guidance</div>
-                    <div class="hoco-run-meta">
-                        ${formatHocoPeriod(run)}<br>
-                        Issued: ${getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown'}<br>
-                        Hazards: ${run.weather || 'Lightning'}
-                    </div>
-                </div>
-            `).join('');
-
-            hocoRunList.querySelectorAll('[data-hoco-run-id]').forEach(card => {
-                card.addEventListener('click', () => {
-                    selectedAutoRunId = card.dataset.hocoRunId;
-                    hocoRunSlider.value = card.dataset.hocoRunIndex;
-                    renderAutoRunList();
-                    loadSelectedAutoRun();
-                });
-            });
 
             updateHocoPreview(visibleAutoRuns.find(run => run.id === selectedAutoRunId) || fallbackRun);
         }
@@ -1790,7 +1986,6 @@
                 applyLayerVisibility();
             } catch (error) {
                 console.error('AUTO-HOCO load error:', error);
-                hocoRunList.innerHTML = `<div class="hoco-empty">Could not load this automated run. ${error.message || ''}</div>`;
                 activeAutoGeojson = null;
                 clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
                 applyLayerVisibility();
@@ -1817,9 +2012,18 @@
                         createdAt: getHocoCreatedDate(run)?.toISOString?.() || null,
                         geojson: await fetchHocoGeojson(run)
                     })));
-                    ensembleGeojson = window.GenWeatherUtils?.buildClientEnsembleGeojson
+                    const rawEnsembleGeojson = window.GenWeatherUtils?.buildClientEnsembleGeojson
                         ? window.GenWeatherUtils.buildClientEnsembleGeojson(loadedRuns, { anomalyAware: true, noiseFilter: true })
                         : { type: 'FeatureCollection', features: [] };
+                    ensembleGeojson = decorateHocoGuidanceGeojson(rawEnsembleGeojson, {
+                        sourceType: 'ensemble',
+                        validFrom: selectedForecastWindow?.start?.toISOString?.() || null,
+                        validTo: selectedForecastWindow?.end?.toISOString?.() || null,
+                        issuedStart: getHocoCreatedDate(visibleAutoRuns[0])?.toISOString?.() || null,
+                        issuedEnd: getHocoCreatedDate(visibleAutoRuns[visibleAutoRuns.length - 1])?.toISOString?.() || null,
+                        sourceCount: visibleAutoRuns.length,
+                        runLabel: `${visibleAutoRuns[visibleAutoRuns.length - 1]?.region || 'UK'} HOCO Ensemble`
+                    });
                     hocoEnsembleCache.set(cacheKey, ensembleGeojson);
                 }
 
@@ -1881,16 +2085,225 @@
                 refreshGuidanceForSelectedDay();
             }, error => {
                 console.error('HOCO snapshot error:', error);
-                hocoRunList.innerHTML = '<div class="hoco-empty">Could not connect to the HOCO archive right now.</div>';
+                hocoPreviewBadge.className = 'hoco-badge neutral';
+                hocoPreviewBadge.textContent = 'ERROR';
+                hocoPreviewTitle.textContent = 'HOCO archive unavailable';
+                hocoPreviewSummary.textContent = 'Could not connect to the HOCO archive right now.';
             });
+        }
+
+        function stopUkLightningRefresh() {
+            if (ukLightningRefreshTimer) {
+                clearInterval(ukLightningRefreshTimer);
+                ukLightningRefreshTimer = null;
+            }
+        }
+
+        function removeUkLightningLayers() {
+            [UK_LIGHTNING_CORE_ID, UK_LIGHTNING_GLOW_ID].forEach(layerId => {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+            });
+            if (map.getSource(UK_LIGHTNING_SOURCE_ID)) {
+                map.removeSource(UK_LIGHTNING_SOURCE_ID);
+            }
+        }
+
+        function buildUkLightningGeojson(referenceTime = Date.now()) {
+            const endTime = referenceTime instanceof Date ? referenceTime.getTime() : Number(referenceTime || Date.now());
+            const startTime = endTime - (UK_LIGHTNING_LOOKBACK_MINUTES * 60 * 1000);
+
+            return {
+                type: 'FeatureCollection',
+                features: ukLightningStrikes
+                    .filter(strike => strike?.time instanceof Date && !Number.isNaN(strike.time.getTime()))
+                    .filter(strike => strike.time.getTime() >= startTime && strike.time.getTime() <= endTime)
+                    .map(strike => {
+                        const ageMinutes = Math.max(0, Math.round((endTime - strike.time.getTime()) / 60000));
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: strike.coordinates
+                            },
+                            properties: {
+                                strike_time: strike.strike_time,
+                                ageMinutes: ageMinutes,
+                                amplitude: strike.amplitude ?? strike.signal_strength ?? null
+                            }
+                        };
+                    })
+            };
+        }
+
+        function renderUkLightningLayers() {
+            const geojsonData = buildUkLightningGeojson(currentRadarTime);
+
+            if (!map.getSource(UK_LIGHTNING_SOURCE_ID)) {
+                map.addSource(UK_LIGHTNING_SOURCE_ID, {
+                    type: 'geojson',
+                    data: geojsonData
+                });
+            } else {
+                map.getSource(UK_LIGHTNING_SOURCE_ID).setData(geojsonData);
+            }
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+            const beforeId = firstSymbol?.id;
+
+            if (!map.getLayer(UK_LIGHTNING_GLOW_ID)) {
+                map.addLayer({
+                    id: UK_LIGHTNING_GLOW_ID,
+                    type: 'circle',
+                    source: UK_LIGHTNING_SOURCE_ID,
+                    paint: {
+                        'circle-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, '#fff7cc',
+                            30, '#ffd24d',
+                            90, '#ff9f1c',
+                            180, '#fb7185',
+                            360, '#c084fc'
+                        ],
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 12,
+                            30, 10,
+                            90, 8,
+                            180, 6,
+                            360, 4
+                        ],
+                        'circle-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 0.42,
+                            60, 0.32,
+                            180, 0.18,
+                            360, 0.08
+                        ],
+                        'circle-blur': 0.8
+                    }
+                }, beforeId);
+            }
+
+            if (!map.getLayer(UK_LIGHTNING_CORE_ID)) {
+                map.addLayer({
+                    id: UK_LIGHTNING_CORE_ID,
+                    type: 'circle',
+                    source: UK_LIGHTNING_SOURCE_ID,
+                    paint: {
+                        'circle-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, '#ffffff',
+                            30, '#ffe066',
+                            90, '#ffb347',
+                            180, '#fb7185',
+                            360, '#d8b4fe'
+                        ],
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 4.6,
+                            60, 4,
+                            180, 3.2,
+                            360, 2.2
+                        ],
+                        'circle-stroke-color': '#1f2937',
+                        'circle-stroke-width': 0.6,
+                        'circle-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 1,
+                            120, 0.88,
+                            360, 0.55
+                        ]
+                    }
+                }, beforeId);
+            }
+        }
+
+        async function fetchUkLightningData() {
+            const githubUrl1 = 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data.json';
+            const githubUrl2 = 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json';
+            const metOfficeBaseUrl = 'https://data.consumer-digital.api.metoffice.gov.uk/v1/lightning';
+
+            const asStrikeList = response => response?.lightning_strikes?.map(strike => ({
+                ...strike,
+                time: new Date(strike.strike_time)
+            })) || [];
+
+            const mainResponse = await fetch(metOfficeBaseUrl).then(res => res.json()).catch(() => null);
+            if (!mainResponse) {
+                throw new Error('No data returned from the Met Office lightning feed.');
+            }
+
+            const baseStrikes = asStrikeList(mainResponse);
+            const chunkUrls = (mainResponse?.chunks || []).map(chunk =>
+                `${metOfficeBaseUrl}?last-minutes=1&chunk=${chunk.chunk}`
+            );
+            const responses = await Promise.all([
+                fetch(githubUrl1).then(res => res.json()).catch(() => null),
+                fetch(githubUrl2).then(res => res.json()).catch(() => null),
+                ...chunkUrls.map(url => fetch(url).then(res => res.json()).catch(() => null))
+            ]);
+
+            const githubStrikes1 = asStrikeList(responses[0]);
+            const githubStrikes2 = asStrikeList(responses[1]);
+            const chunkStrikes = responses.slice(2).flatMap(response => asStrikeList(response));
+            const allStrikes = [...githubStrikes1, ...githubStrikes2, ...baseStrikes, ...chunkStrikes];
+            const seen = new Map();
+
+            ukLightningStrikes = allStrikes.filter(strike => {
+                const coords = Array.isArray(strike.coordinates) ? strike.coordinates : [null, null];
+                const key = `${strike.strike_time}_${coords[0]}_${coords[1]}`;
+                if (seen.has(key)) return false;
+                seen.set(key, true);
+                return coords[0] !== null && coords[1] !== null && strike.time instanceof Date && !Number.isNaN(strike.time.getTime());
+            });
+            ukLightningLastUpdate = new Date();
+        }
+
+        async function ensureUkLightningLayer() {
+            const isLayerActive = document.getElementById('lightningToggle').checked && document.getElementById('lightningLayer').value === 'uk-lightning';
+            if (!isLayerActive) return;
+
+            const dataIsFresh = ukLightningLastUpdate && (Date.now() - ukLightningLastUpdate.getTime()) < 60000 && ukLightningStrikes.length;
+            if (!dataIsFresh) {
+                await fetchUkLightningData();
+            }
+
+            renderUkLightningLayers();
+        }
+
+        function scheduleUkLightningRefresh() {
+            stopUkLightningRefresh();
+            const isLayerActive = document.getElementById('lightningToggle').checked && document.getElementById('lightningLayer').value === 'uk-lightning';
+            if (!isLayerActive) return;
+
+            ukLightningRefreshTimer = setInterval(async () => {
+                try {
+                    await fetchUkLightningData();
+                    renderUkLightningLayers();
+                } catch (error) {
+                    console.error('UK lightning refresh error:', error);
+                }
+            }, 60000);
         }
 
         // --- LAYER LOGIC ---
         window.switchBaseMap = (style) => {
+            stopUkLightningRefresh();
             map.setStyle(style);
-            setTimeout(() => {
-                if (document.getElementById('lightningToggle').checked) lightningLayerTypeHandler();
-            }, 1000);
         };
 
         window.toggleLayer = (type, checked) => {
@@ -1908,7 +2321,9 @@
                     map.removeSource('satellite-source');
                 }
                 if (type === 'lightning' && mapsglController) {
-                    ['lightning-strikes', 'lightning-density'].forEach(id => mapsglController.removeWeatherLayer(id));
+                    ['lightning-strikes'].forEach(id => mapsglController.removeWeatherLayer(id));
+                    removeUkLightningLayers();
+                    stopUkLightningRefresh();
                 }
             }
         };
@@ -1937,6 +2352,9 @@
             // Trigger updates
             radarLayerTypeHandler();
             satelliteLayerTypeHandler();
+            if (document.getElementById('lightningToggle').checked && document.getElementById('lightningLayer').value === 'uk-lightning') {
+                renderUkLightningLayers();
+            }
         };
 
         window.toggleRadarPlay = () => {
@@ -2058,16 +2476,25 @@
         window.radarLayerTypeHandler = () => debounceRadar();
         window.satelliteLayerTypeHandler = () => debounceSatellite();
 
-        window.lightningLayerTypeHandler = () => {
+        window.lightningLayerTypeHandler = async () => {
             if (!mapsglController) return;
             const val = document.getElementById('lightningLayer').value;
             const toggle = document.getElementById('lightningToggle').checked;
 
-            ['lightning-strikes', 'lightning-density'].forEach(id => mapsglController.removeWeatherLayer(id));
+            ['lightning-strikes'].forEach(id => mapsglController.removeWeatherLayer(id));
+            removeUkLightningLayers();
+            stopUkLightningRefresh();
 
             if (toggle) {
                 const config = lightningOptions[val];
-                if (config && config.type === 'mapsgl') {
+                if (config && config.type === 'custom-uk') {
+                    try {
+                        await ensureUkLightningLayer();
+                        scheduleUkLightningRefresh();
+                    } catch (error) {
+                        console.error('UK lightning load error:', error);
+                    }
+                } else if (config && config.type === 'mapsgl') {
                     mapsglController.addWeatherLayer(config.id);
                 }
             }
@@ -2160,7 +2587,7 @@
         function updateDateLabels() {
             const dayOffset = parseInt(slider.value, 10) || 0;
             updateSelectedForecastWindow(dayOffset);
-            dateDisplay.textContent = getRelativeDayLabel(dayOffset, selectedForecastWindow);
+            dateDisplay.textContent = getSliderWindowDisplay(dayOffset, selectedForecastWindow);
 
             const fullFormatted = selectedForecastWindow?.start?.toLocaleDateString('en-GB', {
                 weekday: 'short',
@@ -2215,19 +2642,63 @@
 
         function openForecastPopup(selectedFeature, lngLat) {
             if (!selectedFeature) return;
-            const props = selectedFeature.properties;
-            const toDate = new Date(props.validTo).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-            const popupTitle = props.isSevere ? 'SEVERE OUTLINE' : `${props.risk} RISK`;
-            const popupBody = props.isSevere
-                ? 'Black outlines highlight areas where severe weather is possible.'
-                : (props.description || 'Official convective outlook area.');
+            const props = selectedFeature.properties || {};
+            const isHoco = props.sourceType === 'hoco' || props.hocoSourceType;
+            const isEnsemble = props.hocoSourceType === 'ensemble';
+            const isSevere = !!props.isSevere;
+            const riskValue = window.GenWeatherUtils?.parseRiskPercent
+                ? window.GenWeatherUtils.parseRiskPercent(props)
+                : Number(props.riskValue ?? props.peak_risk ?? props.risk ?? 0);
+            const accentColor = isSevere
+                ? '#111111'
+                : (props.color || getHocoLightningColor(riskValue));
+            const accentTextColor = getContrastingTextColor(accentColor);
+            const popupKicker = isHoco
+                ? (isEnsemble ? 'HOCO Ensemble' : 'HOCO Automated Guidance')
+                : 'Manually Drawn Convective Outlook';
+            const popupTitle = isHoco
+                ? getHocoProbabilityLabel(riskValue)
+                : (isSevere ? 'Severe Weather Possible' : (props.risk || 'Official Outlook'));
+            const popupSubtitle = isHoco
+                ? 'Probability of lightning within 25 miles'
+                : (isSevere ? 'Black outlines mark areas where severe weather is possible.' : 'Official convective outlook polygon');
+            const issuedValue = props.issuedAt
+                ? formatPopupDate(props.issuedAt)
+                : (props.issuedStart || props.issuedEnd
+                    ? `${formatPopupDate(props.issuedStart)} to ${formatPopupDate(props.issuedEnd)}`
+                    : '--');
+            const popupNote = isHoco
+                ? (isEnsemble
+                    ? `This polygon is part of the locally blended HOCO ensemble built from ${props.sourceCount || 0} automated source run${props.sourceCount === 1 ? '' : 's'}.`
+                    : `This polygon comes from an individual AUTO-HOCO run${props.runLabel ? `: ${props.runLabel}` : ''}.`)
+                : (isSevere
+                    ? 'Black outlines highlight areas where severe weather is possible.'
+                    : (props.description || 'Official convective outlook area.'));
 
             new mapboxgl.Popup()
                 .setLngLat(lngLat)
                 .setHTML(`
-                    <div class="popup-header" style="color:${props.color}; font-weight:800; font-size:14px;">${popupTitle}</div>
-                    <div class="popup-meta" style="font-size:11px; color:#555;">Valid until: ${toDate}</div>
-                    <p style="font-size:12px; line-height:1.4; margin-top:5px;">${popupBody}</p>
+                    <div class="outlook-popup">
+                        <div class="outlook-popup-top" style="background:${escapeHtml(accentColor)};">
+                            <div class="outlook-popup-kicker">${escapeHtml(popupKicker)}</div>
+                            <div class="outlook-popup-title">${escapeHtml(popupTitle)}</div>
+                            <div class="outlook-popup-subtitle">${escapeHtml(popupSubtitle)}</div>
+                        </div>
+                        <div class="outlook-popup-body">
+                            <div class="outlook-popup-pill-row">
+                                <span class="outlook-popup-pill">${escapeHtml(isHoco ? (isEnsemble ? 'ENSEMBLE' : 'AUTO') : 'MANUAL')}</span>
+                                <span class="outlook-popup-pill primary" style="background:${escapeHtml(accentColor)}; color:${escapeHtml(accentTextColor)};">
+                                    ${escapeHtml((isHoco ? getHocoProbabilityLabel(riskValue) : (props.risk || 'Outlook')).toUpperCase())}
+                                </span>
+                            </div>
+                            <div class="outlook-popup-meta">
+                                <div><strong>Valid:</strong> ${escapeHtml(props.validFrom && props.validTo ? `${formatPopupDate(props.validFrom)} to ${formatPopupDate(props.validTo)}` : formatPopupDate(props.validTo))}</div>
+                                <div><strong>Issued:</strong> ${escapeHtml(issuedValue)}</div>
+                                ${isHoco && props.sourceCount ? `<div><strong>Blend sources:</strong> ${escapeHtml(String(props.sourceCount))}</div>` : ''}
+                            </div>
+                            <div class="outlook-popup-note"><strong>Note:</strong> ${escapeHtml(popupNote)}</div>
+                        </div>
+                    </div>
                 `)
                 .addTo(map);
         }
@@ -2256,11 +2727,13 @@
                                     geometry: f.geometry,
                                     properties: {
                                         docId: doc.id,
+                                        sourceType: 'manual',
                                         color: meta.color,
                                         risk: severe ? 'SEVERE' : meta.label,
                                         rank: severe ? 0 : (window.GenWeatherUtils?.getFeatureRank?.(sourceFeature) || 0),
                                         isSevere: severe,
                                         description: data.description,
+                                        issuedAt: data.issuedAt,
                                         validFrom: data.validFrom,
                                         validTo: data.validTo
                                     }
@@ -2284,13 +2757,29 @@
                 openForecastPopup(selectedFeature, e.lngLat);
             };
 
+            const handleGuidanceClick = (e) => {
+                openForecastPopup(e.features?.[0], e.lngLat);
+            };
+
             map.on('click', 'forecast-fill', handleForecastClick);
             map.on('click', 'forecast-severe-line', handleForecastClick);
+            map.on('click', HOCO_AUTO_FILL_ID, handleGuidanceClick);
+            map.on('click', HOCO_AUTO_LINE_ID, handleGuidanceClick);
+            map.on('click', HOCO_ENSEMBLE_FILL_ID, handleGuidanceClick);
+            map.on('click', HOCO_ENSEMBLE_LINE_ID, handleGuidanceClick);
 
             map.on('mouseenter', 'forecast-fill', () => map.getCanvas().style.cursor = 'pointer');
             map.on('mouseenter', 'forecast-severe-line', () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseenter', HOCO_AUTO_FILL_ID, () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseenter', HOCO_AUTO_LINE_ID, () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseenter', HOCO_ENSEMBLE_FILL_ID, () => map.getCanvas().style.cursor = 'pointer');
+            map.on('mouseenter', HOCO_ENSEMBLE_LINE_ID, () => map.getCanvas().style.cursor = 'pointer');
             map.on('mouseleave', 'forecast-fill', () => map.getCanvas().style.cursor = '');
             map.on('mouseleave', 'forecast-severe-line', () => map.getCanvas().style.cursor = '');
+            map.on('mouseleave', HOCO_AUTO_FILL_ID, () => map.getCanvas().style.cursor = '');
+            map.on('mouseleave', HOCO_AUTO_LINE_ID, () => map.getCanvas().style.cursor = '');
+            map.on('mouseleave', HOCO_ENSEMBLE_FILL_ID, () => map.getCanvas().style.cursor = '');
+            map.on('mouseleave', HOCO_ENSEMBLE_LINE_ID, () => map.getCanvas().style.cursor = '');
         }
 
         slider.addEventListener('input', updateDateLabels);

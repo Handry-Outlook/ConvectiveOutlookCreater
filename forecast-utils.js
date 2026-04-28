@@ -13,6 +13,18 @@
         color: '#111111',
         description: 'Black outline represents severe weather possible.'
     };
+    const HOCO_LIGHTNING_COLORS = [
+        "#ffffff", "#d0cece", "#d0cece", "#d0cece", "#d0cece", "#bea497", "#bea497", "#bea497", "#bea497", "#bea497",
+        "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4",
+        "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4",
+        "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200",
+        "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200",
+        "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27",
+        "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27",
+        "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24",
+        "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba",
+        "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba"
+    ];
 
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
@@ -403,6 +415,36 @@
             key: start.getFullYear() + '-' + String(start.getMonth() + 1).padStart(2, '0') + '-' + String(start.getDate()).padStart(2, '0'),
             offset: offset
         };
+    }
+
+    function getHocoLightningColor(value) {
+        var numeric = Number.parseFloat(value);
+        if (!Number.isFinite(numeric)) return HOCO_LIGHTNING_COLORS[0];
+        var clamped = Math.max(0, Math.min(100, numeric));
+        if (clamped <= 0) return HOCO_LIGHTNING_COLORS[0];
+        var index = Math.min(HOCO_LIGHTNING_COLORS.length - 1, Math.max(0, Math.ceil(clamped) - 1));
+        return HOCO_LIGHTNING_COLORS[index];
+    }
+
+    function getHocoLightningGradientStops() {
+        var stops = [];
+        var lastColor = null;
+
+        HOCO_LIGHTNING_COLORS.forEach(function (color, index) {
+            if (color !== lastColor) {
+                stops.push({
+                    value: index,
+                    color: color
+                });
+                lastColor = color;
+            }
+        });
+
+        if (!stops.length || stops[stops.length - 1].value !== 100) {
+            stops.push({ value: 100, color: HOCO_LIGHTNING_COLORS[HOCO_LIGHTNING_COLORS.length - 1] });
+        }
+
+        return stops;
     }
 
     function parseRiskPercent(properties) {
@@ -834,11 +876,11 @@
     function buildClientEnsembleGeojson(runEntries, options) {
         var config = options || {};
         var riskBands = config.riskBands || [
-            { key: 'low', label: 'Low Risk', threshold: 5, representativeRisk: 15, fill: '#67c6ac', minCells: 10, scale: 1.06, smoothingPasses: 2 },
-            { key: 'slight', label: 'Slight Risk', threshold: 20, representativeRisk: 30, fill: '#ffea00', minCells: 8, scale: 1.04, smoothingPasses: 2 },
-            { key: 'enhanced', label: 'Enhanced Risk', threshold: 40, representativeRisk: 50, fill: '#ff7a21', minCells: 6, scale: 1.03, smoothingPasses: 2 },
-            { key: 'moderate', label: 'Moderate Risk', threshold: 60, representativeRisk: 68, fill: '#f91522', minCells: 5, scale: 1.02, smoothingPasses: 1 },
-            { key: 'high', label: 'High Risk', threshold: 75, representativeRisk: 85, fill: '#b23cc7', minCells: 4, scale: 1.01, smoothingPasses: 1 }
+            { key: 'low', label: 'Low Risk', threshold: 5, representativeRisk: 15, fill: getHocoLightningColor(15), minCells: 10, scale: 1.06, smoothingPasses: 2 },
+            { key: 'slight', label: 'Slight Risk', threshold: 20, representativeRisk: 30, fill: getHocoLightningColor(30), minCells: 8, scale: 1.04, smoothingPasses: 2 },
+            { key: 'enhanced', label: 'Enhanced Risk', threshold: 40, representativeRisk: 50, fill: getHocoLightningColor(50), minCells: 6, scale: 1.03, smoothingPasses: 2 },
+            { key: 'moderate', label: 'Moderate Risk', threshold: 60, representativeRisk: 68, fill: getHocoLightningColor(68), minCells: 5, scale: 1.02, smoothingPasses: 1 },
+            { key: 'high', label: 'High Risk', threshold: 75, representativeRisk: 85, fill: getHocoLightningColor(85), minCells: 4, scale: 1.01, smoothingPasses: 1 }
         ];
         var field = buildClientEnsembleField(runEntries, config);
         var smoothedMatrix = applyMatrixSmoothing(field.matrix, config.noiseFilter === false ? 2 : 3);
@@ -944,6 +986,7 @@
     window.GenWeatherUtils = {
         RISK_META: RISK_META,
         SEVERE_META: SEVERE_META,
+        HOCO_LIGHTNING_COLORS: HOCO_LIGHTNING_COLORS,
         clone: clone,
         getRiskMeta: getRiskMeta,
         getFeatureMeta: getFeatureMeta,
@@ -957,6 +1000,8 @@
         summarizeAllRiskLevels: summarizeAllRiskLevels,
         validateRiskContainment: validateRiskContainment,
         getForecastDayWindow: getForecastDayWindow,
+        getHocoLightningColor: getHocoLightningColor,
+        getHocoLightningGradientStops: getHocoLightningGradientStops,
         parseRiskPercent: parseRiskPercent,
         buildClientEnsembleGeojson: buildClientEnsembleGeojson,
         formatUtc: formatUtc,
