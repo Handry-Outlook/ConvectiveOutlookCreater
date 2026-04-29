@@ -1270,9 +1270,9 @@
         });
         const POSTER_RENDER_SCALE = 0.5;
         const POSTER_MAP_FRAME = Object.freeze({
-            x: 3320,
+            x: 3240,
             y: 88,
-            width: 3710,
+            width: 3790,
             height: 4844,
             radius: 42
         });
@@ -1396,7 +1396,7 @@
         let pendingLocalDraftRestore = false;
         let adminMapReady = false;
 
-        mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
 
         const draw = new MapboxDraw({
             displayControlsDefault: false,
@@ -3483,7 +3483,7 @@
             if (staticGeojson) {
                 try {
                     const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeojson));
-                    const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
+                    const staticMapUrl = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
                     return await loadCanvasImage(staticMapUrl);
                 } catch (error) {
                     console.warn('Poster static map load failed, falling back to the vector poster map.', error);
