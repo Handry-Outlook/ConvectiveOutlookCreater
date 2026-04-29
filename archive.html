@@ -260,6 +260,40 @@
         const db = getFirestore(app);
         const MAPBOX_TOKEN = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
 
+        function buildArchiveStaticPreviewGeojson(features) {
+            const baseGeojson = {
+                type: 'FeatureCollection',
+                features: (features || []).map(feature => ({
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        fill: feature.properties?.fill || '#cccccc',
+                        'fill-opacity': feature.properties?.['fill-opacity'] ?? 0.6,
+                        stroke: feature.properties?.stroke || feature.properties?.fill || '#cccccc',
+                        'stroke-width': feature.properties?.['stroke-width'] ?? 2
+                    }
+                }))
+            };
+
+            const candidates = [baseGeojson];
+            [0.005, 0.01, 0.02, 0.04, 0.08].forEach(tolerance => {
+                try {
+                    candidates.push(turf.simplify(baseGeojson, { tolerance, highPrecision: false }));
+                } catch (error) {
+                    console.warn('Archive static map simplify failed for tolerance', tolerance, error);
+                }
+            });
+
+            for (const candidate of candidates) {
+                const serialized = JSON.stringify(candidate);
+                if (serialized.length < 7800) {
+                    return encodeURIComponent(serialized);
+                }
+            }
+
+            return encodeURIComponent(JSON.stringify({ type: 'FeatureCollection', features: [] }));
+        }
+
         async function loadArchive() {
             const listContainer = document.getElementById('archive-list');
             
@@ -318,21 +352,7 @@
                     const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
                     const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
 
-                    let encodedGeo = '';
-                    try {
-                        // Simplify GeoJSON for static map URL limits
-                        const simplified = turf.simplify(geoJSON, { tolerance: 0.015, highPrecision: false });
-                        const geoStr = JSON.stringify(simplified);
-                        if (geoStr.length < 7800) {
-                            encodedGeo = encodeURIComponent(geoStr);
-                        } else {
-                            // Too big for Mapbox Static, fallback to empty to avoid broken image
-                            encodedGeo = '{"type":"FeatureCollection","features":[]}';
-                        }
-                    } catch (e) {
-                        console.warn("GeoJSON simplify failed for static map", e);
-                        encodedGeo = '{"type":"FeatureCollection","features":[]}';
-                    }
+                    const encodedGeo = buildArchiveStaticPreviewGeojson(geoJSON.features);
                     
                     const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
                     const previewUrl = data.posterUrl || staticMapUrl;

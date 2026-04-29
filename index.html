@@ -1740,6 +1740,8 @@
                     paint: { 'line-color': '#111111', 'line-width': 3.2 }
                 }, firstSymbol?.id);
             }
+
+            moveUkLightningLayersToTop();
         }
 
         function setLayerVisibility(layerId, visible) {
@@ -1807,6 +1809,8 @@
                     }
                 }, firstSymbol?.id);
             }
+
+            moveUkLightningLayersToTop();
         }
 
         function clearGuidanceLayer(sourceId, fillId, lineId) {
@@ -2099,6 +2103,15 @@
             }
         }
 
+        function moveUkLightningLayersToTop() {
+            if (map.getLayer(UK_LIGHTNING_GLOW_ID)) {
+                map.moveLayer(UK_LIGHTNING_GLOW_ID);
+            }
+            if (map.getLayer(UK_LIGHTNING_CORE_ID)) {
+                map.moveLayer(UK_LIGHTNING_CORE_ID);
+            }
+        }
+
         function removeUkLightningLayers() {
             [UK_LIGHTNING_CORE_ID, UK_LIGHTNING_GLOW_ID].forEach(layerId => {
                 if (map.getLayer(layerId)) {
@@ -2230,6 +2243,8 @@
                     }
                 }, beforeId);
             }
+
+            moveUkLightningLayersToTop();
         }
 
         async function fetchUkLightningData() {
@@ -2237,30 +2252,42 @@
             const githubUrl2 = 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json';
             const metOfficeBaseUrl = 'https://data.consumer-digital.api.metoffice.gov.uk/v1/lightning';
 
+            const fetchJsonOrNull = async url => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) return null;
+                    return await response.json();
+                } catch (error) {
+                    return null;
+                }
+            };
+
             const asStrikeList = response => response?.lightning_strikes?.map(strike => ({
                 ...strike,
                 time: new Date(strike.strike_time)
             })) || [];
 
-            const mainResponse = await fetch(metOfficeBaseUrl).then(res => res.json()).catch(() => null);
-            if (!mainResponse) {
-                throw new Error('No data returned from the Met Office lightning feed.');
-            }
+            const [mainResponse, githubResponse1, githubResponse2] = await Promise.all([
+                fetchJsonOrNull(metOfficeBaseUrl),
+                fetchJsonOrNull(githubUrl1),
+                fetchJsonOrNull(githubUrl2)
+            ]);
 
             const baseStrikes = asStrikeList(mainResponse);
             const chunkUrls = (mainResponse?.chunks || []).map(chunk =>
                 `${metOfficeBaseUrl}?last-minutes=1&chunk=${chunk.chunk}`
             );
-            const responses = await Promise.all([
-                fetch(githubUrl1).then(res => res.json()).catch(() => null),
-                fetch(githubUrl2).then(res => res.json()).catch(() => null),
-                ...chunkUrls.map(url => fetch(url).then(res => res.json()).catch(() => null))
-            ]);
+            const chunkResponses = await Promise.all(chunkUrls.map(url => fetchJsonOrNull(url)));
 
-            const githubStrikes1 = asStrikeList(responses[0]);
-            const githubStrikes2 = asStrikeList(responses[1]);
-            const chunkStrikes = responses.slice(2).flatMap(response => asStrikeList(response));
+            const githubStrikes1 = asStrikeList(githubResponse1);
+            const githubStrikes2 = asStrikeList(githubResponse2);
+            const chunkStrikes = chunkResponses.flatMap(response => asStrikeList(response));
             const allStrikes = [...githubStrikes1, ...githubStrikes2, ...baseStrikes, ...chunkStrikes];
+
+            if (!allStrikes.length) {
+                throw new Error('No data returned from the available UK lightning feeds.');
+            }
+
             const seen = new Map();
 
             ukLightningStrikes = allStrikes.filter(strike => {
@@ -2458,6 +2485,8 @@
                 paint: { 'raster-opacity': parseFloat(document.getElementById(type + 'Opacity').value) }
             }, beforeId);
 
+            moveUkLightningLayersToTop();
+
             if (type === 'radar') isRadarPlotting = false;
             else isSatellitePlotting = false;
         };
@@ -2477,11 +2506,12 @@
         window.satelliteLayerTypeHandler = () => debounceSatellite();
 
         window.lightningLayerTypeHandler = async () => {
-            if (!mapsglController) return;
             const val = document.getElementById('lightningLayer').value;
             const toggle = document.getElementById('lightningToggle').checked;
 
-            ['lightning-strikes'].forEach(id => mapsglController.removeWeatherLayer(id));
+            if (mapsglController) {
+                ['lightning-strikes'].forEach(id => mapsglController.removeWeatherLayer(id));
+            }
             removeUkLightningLayers();
             stopUkLightningRefresh();
 
@@ -2495,6 +2525,10 @@
                         console.error('UK lightning load error:', error);
                     }
                 } else if (config && config.type === 'mapsgl') {
+                    if (!mapsglController) {
+                        console.warn('XWeather lightning layer is unavailable because the weather controller is not ready.');
+                        return;
+                    }
                     mapsglController.addWeatherLayer(config.id);
                 }
             }
