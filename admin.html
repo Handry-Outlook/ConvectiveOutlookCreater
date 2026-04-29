@@ -941,7 +941,7 @@
                 <summary class="expandable-summary">
                     <div>
                         <div class="section-title">HOCO Loader</div>
-                        <div class="section-note">Load one automated run or the blended ensemble into the draft editor.</div>
+                        <div class="section-note">Compare automated guidance and the blended ensemble as read-only overlays beside your draft.</div>
                     </div>
                     <i class="fas fa-chevron-down expandable-chevron" aria-hidden="true"></i>
                 </summary>
@@ -982,7 +982,7 @@
                                 <span class="admin-hoco-badge neutral" id="hoco-admin-ensemble-count">0 SOURCES</span>
                             </div>
                             <h3 id="hoco-admin-ensemble-title">Waiting for automated source runs...</h3>
-                            <p id="hoco-admin-ensemble-summary">When runs exist for the selected forecast day, the client ensemble is blended here before you load it into the editor.</p>
+                            <p id="hoco-admin-ensemble-summary">When runs exist for the selected forecast day, the client ensemble is blended here as a read-only overlay.</p>
                             <div class="admin-hoco-meta">
                                 <div><strong>Valid:</strong> <span id="hoco-admin-ensemble-period">--</span></div>
                                 <div><strong>Issued span:</strong> <span id="hoco-admin-ensemble-issued">--</span></div>
@@ -1480,6 +1480,11 @@
             return window.GenWeatherUtils?.getHocoLightningColor?.(value) || '#66c2a4';
         }
 
+        function getHocoProbabilityLabel(value) {
+            const numeric = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+            return `${numeric}% lightning`;
+        }
+
         function decorateAdminHocoGeojson(geojsonData, metadata = {}) {
             return {
                 type: 'FeatureCollection',
@@ -1493,19 +1498,21 @@
                         properties: {
                             ...feature.properties,
                             riskValue: riskValue,
+                            probabilityLabel: getHocoProbabilityLabel(riskValue),
                             fill: hocoColor,
                             color: hocoColor,
                             stroke: hocoColor,
+                            hocoId: `${metadata.runId || metadata.sourceType || 'hoco'}-${index}`,
                             sourceType: 'hoco',
                             hocoSourceType: metadata.sourceType || 'auto',
-                            validFrom: metadata.validFrom || null,
-                            validTo: metadata.validTo || null,
-                            issuedAt: metadata.issuedAt || null,
+                            popupKicker: metadata.sourceType === 'ensemble' ? 'HOCO Ensemble' : 'HOCO Automated Guidance',
+                            validFrom: metadata.validFrom || feature?.properties?.validFrom || null,
+                            validTo: metadata.validTo || feature?.properties?.validTo || null,
+                            issuedAt: metadata.issuedAt || feature?.properties?.issuedAt || null,
                             issuedStart: metadata.issuedStart || null,
                             issuedEnd: metadata.issuedEnd || null,
                             sourceCount: metadata.sourceCount || null,
-                            runLabel: metadata.runLabel || null,
-                            hocoId: `${metadata.runId || metadata.sourceType || 'hoco'}-${index}`
+                            runLabel: metadata.runLabel || null
                         }
                     };
                 })
@@ -1597,7 +1604,7 @@
 
             if (!sourceCount) {
                 adminHocoEnsembleTitle.textContent = 'Waiting for automated source runs...';
-                adminHocoEnsembleSummary.textContent = 'When runs exist for the selected forecast day, the client ensemble is blended here before you load it into the editor.';
+                adminHocoEnsembleSummary.textContent = 'When runs exist for the selected forecast day, the client ensemble is blended here as a read-only overlay.';
                 adminHocoEnsembleIssued.textContent = '--';
                 adminHocoEnsembleStatus.textContent = 'Idle';
                 return;
@@ -1623,6 +1630,13 @@
             adminHocoRunSlider.max = String(Math.max(adminVisibleHocoRuns.length - 1, 0));
             adminHocoRunSlider.disabled = adminVisibleHocoRuns.length <= 1;
             adminHocoRunSlider.value = String(Math.max(selectedIndex, 0));
+
+            if (!adminVisibleHocoRuns.length) {
+                adminSelectedHocoRunId = null;
+                updateAdminHocoPreview(null);
+                return;
+            }
+
             updateAdminHocoPreview(adminVisibleHocoRuns.find(run => run.id === adminSelectedHocoRunId) || fallbackRun);
         }
 
@@ -1656,7 +1670,7 @@
                     paint: {
                         'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
                         'line-width': lineWidth,
-                        'line-opacity': 0.8
+                        'line-opacity': 0.92
                     }
                 }, firstSymbol?.id);
             }
@@ -2177,15 +2191,36 @@
             initHistoryListener();
         }
 
-        function loadCanvasImage(source) {
+        async function loadCanvasImage(source) {
+            const isRemote = /^https?:/i.test(source);
+            let objectUrl = null;
+
+            if (isRemote) {
+                const response = await fetch(source);
+                if (!response.ok) {
+                    throw new Error(`Could not fetch image asset (${response.status}).`);
+                }
+                const blob = await response.blob();
+                objectUrl = URL.createObjectURL(blob);
+            }
+
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                if (/^https?:/i.test(source)) {
-                    img.crossOrigin = 'anonymous';
-                }
-                img.onload = () => resolve(img);
-                img.onerror = reject;
-                img.src = source;
+                const cleanup = () => {
+                    if (objectUrl) {
+                        setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+                    }
+                };
+
+                img.onload = () => {
+                    cleanup();
+                    resolve(img);
+                };
+                img.onerror = () => {
+                    cleanup();
+                    reject(new Error(`Could not load image asset: ${source}`));
+                };
+                img.src = objectUrl || source;
             });
         }
 
@@ -2337,41 +2372,314 @@
             return { bounds, hasBounds };
         }
 
-        async function renderPosterMapImage(features, width, height) {
-            const displayFeatures = buildRawDisplayFeatures(features).map(feature => {
-                const isSevere = !!feature.properties?.isSevere;
-                return {
-                    ...feature,
-                    properties: {
-                        ...feature.properties,
-                        fill: isSevere ? 'rgba(0,0,0,0)' : feature.properties.color,
-                        'fill-opacity': isSevere ? 0 : 0.24,
-                        stroke: isSevere ? '#111111' : feature.properties.color,
-                        'stroke-width': isSevere ? 4.8 : 4
-                    }
-                };
+        function buildPosterStaticGeojson(features) {
+            const baseGeojson = {
+                type: 'FeatureCollection',
+                features: buildRawDisplayFeatures(features).map(feature => {
+                    const isSevere = !!feature.properties?.isSevere;
+                    return {
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            fill: isSevere ? 'rgba(0,0,0,0)' : feature.properties.color,
+                            'fill-opacity': isSevere ? 0 : 0.24,
+                            stroke: isSevere ? '#111111' : feature.properties.color,
+                            'stroke-width': isSevere ? 4.8 : 4
+                        }
+                    };
+                })
+            };
+
+            const candidates = [baseGeojson];
+            [0.005, 0.01, 0.02, 0.04, 0.08].forEach(tolerance => {
+                try {
+                    candidates.push(turf.simplify(baseGeojson, { tolerance, highPrecision: false }));
+                } catch (error) {
+                    console.warn('Poster map simplify failed for tolerance', tolerance, error);
+                }
             });
 
-            const requestWidth = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
-            const requestHeight = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
-
-            // ─── FIX 6: Simplify GeoJSON before encoding for static map URL ────────
-            // Prevents 414 / 400 errors from oversized URLs.
-            let staticGeoJson = { type: 'FeatureCollection', features: displayFeatures };
-            try {
-                const simplified = turf.simplify(staticGeoJson, { tolerance: 0.015, highPrecision: false });
-                const geoStr = JSON.stringify(simplified);
-                if (geoStr.length < 7800) {
-                    staticGeoJson = simplified;
+            for (const candidate of candidates) {
+                const serialized = JSON.stringify(candidate);
+                if (serialized.length < 7800) {
+                    return candidate;
                 }
-            } catch (e) {
-                console.warn('Poster map simplify failed, using original.', e);
             }
 
-            const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeoJson));
-            const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
+            return null;
+        }
 
-            return loadCanvasImage(staticMapUrl);
+        function getPosterMercatorY(lat) {
+            const safeLat = Math.max(-85, Math.min(85, Number(lat) || 0));
+            const radians = safeLat * (Math.PI / 180);
+            return Math.log(Math.tan((Math.PI / 4) + (radians / 2)));
+        }
+
+        function buildPosterProjection(features, width, height, padding = 76) {
+            const displayFeatures = buildRawDisplayFeatures(features);
+            let minLng = Infinity;
+            let maxLng = -Infinity;
+            let minY = Infinity;
+            let maxY = -Infinity;
+
+            const registerCoordinate = coordinate => {
+                const [lng, lat] = coordinate || [];
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+                minLng = Math.min(minLng, lng);
+                maxLng = Math.max(maxLng, lng);
+                const mercatorY = getPosterMercatorY(lat);
+                minY = Math.min(minY, mercatorY);
+                maxY = Math.max(maxY, mercatorY);
+            };
+
+            displayFeatures.forEach(feature => {
+                if (feature.geometry.type === 'Polygon') {
+                    feature.geometry.coordinates.forEach(ring => ring.forEach(registerCoordinate));
+                } else if (feature.geometry.type === 'MultiPolygon') {
+                    feature.geometry.coordinates.forEach(polygon => polygon.forEach(ring => ring.forEach(registerCoordinate)));
+                }
+            });
+
+            if (!Number.isFinite(minLng) || !Number.isFinite(maxLng) || !Number.isFinite(minY) || !Number.isFinite(maxY)) {
+                minLng = -10;
+                maxLng = 3;
+                minY = getPosterMercatorY(49);
+                maxY = getPosterMercatorY(61);
+            }
+
+            const lngPadding = Math.max((maxLng - minLng) * 0.08, 0.8);
+            const yPadding = Math.max((maxY - minY) * 0.08, 0.08);
+            minLng -= lngPadding;
+            maxLng += lngPadding;
+            minY -= yPadding;
+            maxY += yPadding;
+
+            const innerWidth = Math.max(1, width - (padding * 2));
+            const innerHeight = Math.max(1, height - (padding * 2));
+            const scale = Math.min(
+                innerWidth / Math.max(maxLng - minLng, 0.0001),
+                innerHeight / Math.max(maxY - minY, 0.0001)
+            );
+            const contentWidth = (maxLng - minLng) * scale;
+            const contentHeight = (maxY - minY) * scale;
+            const offsetX = padding + ((innerWidth - contentWidth) / 2);
+            const offsetY = padding + ((innerHeight - contentHeight) / 2);
+
+            return {
+                displayFeatures,
+                project(coordinate) {
+                    const [lng, lat] = coordinate;
+                    return [
+                        offsetX + ((lng - minLng) * scale),
+                        offsetY + ((maxY - getPosterMercatorY(lat)) * scale)
+                    ];
+                },
+                bounds: { minLng, maxLng, minY, maxY }
+            };
+        }
+
+        function getPosterGridStep(span) {
+            if (span > 24) return 5;
+            if (span > 12) return 2;
+            if (span > 6) return 1;
+            return 0.5;
+        }
+
+        function traceProjectedGeometry(ctx, geometry, project) {
+            const traceRing = ring => {
+                ring.forEach((coordinate, index) => {
+                    const [x, y] = project(coordinate);
+                    if (index === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                });
+                ctx.closePath();
+            };
+
+            if (geometry.type === 'Polygon') {
+                geometry.coordinates.forEach(traceRing);
+            } else if (geometry.type === 'MultiPolygon') {
+                geometry.coordinates.forEach(polygon => polygon.forEach(traceRing));
+            }
+        }
+
+        function renderPosterMapVectorFallback(features, width, height) {
+            const fallbackCanvas = document.createElement('canvas');
+            fallbackCanvas.width = width;
+            fallbackCanvas.height = height;
+
+            const fallbackCtx = fallbackCanvas.getContext('2d');
+            const projection = buildPosterProjection(features, width, height);
+            const { minLng, maxLng } = projection.bounds;
+            const minLat = 48.5;
+            const maxLat = 61.5;
+
+            const skyGradient = fallbackCtx.createLinearGradient(0, 0, 0, height);
+            skyGradient.addColorStop(0, '#d9e7f5');
+            skyGradient.addColorStop(1, '#eef4fb');
+            fallbackCtx.fillStyle = skyGradient;
+            fallbackCtx.fillRect(0, 0, width, height);
+
+            fallbackCtx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
+            fallbackCtx.lineWidth = 1;
+
+            const lonStep = getPosterGridStep(maxLng - minLng);
+            const latStep = getPosterGridStep(maxLat - minLat);
+
+            for (let lon = Math.ceil(minLng / lonStep) * lonStep; lon <= maxLng; lon += lonStep) {
+                const [xTop, yTop] = projection.project([lon, maxLat]);
+                const [xBottom, yBottom] = projection.project([lon, minLat]);
+                fallbackCtx.beginPath();
+                fallbackCtx.moveTo(xTop, yTop);
+                fallbackCtx.lineTo(xBottom, yBottom);
+                fallbackCtx.stroke();
+            }
+
+            for (let lat = Math.ceil(minLat / latStep) * latStep; lat <= maxLat; lat += latStep) {
+                const [xLeft, yLeft] = projection.project([minLng, lat]);
+                const [xRight, yRight] = projection.project([maxLng, lat]);
+                fallbackCtx.beginPath();
+                fallbackCtx.moveTo(xLeft, yLeft);
+                fallbackCtx.lineTo(xRight, yRight);
+                fallbackCtx.stroke();
+            }
+
+            const sortedFeatures = projection.displayFeatures.slice().sort((a, b) => {
+                const aWeight = a.properties?.isSevere ? 999 : (a.properties?.rank || 0);
+                const bWeight = b.properties?.isSevere ? 999 : (b.properties?.rank || 0);
+                return aWeight - bWeight;
+            });
+
+            sortedFeatures.forEach(feature => {
+                const isSevere = !!feature.properties?.isSevere;
+                fallbackCtx.save();
+                fallbackCtx.beginPath();
+                traceProjectedGeometry(fallbackCtx, feature.geometry, projection.project);
+
+                if (!isSevere) {
+                    fallbackCtx.fillStyle = feature.properties?.color || '#94a3b8';
+                    fallbackCtx.globalAlpha = 0.28;
+                    fallbackCtx.fill('evenodd');
+                }
+
+                fallbackCtx.globalAlpha = 1;
+                fallbackCtx.strokeStyle = isSevere ? '#111111' : (feature.properties?.color || '#94a3b8');
+                fallbackCtx.lineWidth = isSevere ? 4.4 : 3.2;
+                fallbackCtx.stroke();
+                fallbackCtx.restore();
+            });
+
+            fallbackCtx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
+            fallbackCtx.lineWidth = 2;
+            fallbackCtx.strokeRect(1, 1, width - 2, height - 2);
+
+            return fallbackCanvas;
+        }
+
+        function getTrimmedImageSourceRect(image) {
+            const sourceWidth = image.naturalWidth || image.width;
+            const sourceHeight = image.naturalHeight || image.height;
+            const analysisCanvas = document.createElement('canvas');
+            analysisCanvas.width = sourceWidth;
+            analysisCanvas.height = sourceHeight;
+
+            const analysisCtx = analysisCanvas.getContext('2d', { willReadFrequently: true });
+            if (!analysisCtx) {
+                return { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
+            }
+
+            try {
+                analysisCtx.drawImage(image, 0, 0, sourceWidth, sourceHeight);
+
+                const { data } = analysisCtx.getImageData(0, 0, sourceWidth, sourceHeight);
+                const sampleIndex = ((sourceHeight - 1) * sourceWidth + (sourceWidth - 1)) * 4;
+                const backgroundRed = data[sampleIndex];
+                const backgroundGreen = data[sampleIndex + 1];
+                const backgroundBlue = data[sampleIndex + 2];
+
+                let minX = sourceWidth;
+                let minY = sourceHeight;
+                let maxX = -1;
+                let maxY = -1;
+
+                for (let y = 0; y < sourceHeight; y += 1) {
+                    for (let x = 0; x < sourceWidth; x += 1) {
+                        const offset = ((y * sourceWidth) + x) * 4;
+                        const alpha = data[offset + 3];
+                        const colorDistance = Math.abs(data[offset] - backgroundRed)
+                            + Math.abs(data[offset + 1] - backgroundGreen)
+                            + Math.abs(data[offset + 2] - backgroundBlue);
+
+                        if (alpha > 24 && colorDistance > 24) {
+                            minX = Math.min(minX, x);
+                            minY = Math.min(minY, y);
+                            maxX = Math.max(maxX, x);
+                            maxY = Math.max(maxY, y);
+                        }
+                    }
+                }
+
+                if (maxX < minX || maxY < minY) {
+                    return { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
+                }
+
+                const padding = 8;
+                return {
+                    x: Math.max(0, minX - padding),
+                    y: Math.max(0, minY - padding),
+                    width: Math.min(sourceWidth - Math.max(0, minX - padding), (maxX - minX + 1) + (padding * 2)),
+                    height: Math.min(sourceHeight - Math.max(0, minY - padding), (maxY - minY + 1) + (padding * 2))
+                };
+            } catch (error) {
+                console.warn('Could not trim the poster logo image, using the full source bounds instead.', error);
+                return { x: 0, y: 0, width: sourceWidth, height: sourceHeight };
+            }
+        }
+
+        function drawContainedSourceImage(ctx, image, sourceRect, x, y, width, height, padding = 0) {
+            const innerX = x + padding;
+            const innerY = y + padding;
+            const innerWidth = Math.max(1, width - (padding * 2));
+            const innerHeight = Math.max(1, height - (padding * 2));
+            const scale = Math.min(innerWidth / sourceRect.width, innerHeight / sourceRect.height);
+            const drawWidth = sourceRect.width * scale;
+            const drawHeight = sourceRect.height * scale;
+            const drawX = innerX + ((innerWidth - drawWidth) / 2);
+            const drawY = innerY + ((innerHeight - drawHeight) / 2);
+
+            ctx.drawImage(
+                image,
+                sourceRect.x,
+                sourceRect.y,
+                sourceRect.width,
+                sourceRect.height,
+                drawX,
+                drawY,
+                drawWidth,
+                drawHeight
+            );
+        }
+
+        async function renderPosterMapImage(features, width, height) {
+            const requestWidth = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
+            const requestHeight = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
+            const staticGeojson = buildPosterStaticGeojson(features);
+
+            if (staticGeojson) {
+                try {
+                    const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeojson));
+                    const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/outdoors-v12/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
+                    return await loadCanvasImage(staticMapUrl);
+                } catch (error) {
+                    console.warn('Poster static map load failed, falling back to the vector poster map.', error);
+                }
+            } else {
+                console.warn('Poster static map payload stayed too large after simplification, falling back to the vector poster map.');
+            }
+
+            return renderPosterMapVectorFallback(features, width, height);
         }
 
         async function renderForecastPoster(draftGeoJSON, options = {}) {
@@ -2399,7 +2707,6 @@
                 color: '#94a3b8'
             };
             const footerTop = canvas.height - 180;
-            let brandCardX = panelWidth - 248;
             const legendTop = 338;
             const rowSpacing = 126;
             const circleX = 130;
@@ -2429,21 +2736,26 @@
             ctx.fillText(`Valid: ${validRange}`, 54, 164);
             ctx.fillText(`Issued at ${issuedLine}`, 54, 210);
 
-            brandCardX = panelWidth - 224;
-            drawRoundedRect(ctx, brandCardX, 30, 194, 118, 24);
+            const brandCard = {
+                x: panelWidth - 224,
+                y: 30,
+                width: 194,
+                height: 118
+            };
+            drawRoundedRect(ctx, brandCard.x, brandCard.y, brandCard.width, brandCard.height, 24);
             ctx.fillStyle = '#2f427f';
             ctx.fill();
             if (logoImage) {
-                ctx.drawImage(logoImage, brandCardX + 14, 36, 166, 94);
+                drawContainedSourceImage(ctx, logoImage, getTrimmedImageSourceRect(logoImage), brandCard.x, brandCard.y, brandCard.width, brandCard.height, 12);
             } else {
                 ctx.fillStyle = '#f8fafc';
                 ctx.beginPath();
-                ctx.arc(brandCardX + 48, 74, 22, 0, Math.PI * 2);
+                ctx.arc(brandCard.x + 48, 74, 22, 0, Math.PI * 2);
                 ctx.fill();
                 ctx.fillStyle = '#ffffff';
                 ctx.font = '700 24px Inter';
-                ctx.fillText('Handry', brandCardX + 90, 72);
-                ctx.fillText('Outlook', brandCardX + 90, 102);
+                ctx.fillText('Handry', brandCard.x + 90, 72);
+                ctx.fillText('Outlook', brandCard.x + 90, 102);
             }
 
             drawRoundedRect(ctx, 54, 244, 230, 54, 18);
