@@ -983,6 +983,374 @@
             .replace(/^-+|-+$/g, '') || 'forecast';
     }
 
+    const POSTER_TEMPLATE_ASSETS = Object.freeze({
+        1: 'assets/low_risk.png',
+        2: 'assets/slight_risk.png',
+        3: 'assets/enhanced_risk.png',
+        4: 'assets/moderate_risk.png',
+        5: 'assets/high_risk.png'
+    });
+    const POSTER_RENDER_SCALE = 0.5;
+    const POSTER_MAP_FRAME = Object.freeze({
+        x: 3245,
+        y: 2,
+        width: 3876,
+        height: 5016,
+        radius: 42
+    });
+    const POSTER_TEXT_LAYOUT = Object.freeze({
+        valid: {
+            x: 700,
+            y: 414,
+            maxWidth: 2400,
+            lineHeight: 92,
+            maxHeight: 160,
+            fontSize: 76
+        },
+        issued: {
+            x: 680,
+            y: 584,
+            maxWidth: 2440,
+            lineHeight: 92,
+            maxHeight: 150,
+            fontSize: 76
+        }
+    });
+
+    function normalizePosterTemplateRank(rank) {
+        const numericRank = Number(rank);
+        if (!Number.isFinite(numericRank)) return 1;
+        return Math.max(1, Math.min(5, Math.round(numericRank)));
+    }
+
+    function getPosterTemplateSource(rank) {
+        return POSTER_TEMPLATE_ASSETS[normalizePosterTemplateRank(rank)] || POSTER_TEMPLATE_ASSETS[1];
+    }
+
+    async function loadCanvasImage(source) {
+        const isRemote = /^https?:/i.test(source);
+        let objectUrl = null;
+
+        if (isRemote) {
+            const response = await fetch(source);
+            if (!response.ok) {
+                throw new Error(`Could not fetch image asset (${response.status}).`);
+            }
+            const blob = await response.blob();
+            objectUrl = URL.createObjectURL(blob);
+        }
+
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const cleanup = () => {
+                if (objectUrl) {
+                    setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+                }
+            };
+
+            img.onload = () => {
+                cleanup();
+                resolve(img);
+            };
+            img.onerror = () => {
+                cleanup();
+                reject(new Error(`Could not load image asset: ${source}`));
+            };
+            img.src = objectUrl || source;
+        });
+    }
+
+    function loadPosterTemplate(rank) {
+        return loadCanvasImage(getPosterTemplateSource(rank));
+    }
+
+    function formatPosterTimestamp(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return '--';
+        const datePart = date.toLocaleDateString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const timePart = date.toLocaleTimeString('en-GB', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        return `${datePart} ${timePart}`;
+    }
+
+    function buildPosterValidLine(validFrom, validTo) {
+        return `${formatPosterTimestamp(validFrom)} - ${formatPosterTimestamp(validTo)}`;
+    }
+
+    function buildPosterIssuedLine(issuedAt, issueVersion) {
+        return `${formatPosterTimestamp(issuedAt)} Version ${issueVersion}`;
+    }
+
+    function scalePosterLayoutRect(rect, scale) {
+        return {
+            x: rect.x * scale,
+            y: rect.y * scale,
+            width: rect.width * scale,
+            height: rect.height * scale,
+            radius: rect.radius * scale
+        };
+    }
+
+    function scalePosterTextLayout(layout, scale) {
+        return {
+            x: layout.x * scale,
+            y: layout.y * scale,
+            maxWidth: layout.maxWidth * scale,
+            lineHeight: layout.lineHeight * scale,
+            maxHeight: layout.maxHeight * scale,
+            fontSize: layout.fontSize * scale
+        };
+    }
+
+    function drawRoundedRect(ctx, x, y, width, height, radius) {
+        const r = Math.min(radius, width / 2, height / 2);
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + width - r, y);
+        ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+        ctx.lineTo(x + width, y + height - r);
+        ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+        ctx.lineTo(x + r, y + height);
+        ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+    }
+
+    function splitCanvasTextIntoLines(ctx, text, maxWidth) {
+        const lines = [];
+        const paragraphs = String(text || '').replace(/\r/g, '').split('\n');
+
+        paragraphs.forEach(paragraph => {
+            const trimmed = paragraph.trim();
+            if (!trimmed) {
+                lines.push('');
+                return;
+            }
+
+            const words = trimmed.split(/\s+/);
+            let line = '';
+
+            words.forEach(word => {
+                const candidate = line ? `${line} ${word}` : word;
+                if (ctx.measureText(candidate).width > maxWidth && line) {
+                    lines.push(line);
+                    line = word;
+                } else {
+                    line = candidate;
+                }
+            });
+
+            if (line) {
+                lines.push(line);
+            }
+        });
+
+        return lines;
+    }
+
+    function ellipsizeCanvasLine(ctx, line, maxWidth) {
+        let trimmed = String(line || '').trim();
+        while (trimmed && ctx.measureText(`${trimmed}...`).width > maxWidth) {
+            trimmed = trimmed.slice(0, -1).trimEnd();
+        }
+        return trimmed ? `${trimmed}...` : '...';
+    }
+
+    function drawCanvasTextBlock(ctx, text, x, y, maxWidth, lineHeight, maxHeight) {
+        const allLines = splitCanvasTextIntoLines(ctx, text, maxWidth);
+        const maxLines = Math.max(1, Math.floor(maxHeight / lineHeight));
+        const visibleLines = allLines.slice(0, maxLines);
+        const truncated = allLines.length > maxLines;
+
+        visibleLines.forEach((line, index) => {
+            const isLastVisibleLine = index === visibleLines.length - 1;
+            const output = truncated && isLastVisibleLine
+                ? ellipsizeCanvasLine(ctx, line || allLines[index] || '', maxWidth)
+                : line;
+            ctx.fillText(output, x, y + (index * lineHeight));
+        });
+
+        return {
+            bottomY: y + (visibleLines.length * lineHeight),
+            truncated: truncated
+        };
+    }
+
+    function buildPosterStaticGeojson(features) {
+        if (!Array.isArray(features)) return null;
+        if (!window.turf) return null;
+
+        const displayFeatures = normalizeDisplayFeatures(features);
+        const baseGeojson = {
+            type: 'FeatureCollection',
+            features: displayFeatures.map(feature => {
+                const isSevere = !!feature.properties?.isSevere;
+                return {
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        fill: isSevere ? 'rgba(0,0,0,0)' : feature.properties.color,
+                        'fill-opacity': isSevere ? 0 : 0.24,
+                        stroke: isSevere ? '#111111' : feature.properties.color,
+                        'stroke-width': isSevere ? 4.8 : 4
+                    }
+                };
+            })
+        };
+
+        try {
+            const simplified = turf.simplify(baseGeojson, { tolerance: 0.03, highQuality: false, mutate: false });
+            return simplified || baseGeojson;
+        } catch (error) {
+            return baseGeojson;
+        }
+    }
+
+    function renderPosterMapVectorFallback(features, width, height) {
+        const fallbackCanvas = document.createElement('canvas');
+        fallbackCanvas.width = width;
+        fallbackCanvas.height = height;
+        const ctx = fallbackCanvas.getContext('2d');
+
+        ctx.fillStyle = '#0b1220';
+        ctx.fillRect(0, 0, width, height);
+
+        // If Mapbox static map fails, at least show the polygons.
+        const displayFeatures = normalizeDisplayFeatures(features);
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+        ctx.lineWidth = 2;
+        ctx.restore();
+
+        // Keep fallback simple: no projection math here (admin has a full fallback).
+        // Consumers mainly care about PNG rendering not being blocked.
+        return fallbackCanvas;
+    }
+
+    async function renderPosterMapImage(features, width, height, options = {}) {
+        const requestWidth = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
+        const requestHeight = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
+        const staticGeojson = buildPosterStaticGeojson(features);
+        const mapboxToken = options.mapboxToken || window?.mapboxgl?.accessToken;
+
+        if (staticGeojson && mapboxToken) {
+            try {
+                const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeojson));
+                const staticMapUrl = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxToken)}`;
+                return await loadCanvasImage(staticMapUrl);
+            } catch (error) {
+                console.warn('Poster static map load failed, falling back to vector poster map.', error);
+            }
+        }
+
+        return renderPosterMapVectorFallback(features, width, height);
+    }
+
+    function drawPosterMapPanel(ctx, mapImage, frame) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(15, 23, 42, 0.38)';
+        ctx.shadowBlur = Math.max(12, frame.radius * 1.1);
+        ctx.shadowOffsetY = Math.max(6, frame.radius * 0.3);
+        drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+        ctx.fillStyle = '#050505';
+        ctx.fill();
+        ctx.restore();
+
+        ctx.save();
+        drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+        ctx.clip();
+        ctx.drawImage(mapImage, frame.x, frame.y, frame.width, frame.height);
+        ctx.restore();
+
+        ctx.save();
+        drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+        ctx.lineWidth = Math.max(3, frame.radius * 0.18);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.26)';
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function buildPosterFileName(validFrom, issueVersion) {
+        const fromValue = validFrom || new Date().toISOString();
+        const datePart = String(fromValue).split('T')[0].replace(/-/g, '');
+        return `convective-outlook-${datePart}-v${issueVersion}.png`;
+    }
+
+    async function renderForecastPosterPng(draftGeoJSON, options = {}) {
+        const issueVersion = options.issueVersion ?? 1;
+        const issuedAt = options.issuedAt ?? new Date().toISOString();
+        const validFrom = options.validFrom ?? new Date().toISOString();
+        const validTo = options.validTo ?? new Date().toISOString();
+        const mapboxToken = options.mapboxToken;
+        const features = draftGeoJSON?.features || [];
+        const riskLevels = summarizeAllRiskLevels(features);
+        const issuedRiskLevels = riskLevels.filter(level => level.issued);
+        const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || { rank: 1 };
+
+        if (document.fonts?.ready) {
+            try { await document.fonts.ready; } catch (e) { /* ignore */ }
+        }
+
+        const templateImage = await loadPosterTemplate(highestRisk.rank);
+        const canvas = document.createElement('canvas');
+        const renderScale = POSTER_RENDER_SCALE;
+        canvas.width = Math.round(templateImage.width * renderScale);
+        canvas.height = Math.round(templateImage.height * renderScale);
+
+        const mapFrame = scalePosterLayoutRect(POSTER_MAP_FRAME, renderScale);
+        const validTextLayout = scalePosterTextLayout(POSTER_TEXT_LAYOUT.valid, renderScale);
+        const issuedTextLayout = scalePosterTextLayout(POSTER_TEXT_LAYOUT.issued, renderScale);
+
+        const mapImage = await renderPosterMapImage(
+            features,
+            Math.round(mapFrame.width),
+            Math.round(mapFrame.height),
+            { mapboxToken: mapboxToken }
+        );
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+        drawPosterMapPanel(ctx, mapImage, mapFrame);
+
+        ctx.fillStyle = '#111111';
+        ctx.font = `500 ${validTextLayout.fontSize}px Inter`;
+        drawCanvasTextBlock(
+            ctx,
+            buildPosterValidLine(validFrom, validTo),
+            validTextLayout.x,
+            validTextLayout.y,
+            validTextLayout.maxWidth,
+            validTextLayout.lineHeight,
+            validTextLayout.maxHeight
+        );
+
+        ctx.fillStyle = '#111111';
+        ctx.font = `500 ${issuedTextLayout.fontSize}px Inter`;
+        drawCanvasTextBlock(
+            ctx,
+            buildPosterIssuedLine(issuedAt, issueVersion),
+            issuedTextLayout.x,
+            issuedTextLayout.y,
+            issuedTextLayout.maxWidth,
+            issuedTextLayout.lineHeight,
+            issuedTextLayout.maxHeight
+        );
+
+        return {
+            dataUrl: canvas.toDataURL('image/png'),
+            fileName: buildPosterFileName(validFrom, issueVersion)
+        };
+    }
+
     window.GenWeatherUtils = {
         RISK_META: RISK_META,
         SEVERE_META: SEVERE_META,
@@ -1006,6 +1374,7 @@
         buildClientEnsembleGeojson: buildClientEnsembleGeojson,
         formatUtc: formatUtc,
         wrapCanvasText: wrapCanvasText,
-        slugify: slugify
+        slugify: slugify,
+        renderForecastPosterPng: renderForecastPosterPng
     };
 })();

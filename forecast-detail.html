@@ -426,7 +426,7 @@
         const lightningToggle = document.getElementById('lightningToggle');
         const lightningLayerSelect = document.getElementById('lightningLayer');
         const lightningStatus = document.getElementById('lightning-status');
-        const MAPBOX_TOKEN = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
         const UK_LIGHTNING_SOURCE_ID = 'forecast-detail-uk-lightning-source';
         const UK_LIGHTNING_GLOW_ID = 'forecast-detail-uk-lightning-glow';
         const UK_LIGHTNING_CORE_ID = 'forecast-detail-uk-lightning-core';
@@ -814,16 +814,19 @@
                     posterPreviewShell.hidden = false;
                 };
                 posterPreviewImg.onerror = () => {
-                    posterStatus.textContent = 'Poster PNG could not be loaded. Re-publish or update this outlook from Admin to regenerate the archived poster.';
+                    posterStatus.textContent = 'Poster PNG could not be loaded from storage. Attempting to generate it locally...';
                     posterPreviewShell.hidden = true;
                     posterLinkBtn.hidden = true;
+                    posterPreviewImg.removeAttribute('src');
+                    attemptLocalPosterRender(data, geoJSON);
                 };
                 posterPreviewImg.src = data.posterUrl;
             } else {
                 posterLinkBtn.hidden = true;
                 posterPreviewShell.hidden = true;
                 posterPreviewImg.removeAttribute('src');
-                posterStatus.textContent = 'This outlook does not have a synced poster PNG yet. Re-publish or update it from Admin to generate one.';
+                posterStatus.textContent = 'No synced poster PNG found. Generating it locally...';
+                attemptLocalPosterRender(data, geoJSON);
             }
 
             const displayFeatures = window.GenWeatherUtils
@@ -903,6 +906,52 @@
                     setLightningStatus('UK lightning hidden', 'off');
                 }
             });
+        }
+
+        async function attemptLocalPosterRender(data, geoJSON) {
+            if (!window.GenWeatherUtils?.renderForecastPosterPng) {
+                posterStatus.textContent = 'Poster generator not available on this page. Re-publish from Admin to create the archived poster.';
+                return;
+            }
+
+            try {
+                const posterArtifact = await window.GenWeatherUtils.renderForecastPosterPng(geoJSON, {
+                    validFrom: data.validFrom,
+                    validTo: data.validTo,
+                    issuedAt: data.issuedAt || data.validFrom,
+                    issueVersion: data.issueVersion || 1,
+                    mapboxToken: MAPBOX_TOKEN
+                });
+
+                const response = await fetch(posterArtifact.dataUrl);
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+
+                posterPreviewImg.onload = () => {
+                    posterStatus.textContent = 'Poster PNG generated locally for preview (not synced to archive storage).';
+                    posterPreviewShell.hidden = false;
+                };
+                posterPreviewImg.onerror = () => {
+                    posterStatus.textContent = 'Poster PNG generated locally but could not be displayed.';
+                    posterPreviewShell.hidden = true;
+                };
+
+                posterPreviewShell.hidden = false;
+                posterPreviewImg.src = objectUrl;
+
+                posterLinkBtn.hidden = false;
+                posterLinkBtn.href = objectUrl;
+                posterLinkBtn.target = '_blank';
+                posterLinkBtn.rel = 'noopener';
+                posterLinkBtn.download = posterArtifact.fileName;
+
+                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+            } catch (error) {
+                console.error('Local poster render failed.', error);
+                posterStatus.textContent = 'Could not generate the poster PNG locally. Re-publish or update from Admin to regenerate the archived poster.';
+                posterPreviewShell.hidden = true;
+                posterLinkBtn.hidden = true;
+            }
         }
 
         fetchForecast();
