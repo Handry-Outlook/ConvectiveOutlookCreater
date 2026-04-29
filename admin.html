@@ -630,6 +630,80 @@
             margin-bottom: 12px;
         }
 
+        .poster-options-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            flex-wrap: wrap;
+            background: #ffffff;
+            border: 1px solid #dbe4ef;
+            border-radius: 14px;
+            padding: 12px 14px;
+            margin-bottom: 12px;
+        }
+
+        .poster-options-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 800;
+            color: #172033;
+            text-transform: none;
+            letter-spacing: 0;
+            cursor: pointer;
+        }
+
+        .poster-options-label input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: var(--primary);
+        }
+
+        .kml-import-shell {
+            display: grid;
+            gap: 14px;
+        }
+
+        .kml-import-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .kml-meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .kml-meta-card {
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 14px;
+            padding: 12px 14px;
+        }
+
+        .kml-meta-label {
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .kml-meta-value {
+            font-size: 13px;
+            color: #334155;
+            line-height: 1.6;
+            word-break: break-word;
+        }
+
         .btn-save {
             width: 100%;
             padding: 15px 16px;
@@ -824,7 +898,8 @@
             .field-grid,
             .editor-actions,
             .sort-row,
-            .admin-hoco-actions {
+            .admin-hoco-actions,
+            .kml-meta-grid {
                 grid-template-columns: 1fr;
             }
 
@@ -933,6 +1008,43 @@
                     <div>
                         <label for="valid-to">Valid to</label>
                         <input type="datetime-local" id="valid-to">
+                    </div>
+                </div>
+            </div>
+
+            <div class="editor-card">
+                <div class="section-head">
+                    <div>
+                        <div class="section-title">Batch KML Import</div>
+                        <div class="section-note">Upload one or more outlook KML files and turn them into a locally saved draft.</div>
+                    </div>
+                </div>
+                <div class="kml-import-shell">
+                    <div>
+                        <label for="kml-batch-input">KML files</label>
+                        <input type="file" id="kml-batch-input" accept=".kml,.xml,application/vnd.google-earth.kml+xml" multiple>
+                    </div>
+                    <div class="kml-import-actions">
+                        <button type="button" class="btn-secondary" id="import-kml-btn"><i class="fas fa-file-import"></i> Load KML draft</button>
+                        <div class="section-note" id="kml-import-status">Batch KML import reads placemark names as risk levels and saves the result as a local draft.</div>
+                    </div>
+                    <div class="kml-meta-grid">
+                        <div class="kml-meta-card">
+                            <div class="kml-meta-label">Draft Validity</div>
+                            <div class="kml-meta-value" id="kml-validity-meta">--</div>
+                        </div>
+                        <div class="kml-meta-card">
+                            <div class="kml-meta-label">Draft Issuance</div>
+                            <div class="kml-meta-value" id="kml-issued-meta">--</div>
+                        </div>
+                        <div class="kml-meta-card">
+                            <div class="kml-meta-label">Imported Title</div>
+                            <div class="kml-meta-value" id="kml-title-meta">No KML draft loaded.</div>
+                        </div>
+                        <div class="kml-meta-card">
+                            <div class="kml-meta-label">Imported Files</div>
+                            <div class="kml-meta-value" id="kml-files-meta">0 files</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1054,6 +1166,14 @@
                 <button class="btn-save" id="save-forecast"><i class="fas fa-bullhorn"></i> Publish Outlook</button>
             </div>
 
+            <div class="poster-options-row">
+                <label class="poster-options-label" for="poster-lightning-toggle">
+                    <input type="checkbox" id="poster-lightning-toggle">
+                    <span>Include UK lightning on poster/export</span>
+                </label>
+                <div class="section-note">Uses the same live UK lightning feeds as the main outlook page and overlays strikes that fall inside the forecast valid window when enabled.</div>
+            </div>
+
             <div id="status"></div>
 
             <div class="editor-card">
@@ -1141,6 +1261,47 @@
         const PREVIEW_SEVERE_LINE_ID = 'outlook-preview-severe-line';
         const HANDRY_LOGO_SRC = 'assets/handry-outlook-logo.png';
         const HANDRY_LOGO_FALLBACK = 'https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/refs/heads/main/Handry_outlook_icon_pride_small.png';
+        const POSTER_TEMPLATE_ASSETS = Object.freeze({
+            1: 'assets/low_risk.png',
+            2: 'assets/slight_risk.png',
+            3: 'assets/enhanced_risk.png',
+            4: 'assets/moderate_risk.png',
+            5: 'assets/high_risk.png'
+        });
+        const POSTER_RENDER_SCALE = 0.5;
+        const POSTER_MAP_FRAME = Object.freeze({
+            x: 3320,
+            y: 88,
+            width: 3710,
+            height: 4844,
+            radius: 42
+        });
+        const POSTER_TEXT_LAYOUT = Object.freeze({
+            valid: {
+                x: 88,
+                y: 332,
+                maxWidth: 2920,
+                lineHeight: 92,
+                maxHeight: 160,
+                fontSize: 76
+            },
+            issued: {
+                x: 88,
+                y: 514,
+                maxWidth: 2920,
+                lineHeight: 92,
+                maxHeight: 150,
+                fontSize: 76
+            }
+        });
+        const POSTER_LIGHTNING_LOOKBACK_MINUTES = 360;
+        const LOCAL_DRAFT_STORAGE_KEY = 'handry-admin-draft-v1';
+        const KML_IMPORT_DEFAULT_STATUS = 'Batch KML import reads placemark names as risk levels and saves the result as a local draft.';
+        const UK_LIGHTNING_FEED_URLS = Object.freeze({
+            githubPrimary: 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data.json',
+            githubSecondary: 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json',
+            metOfficeBase: 'https://data.consumer-digital.api.metoffice.gov.uk/v1/lightning'
+        });
 
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
@@ -1171,6 +1332,14 @@
         const layerStack = document.getElementById('layer-stack');
         const layerCount = document.getElementById('layer-count');
         const saveButton = document.getElementById('save-forecast');
+        const posterLightningToggle = document.getElementById('poster-lightning-toggle');
+        const kmlBatchInput = document.getElementById('kml-batch-input');
+        const importKmlButton = document.getElementById('import-kml-btn');
+        const kmlImportStatus = document.getElementById('kml-import-status');
+        const kmlValidityMeta = document.getElementById('kml-validity-meta');
+        const kmlIssuedMeta = document.getElementById('kml-issued-meta');
+        const kmlTitleMeta = document.getElementById('kml-title-meta');
+        const kmlFilesMeta = document.getElementById('kml-files-meta');
         const validFromInput = document.getElementById('valid-from');
         const validToInput = document.getElementById('valid-to');
         const adminHocoDateInput = document.getElementById('hoco-admin-date');
@@ -1219,6 +1388,13 @@
         let adminActiveHocoEnsembleGeojson = null;
         const adminHocoGeojsonCache = new Map();
         const adminHocoEnsembleCache = new Map();
+        let posterUkLightningStrikes = [];
+        let posterUkLightningLastUpdate = null;
+        let draftIssuedAtOverride = null;
+        let importedDraftTitle = '';
+        let importedDraftFiles = [];
+        let pendingLocalDraftRestore = false;
+        let adminMapReady = false;
 
         mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
 
@@ -1279,10 +1455,14 @@
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         map.on('load', () => {
+            adminMapReady = true;
             map.addControl(draw, 'top-left');
             ensurePreviewLayers();
             updateLayerToggleButtons();
             refreshDrawPreview();
+            if (pendingLocalDraftRestore) {
+                restoreLocalDraftIfAvailable();
+            }
         });
 
         map.on('style.load', () => {
@@ -1369,6 +1549,14 @@
             return local.toISOString().slice(0, 16);
         }
 
+        function parseLocalDateTimeText(value) {
+            const match = String(value || '').trim().match(/(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})/);
+            if (!match) return null;
+            const [, dd, mm, yyyy, hh, min] = match;
+            const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), 0, 0);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
         function formatDateKey(date) {
             if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
             const year = date.getFullYear();
@@ -1385,6 +1573,195 @@
         function formatShortTime(date) {
             if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '--';
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function formatDraftMetaDate(value) {
+            const date = value instanceof Date ? value : new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            return date.toLocaleString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+        }
+
+        function formatDraftMetaWindow() {
+            const validFrom = validFromInput.value ? new Date(validFromInput.value) : null;
+            const validTo = validToInput.value ? new Date(validToInput.value) : null;
+            if (!validFrom || Number.isNaN(validFrom.getTime()) || !validTo || Number.isNaN(validTo.getTime())) {
+                return '--';
+            }
+            return `${formatDraftMetaDate(validFrom)} - ${formatDraftMetaDate(validTo)}`;
+        }
+
+        function setKmlImportStatus(message = KML_IMPORT_DEFAULT_STATUS) {
+            kmlImportStatus.textContent = message;
+        }
+
+        function updateKmlImportMeta() {
+            kmlValidityMeta.textContent = formatDraftMetaWindow();
+            kmlIssuedMeta.textContent = draftIssuedAtOverride ? formatDraftMetaDate(draftIssuedAtOverride) : '--';
+            kmlTitleMeta.textContent = importedDraftTitle || 'No KML draft loaded.';
+            kmlFilesMeta.textContent = importedDraftFiles.length
+                ? `${importedDraftFiles.length} file${importedDraftFiles.length === 1 ? '' : 's'}: ${importedDraftFiles.join(', ')}`
+                : '0 files';
+        }
+
+        function clearImportedDraftMetadata() {
+            draftIssuedAtOverride = null;
+            importedDraftTitle = '';
+            importedDraftFiles = [];
+            updateKmlImportMeta();
+            setKmlImportStatus();
+        }
+
+        function getKmlRiskDefinition(name) {
+            const normalized = String(name || '').trim().toLowerCase();
+            if (normalized.includes('high')) {
+                const meta = window.GenWeatherUtils?.getRiskMeta?.(5) || { label: '5 High', color: '#b23cc7' };
+                return { risk: meta.label, rank: 5, color: meta.color, severe: false };
+            }
+            if (normalized.includes('moderate')) {
+                const meta = window.GenWeatherUtils?.getRiskMeta?.(4) || { label: '4 Moderate', color: '#f91522' };
+                return { risk: meta.label, rank: 4, color: meta.color, severe: false };
+            }
+            if (normalized.includes('enhanced')) {
+                const meta = window.GenWeatherUtils?.getRiskMeta?.(3) || { label: '3 Enhanced', color: '#ff7a21' };
+                return { risk: meta.label, rank: 3, color: meta.color, severe: false };
+            }
+            if (normalized.includes('slight')) {
+                const meta = window.GenWeatherUtils?.getRiskMeta?.(2) || { label: '2 Slight', color: '#ffea00' };
+                return { risk: meta.label, rank: 2, color: meta.color, severe: false };
+            }
+            if (normalized.includes('low')) {
+                const meta = window.GenWeatherUtils?.getRiskMeta?.(1) || { label: '1 Low', color: '#67c6ac' };
+                return { risk: meta.label, rank: 1, color: meta.color, severe: false };
+            }
+            const meta = window.GenWeatherUtils?.SEVERE_META || { label: 'SEVERE', color: '#111111' };
+            return { risk: meta.label, rank: 0, color: meta.color, severe: true };
+        }
+
+        function getElementsByLocalName(root, localName) {
+            if (!root) return [];
+            const matches = [];
+            if (root.localName === localName) {
+                matches.push(root);
+            }
+            matches.push(...Array.from(root.getElementsByTagName('*')).filter(node => node.localName === localName));
+            return matches;
+        }
+
+        function getDirectChildText(parent, localName) {
+            if (!parent?.children) return '';
+            const child = Array.from(parent.children).find(node => node.localName === localName);
+            return child?.textContent?.trim() || '';
+        }
+
+        function parseKmlValidityWindow(title) {
+            const normalized = String(title || '').replace(/\s+/g, ' ').trim();
+            const match = normalized.match(/convective outlook\s*:\s*(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2})\s*-\s*(\d{1,2}\/\d{1,2}\/\d{4}\s+\d{1,2}:\d{2})/i);
+            if (!match) return null;
+            const start = parseLocalDateTimeText(match[1]);
+            const end = parseLocalDateTimeText(match[2]);
+            if (!start || !end || end <= start) return null;
+            return { start, end, title: normalized };
+        }
+
+        function parseKmlCoordinates(text) {
+            return String(text || '')
+                .trim()
+                .split(/\s+/)
+                .map(entry => entry.split(','))
+                .map(parts => [Number(parts[0]), Number(parts[1])])
+                .filter(coord => Number.isFinite(coord[0]) && Number.isFinite(coord[1]));
+        }
+
+        function closeCoordinateRing(coordinates) {
+            const ring = coordinates.slice();
+            if (!ring.length) return ring;
+            const [firstLng, firstLat] = ring[0];
+            const [lastLng, lastLat] = ring[ring.length - 1];
+            if (firstLng !== lastLng || firstLat !== lastLat) {
+                ring.push([firstLng, firstLat]);
+            }
+            return ring;
+        }
+
+        function parseKmlPolygonNode(polygonNode) {
+            if (!polygonNode) return null;
+
+            const extractRing = boundaryNode => {
+                const coordinatesNode = getElementsByLocalName(boundaryNode, 'coordinates')[0];
+                if (!coordinatesNode) return [];
+                return closeCoordinateRing(parseKmlCoordinates(coordinatesNode.textContent));
+            };
+
+            const outerBoundary = getElementsByLocalName(polygonNode, 'outerBoundaryIs')[0];
+            const outerRing = extractRing(outerBoundary || polygonNode);
+            if (outerRing.length < 4) return null;
+
+            const innerRings = getElementsByLocalName(polygonNode, 'innerBoundaryIs')
+                .map(extractRing)
+                .filter(ring => ring.length >= 4);
+
+            return {
+                type: 'Polygon',
+                coordinates: [outerRing, ...innerRings]
+            };
+        }
+
+        function extractKmlDocumentTitle(xml) {
+            const documentNode = getElementsByLocalName(xml, 'Document')[0];
+            const folderNode = getElementsByLocalName(xml, 'Folder')[0];
+            return getDirectChildText(documentNode, 'name')
+                || getDirectChildText(folderNode, 'name')
+                || getDirectChildText(xml.documentElement, 'name')
+                || '';
+        }
+
+        async function parseKmlFile(file) {
+            const text = await file.text();
+            const xml = new DOMParser().parseFromString(text, 'application/xml');
+            if (xml.querySelector('parsererror')) {
+                throw new Error(`${file.name} is not valid KML.`);
+            }
+
+            const title = extractKmlDocumentTitle(xml);
+            const validWindow = parseKmlValidityWindow(title);
+            const placemarks = getElementsByLocalName(xml, 'Placemark');
+            const features = [];
+
+            placemarks.forEach(placemark => {
+                const placemarkName = getDirectChildText(placemark, 'name') || file.name;
+                const risk = getKmlRiskDefinition(placemarkName);
+                const polygonNodes = getElementsByLocalName(placemark, 'Polygon');
+
+                polygonNodes.forEach(polygonNode => {
+                    const geometry = parseKmlPolygonNode(polygonNode);
+                    if (!geometry) return;
+                    features.push({
+                        type: 'Feature',
+                        geometry,
+                        properties: {
+                            user_color: risk.color,
+                            user_risk: risk.risk,
+                            user_rank: risk.rank,
+                            user_severe: risk.severe
+                        }
+                    });
+                });
+            });
+
+            return {
+                fileName: file.name,
+                title,
+                validWindow,
+                features,
+                lastModified: file.lastModified ? new Date(file.lastModified) : null
+            };
         }
 
         function parseHocoTime(timeStr) {
@@ -1908,6 +2285,7 @@
             const nextPos = start + text.length;
             textarea.setSelectionRange(nextPos, nextPos);
             updateDiscussionUI();
+            persistDraftLocally();
         }
 
         function buildRawDisplayFeatures(features) {
@@ -1957,6 +2335,138 @@
 
         function createPreviewFeatures() {
             return buildRawDisplayFeatures(draw.getAll().features);
+        }
+
+        function buildLocalDraftSnapshot() {
+            return {
+                validFrom: validFromInput.value || '',
+                validTo: validToInput.value || '',
+                description: forecastText.value || '',
+                geoJSON: createDraftGeoJSON(),
+                issuedAtOverride: draftIssuedAtOverride || null,
+                importedTitle: importedDraftTitle || '',
+                importedFiles: importedDraftFiles.slice(),
+                savedAt: new Date().toISOString()
+            };
+        }
+
+        function hasPersistableDraftContent(snapshot = buildLocalDraftSnapshot()) {
+            const description = typeof snapshot.description === 'string' ? snapshot.description : '';
+            const features = Array.isArray(snapshot?.geoJSON?.features) ? snapshot.geoJSON.features : [];
+            const importedFiles = Array.isArray(snapshot.importedFiles) ? snapshot.importedFiles : [];
+            return Boolean(
+                description.trim()
+                || features.length
+                || importedFiles.length
+            );
+        }
+
+        function clearLocalDraft() {
+            try {
+                window.localStorage.removeItem(LOCAL_DRAFT_STORAGE_KEY);
+            } catch (error) {
+                console.warn('Could not clear local draft storage.', error);
+            }
+        }
+
+        function persistDraftLocally() {
+            if (currentEditingDocId) return;
+
+            const snapshot = buildLocalDraftSnapshot();
+            if (!hasPersistableDraftContent(snapshot)) {
+                clearLocalDraft();
+                return;
+            }
+
+            try {
+                window.localStorage.setItem(LOCAL_DRAFT_STORAGE_KEY, JSON.stringify(snapshot));
+            } catch (error) {
+                console.warn('Could not persist local draft storage.', error);
+            }
+        }
+
+        function applyLocalDraftSnapshot(snapshot) {
+            currentEditingDocId = null;
+            currentEditingData = null;
+            setEditorMode(false);
+            forecastText.value = snapshot.description || '';
+            validFromInput.value = snapshot.validFrom || '';
+            validToInput.value = snapshot.validTo || '';
+            draftIssuedAtOverride = snapshot.issuedAtOverride || null;
+            importedDraftTitle = snapshot.importedTitle || '';
+            importedDraftFiles = Array.isArray(snapshot.importedFiles) ? snapshot.importedFiles : [];
+
+            draw.deleteAll();
+            const geoJSON = typeof snapshot.geoJSON === 'string' ? JSON.parse(snapshot.geoJSON) : snapshot.geoJSON;
+            (geoJSON?.features || []).forEach(feature => {
+                const state = getOutlookFeatureState(feature);
+                draw.add({
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        user_color: feature.properties?.user_color || state.color,
+                        user_risk: feature.properties?.user_risk || state.risk,
+                        user_rank: feature.properties?.user_rank ?? state.rank,
+                        user_severe: feature.properties?.user_severe ?? state.severe
+                    }
+                });
+            });
+
+            updateDiscussionUI();
+            updateLayerStackUI();
+            refreshDrawPreview();
+            updateKmlImportMeta();
+            syncAdminHocoDateToInputs();
+            closeDiscussionModal();
+            if (geoJSON?.features?.length) {
+                fitMapToFeatures(geoJSON.features);
+            }
+        }
+
+        function restoreLocalDraftIfAvailable() {
+            if (!currentUser) return;
+            if (currentEditingDocId || forecastText.value.trim() || draw.getAll().features.length) return;
+
+            let rawSnapshot = null;
+            try {
+                rawSnapshot = window.localStorage.getItem(LOCAL_DRAFT_STORAGE_KEY);
+            } catch (error) {
+                console.warn('Could not read local draft storage.', error);
+                return;
+            }
+
+            if (!rawSnapshot) return;
+
+            if (!adminMapReady) {
+                pendingLocalDraftRestore = true;
+                return;
+            }
+
+            try {
+                const snapshot = JSON.parse(rawSnapshot);
+                if (!hasPersistableDraftContent(snapshot)) {
+                    clearLocalDraft();
+                    return;
+                }
+                applyLocalDraftSnapshot(snapshot);
+                setKmlImportStatus('Local draft restored from this browser.');
+                showStatus('Local draft restored.', '#475569');
+            } catch (error) {
+                console.warn('Could not restore local draft.', error);
+                clearLocalDraft();
+            } finally {
+                pendingLocalDraftRestore = false;
+            }
+        }
+
+        function getDraftIssuedAtValue(fallbackValue = new Date().toISOString()) {
+            if (draftIssuedAtOverride) {
+                const issuedDate = new Date(draftIssuedAtOverride);
+                if (!Number.isNaN(issuedDate.getTime())) {
+                    return issuedDate.toISOString();
+                }
+            }
+            return fallbackValue;
         }
 
         function ensurePreviewLayers() {
@@ -2092,6 +2602,7 @@
             validFromInput.value = toLocalInputValue(validFrom);
             validToInput.value = toLocalInputValue(validTo);
             syncAdminHocoDateToInputs();
+            updateKmlImportMeta();
         }
 
         function showStatus(message, color) {
@@ -2118,6 +2629,8 @@
             setEditorMode(false);
             forecastText.value = '';
             draw.deleteAll();
+            clearImportedDraftMetadata();
+            clearLocalDraft();
             setDefaultDates();
             updateDiscussionUI();
             updateLayerStackUI();
@@ -2131,7 +2644,8 @@
             return Boolean(
                 currentEditingDocId ||
                 forecastText.value.trim() ||
-                draw.getAll().features.length
+                draw.getAll().features.length ||
+                importedDraftFiles.length
             );
         }
 
@@ -2162,10 +2676,12 @@
         function loadToEdit(id, data) {
             currentEditingDocId = id;
             currentEditingData = data;
+            clearImportedDraftMetadata();
             setEditorMode(true);
             validFromInput.value = data.validFrom;
             validToInput.value = data.validTo;
             syncAdminHocoDateToInputs();
+            updateKmlImportMeta();
             forecastText.value = data.description || '';
             updateDiscussionUI();
 
@@ -2246,6 +2762,288 @@
             const fromValue = validFromInput.value || new Date().toISOString();
             const datePart = String(fromValue).split('T')[0].replace(/-/g, '');
             return `convective-outlook-${datePart}-v${issueVersion}.png`;
+        }
+
+        async function fetchPosterUkLightningData() {
+            const fetchJsonOrNull = async url => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) return null;
+                    return await response.json();
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const asStrikeList = response => response?.lightning_strikes?.map(strike => ({
+                ...strike,
+                time: new Date(strike.strike_time)
+            })) || [];
+
+            const [mainResponse, githubResponse1, githubResponse2] = await Promise.all([
+                fetchJsonOrNull(UK_LIGHTNING_FEED_URLS.metOfficeBase),
+                fetchJsonOrNull(UK_LIGHTNING_FEED_URLS.githubPrimary),
+                fetchJsonOrNull(UK_LIGHTNING_FEED_URLS.githubSecondary)
+            ]);
+
+            const baseStrikes = asStrikeList(mainResponse);
+            const chunkUrls = (mainResponse?.chunks || []).map(chunk =>
+                `${UK_LIGHTNING_FEED_URLS.metOfficeBase}?last-minutes=1&chunk=${chunk.chunk}`
+            );
+            const chunkResponses = await Promise.all(chunkUrls.map(url => fetchJsonOrNull(url)));
+
+            const githubStrikes1 = asStrikeList(githubResponse1);
+            const githubStrikes2 = asStrikeList(githubResponse2);
+            const chunkStrikes = chunkResponses.flatMap(response => asStrikeList(response));
+            const allStrikes = [...githubStrikes1, ...githubStrikes2, ...baseStrikes, ...chunkStrikes];
+
+            if (!allStrikes.length) {
+                throw new Error('No data returned from the available UK lightning feeds.');
+            }
+
+            const seen = new Map();
+            posterUkLightningStrikes = allStrikes.filter(strike => {
+                const coords = Array.isArray(strike.coordinates) ? strike.coordinates : [null, null];
+                const key = `${strike.strike_time}_${coords[0]}_${coords[1]}`;
+                if (seen.has(key)) return false;
+                seen.set(key, true);
+                return coords[0] !== null && coords[1] !== null && strike.time instanceof Date && !Number.isNaN(strike.time.getTime());
+            });
+            posterUkLightningLastUpdate = new Date();
+            return posterUkLightningStrikes;
+        }
+
+        async function getPosterUkLightningData(forceRefresh = false) {
+            const dataIsFresh = !forceRefresh
+                && posterUkLightningLastUpdate
+                && (Date.now() - posterUkLightningLastUpdate.getTime()) < 60000
+                && posterUkLightningStrikes.length;
+
+            if (dataIsFresh) {
+                return posterUkLightningStrikes;
+            }
+
+            return fetchPosterUkLightningData();
+        }
+
+        function resolveDraftLightningWindow(referenceTime = Date.now()) {
+            const nowTime = referenceTime instanceof Date ? referenceTime.getTime() : Number(referenceTime || Date.now());
+            const validStart = validFromInput.value ? new Date(validFromInput.value) : null;
+            const validEnd = validToInput.value ? new Date(validToInput.value) : null;
+
+            if (validStart && !Number.isNaN(validStart.getTime()) && validEnd && !Number.isNaN(validEnd.getTime())) {
+                return {
+                    startTime: validStart.getTime(),
+                    endTime: Math.min(validEnd.getTime(), nowTime),
+                    referenceTime: Math.min(validEnd.getTime(), nowTime)
+                };
+            }
+
+            return {
+                startTime: nowTime - (POSTER_LIGHTNING_LOOKBACK_MINUTES * 60 * 1000),
+                endTime: nowTime,
+                referenceTime: nowTime
+            };
+        }
+
+        async function importBatchKmlFiles(fileList) {
+            const files = Array.from(fileList || []);
+            if (!files.length) {
+                setKmlImportStatus('Choose one or more KML files first.');
+                return;
+            }
+
+            if (hasDraftContent() && !window.confirm('Replace the current draft with the imported KML files?')) {
+                setKmlImportStatus('KML import canceled. Current draft kept.');
+                return;
+            }
+
+            setKmlImportStatus('Importing KML files...');
+            showStatus('Importing KML draft...', '#1d4ed8');
+
+            const parsedFiles = await Promise.all(files.map(file => parseKmlFile(file)));
+            const importedFeatures = parsedFiles.flatMap(entry => entry.features || []);
+
+            if (!importedFeatures.length) {
+                throw new Error('No polygons were found in the selected KML files.');
+            }
+
+            const validWindows = parsedFiles
+                .map(entry => entry.validWindow)
+                .filter(Boolean);
+            const primaryWindow = validWindows[0] || null;
+            const hasValidityMismatch = validWindows.some(windowEntry =>
+                primaryWindow
+                && (windowEntry.start.getTime() !== primaryWindow.start.getTime() || windowEntry.end.getTime() !== primaryWindow.end.getTime())
+            );
+
+            const latestLastModified = parsedFiles
+                .map(entry => entry.lastModified)
+                .filter(date => date instanceof Date && !Number.isNaN(date.getTime()))
+                .sort((a, b) => a.getTime() - b.getTime())
+                .pop() || null;
+
+            currentEditingDocId = null;
+            currentEditingData = null;
+            setEditorMode(false);
+            forecastText.value = '';
+            draw.deleteAll();
+
+            importedFeatures.forEach(feature => {
+                const state = getOutlookFeatureState(feature);
+                draw.add({
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        user_color: feature.properties?.user_color || state.color,
+                        user_risk: feature.properties?.user_risk || state.risk,
+                        user_rank: feature.properties?.user_rank ?? state.rank,
+                        user_severe: feature.properties?.user_severe ?? state.severe
+                    }
+                });
+            });
+
+            if (primaryWindow) {
+                validFromInput.value = toLocalInputValue(primaryWindow.start);
+                validToInput.value = toLocalInputValue(primaryWindow.end);
+            }
+
+            draftIssuedAtOverride = latestLastModified ? latestLastModified.toISOString() : null;
+            importedDraftTitle = primaryWindow?.title || parsedFiles.find(entry => entry.title)?.title || '';
+            importedDraftFiles = parsedFiles.map(entry => entry.fileName);
+
+            updateDiscussionUI();
+            updateLayerStackUI();
+            refreshDrawPreview();
+            fitMapToFeatures(importedFeatures);
+            syncAdminHocoDateToInputs();
+            updateKmlImportMeta();
+            persistDraftLocally();
+            kmlBatchInput.value = '';
+
+            const importWarnings = [];
+            if (!primaryWindow) {
+                importWarnings.push('No Convective Outlook title window was found, so the existing validity fields were kept.');
+            }
+            if (hasValidityMismatch) {
+                importWarnings.push('Some KML files had different title validity windows; the first window was used.');
+            }
+
+            const successMessage = `Imported ${parsedFiles.length} KML file${parsedFiles.length === 1 ? '' : 's'} into a local draft.${importWarnings.length ? ` ${importWarnings.join(' ')}` : ''}`;
+            setKmlImportStatus(successMessage);
+            showStatus('KML draft loaded and saved locally.', 'var(--success)');
+        }
+
+        function normalizePosterTemplateRank(rank) {
+            const numericRank = Number(rank);
+            if (!Number.isFinite(numericRank)) return 1;
+            return Math.max(1, Math.min(5, Math.round(numericRank)));
+        }
+
+        function getPosterTemplateSource(rank) {
+            return POSTER_TEMPLATE_ASSETS[normalizePosterTemplateRank(rank)] || POSTER_TEMPLATE_ASSETS[1];
+        }
+
+        function loadPosterTemplate(rank) {
+            return loadCanvasImage(getPosterTemplateSource(rank));
+        }
+
+        function formatPosterTimestamp(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            const datePart = date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+            const timePart = date.toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false
+            });
+            return `${datePart} ${timePart}`;
+        }
+
+        function buildPosterValidLine() {
+            return `${formatPosterTimestamp(validFromInput.value)} - ${formatPosterTimestamp(validToInput.value)}`;
+        }
+
+        function buildPosterIssuedLine(issuedAt, issueVersion) {
+            return `${formatPosterTimestamp(issuedAt)} Version ${issueVersion}`;
+        }
+
+        function scalePosterLayoutRect(rect, scale) {
+            return {
+                x: rect.x * scale,
+                y: rect.y * scale,
+                width: rect.width * scale,
+                height: rect.height * scale,
+                radius: rect.radius * scale
+            };
+        }
+
+        function scalePosterTextLayout(layout, scale) {
+            return {
+                x: layout.x * scale,
+                y: layout.y * scale,
+                maxWidth: layout.maxWidth * scale,
+                lineHeight: layout.lineHeight * scale,
+                maxHeight: layout.maxHeight * scale,
+                fontSize: layout.fontSize * scale
+            };
+        }
+
+        function getPosterLightningStyle(ageMinutes, scaleFactor = 1) {
+            if (ageMinutes <= 30) {
+                return { glowColor: '#ffd24d', coreColor: '#ffffff', glowRadius: 12 * scaleFactor, coreRadius: 4.6 * scaleFactor, glowOpacity: 0.36, coreOpacity: 1 };
+            }
+            if (ageMinutes <= 90) {
+                return { glowColor: '#ff9f1c', coreColor: '#ffe066', glowRadius: 9 * scaleFactor, coreRadius: 4 * scaleFactor, glowOpacity: 0.28, coreOpacity: 0.92 };
+            }
+            if (ageMinutes <= 180) {
+                return { glowColor: '#fb7185', coreColor: '#ffb347', glowRadius: 7 * scaleFactor, coreRadius: 3.4 * scaleFactor, glowOpacity: 0.2, coreOpacity: 0.78 };
+            }
+            return { glowColor: '#c084fc', coreColor: '#d8b4fe', glowRadius: 5 * scaleFactor, coreRadius: 2.6 * scaleFactor, glowOpacity: 0.14, coreOpacity: 0.62 };
+        }
+
+        function drawPosterLightningStrikes(ctx, projection, lightningStrikes, timeWindow, width, height) {
+            const resolvedWindow = timeWindow || resolveDraftLightningWindow();
+            const endTime = resolvedWindow.endTime;
+            const startTime = resolvedWindow.startTime;
+            const scaleFactor = Math.max(0.85, Math.min(1.45, Math.min(width / 1500, height / 1500) * 1.35));
+
+            lightningStrikes
+                .filter(strike => strike?.time instanceof Date && !Number.isNaN(strike.time.getTime()))
+                .filter(strike => Array.isArray(strike.coordinates) && strike.coordinates.length >= 2)
+                .filter(strike => strike.time.getTime() >= startTime && strike.time.getTime() <= endTime)
+                .sort((a, b) => a.time.getTime() - b.time.getTime())
+                .forEach(strike => {
+                    const [x, y] = projection.project(strike.coordinates);
+                    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+                    if (x < -40 || x > width + 40 || y < -40 || y > height + 40) return;
+
+                    const ageMinutes = Math.max(0, Math.round((resolvedWindow.referenceTime - strike.time.getTime()) / 60000));
+                    const style = getPosterLightningStyle(ageMinutes, scaleFactor);
+
+                    ctx.save();
+                    ctx.fillStyle = style.glowColor;
+                    ctx.globalAlpha = style.glowOpacity;
+                    ctx.beginPath();
+                    ctx.arc(x, y, style.glowRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.fillStyle = style.coreColor;
+                    ctx.globalAlpha = style.coreOpacity;
+                    ctx.beginPath();
+                    ctx.arc(x, y, style.coreRadius, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    ctx.globalAlpha = 0.62;
+                    ctx.strokeStyle = '#1f2937';
+                    ctx.lineWidth = Math.max(0.8, 0.7 * scaleFactor);
+                    ctx.stroke();
+                    ctx.restore();
+                });
         }
 
         function validateDraftGeoJSON(draftGeoJSON) {
@@ -2505,7 +3303,7 @@
             }
         }
 
-        function renderPosterMapVectorFallback(features, width, height) {
+        function renderPosterMapVectorFallback(features, width, height, options = {}) {
             const fallbackCanvas = document.createElement('canvas');
             fallbackCanvas.width = width;
             fallbackCanvas.height = height;
@@ -2570,6 +3368,17 @@
                 fallbackCtx.stroke();
                 fallbackCtx.restore();
             });
+
+            if (Array.isArray(options.lightningStrikes) && options.lightningStrikes.length) {
+                drawPosterLightningStrikes(
+                    fallbackCtx,
+                    projection,
+                    options.lightningStrikes,
+                    options.timeWindow || resolveDraftLightningWindow(),
+                    width,
+                    height
+                );
+            }
 
             fallbackCtx.strokeStyle = 'rgba(15, 23, 42, 0.14)';
             fallbackCtx.lineWidth = 2;
@@ -2662,7 +3471,11 @@
             );
         }
 
-        async function renderPosterMapImage(features, width, height) {
+        async function renderPosterMapImage(features, width, height, options = {}) {
+            if (Array.isArray(options.lightningStrikes) && options.lightningStrikes.length) {
+                return renderPosterMapVectorFallback(features, width, height, options);
+            }
+
             const requestWidth = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
             const requestHeight = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
             const staticGeojson = buildPosterStaticGeojson(features);
@@ -2679,189 +3492,129 @@
                 console.warn('Poster static map payload stayed too large after simplification, falling back to the vector poster map.');
             }
 
-            return renderPosterMapVectorFallback(features, width, height);
+            return renderPosterMapVectorFallback(features, width, height, options);
+        }
+
+        function drawPosterMapPanel(ctx, mapImage, frame) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.38)';
+            ctx.shadowBlur = Math.max(12, frame.radius * 1.1);
+            ctx.shadowOffsetY = Math.max(6, frame.radius * 0.3);
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.fillStyle = '#050505';
+            ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.clip();
+            ctx.drawImage(mapImage, frame.x, frame.y, frame.width, frame.height);
+            ctx.restore();
+
+            ctx.save();
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.lineWidth = Math.max(3, frame.radius * 0.18);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.26)';
+            ctx.stroke();
+            ctx.restore();
         }
 
         async function renderForecastPoster(draftGeoJSON, options = {}) {
             const issueVersion = options.issueVersion ?? getNextIssueVersion();
             const issuedAt = options.issuedAt ?? new Date().toISOString();
-            const canvas = document.createElement('canvas');
-            canvas.width = 2200;
-            canvas.height = 1300;
-
-            const panelWidth = 920;
-            const mapWidth = canvas.width - panelWidth;
-            const [mapImage, logoImage] = await Promise.all([
-                renderPosterMapImage(draftGeoJSON.features, mapWidth, canvas.height),
-                loadPosterLogo()
-            ]);
-            const ctx = canvas.getContext('2d');
+            const includeLightning = !!options.includeLightning;
             const riskLevels = window.GenWeatherUtils?.summarizeAllRiskLevels
                 ? window.GenWeatherUtils.summarizeAllRiskLevels(draftGeoJSON.features)
                 : window.GenWeatherUtils.summarizeRiskLevels(draftGeoJSON.features).map(r => ({ ...r, issued: true }));
             const issuedRiskLevels = riskLevels.filter(level => level.issued);
-            const validRange = `${formatPosterDate(validFromInput.value)} - ${formatPosterDate(validToInput.value)}`;
-            const issuedLine = `${formatPosterDate(issuedAt)} Version ${issueVersion}`;
             const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || {
+                rank: 1,
                 title: 'No issued risk',
                 color: '#94a3b8'
             };
-            const footerTop = canvas.height - 180;
-            const legendTop = 338;
-            const rowSpacing = 126;
-            const circleX = 130;
-            const circleRadius = 50;
-            const textX = 216;
-
-            ctx.fillStyle = '#eef2f7';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(mapImage, panelWidth, 0, mapWidth, canvas.height);
-
-            const overlayGradient = ctx.createLinearGradient(panelWidth, 0, canvas.width, canvas.height);
-            overlayGradient.addColorStop(0, 'rgba(15, 23, 42, 0.06)');
-            overlayGradient.addColorStop(1, 'rgba(15, 23, 42, 0.18)');
-            ctx.fillStyle = overlayGradient;
-            ctx.fillRect(panelWidth, 0, mapWidth, canvas.height);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, panelWidth, canvas.height);
-            ctx.fillStyle = '#dae2ef';
-            ctx.fillRect(panelWidth - 1, 0, 2, canvas.height);
-
-            ctx.fillStyle = '#0f172a';
-            ctx.font = '700 70px Inter';
-            ctx.fillText('Convective Outlook', 54, 110);
-            ctx.font = '500 28px Inter';
-            ctx.fillStyle = '#334155';
-            ctx.fillText(`Valid: ${validRange}`, 54, 164);
-            ctx.fillText(`Issued at ${issuedLine}`, 54, 210);
-
-            const brandCard = {
-                x: panelWidth - 224,
-                y: 30,
-                width: 194,
-                height: 118
-            };
-            drawRoundedRect(ctx, brandCard.x, brandCard.y, brandCard.width, brandCard.height, 24);
-            ctx.fillStyle = '#2f427f';
-            ctx.fill();
-            if (logoImage) {
-                drawContainedSourceImage(ctx, logoImage, getTrimmedImageSourceRect(logoImage), brandCard.x, brandCard.y, brandCard.width, brandCard.height, 12);
-            } else {
-                ctx.fillStyle = '#f8fafc';
-                ctx.beginPath();
-                ctx.arc(brandCard.x + 48, 74, 22, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = '#ffffff';
-                ctx.font = '700 24px Inter';
-                ctx.fillText('Handry', brandCard.x + 90, 72);
-                ctx.fillText('Outlook', brandCard.x + 90, 102);
+            if (document.fonts?.ready) {
+                try {
+                    await document.fonts.ready;
+                } catch (error) {
+                    console.warn('Poster font readiness check failed, continuing with current fonts.', error);
+                }
             }
 
-            drawRoundedRect(ctx, 54, 244, 230, 54, 18);
-            ctx.fillStyle = '#f8fafc';
-            ctx.fill();
-            ctx.strokeStyle = highestRisk.color;
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.fillStyle = highestRisk.color;
-            ctx.font = '700 18px Inter';
-            ctx.fillText(`Highest risk: ${highestRisk.title}`, 76, 277);
+            const templateImage = await loadPosterTemplate(highestRisk.rank);
+            const canvas = document.createElement('canvas');
+            const renderScale = POSTER_RENDER_SCALE;
+            canvas.width = Math.round(templateImage.width * renderScale);
+            canvas.height = Math.round(templateImage.height * renderScale);
 
-            drawRoundedRect(ctx, 306, 244, panelWidth - 360, 54, 18);
-            ctx.fillStyle = '#ffffff';
-            ctx.fill();
-            ctx.strokeStyle = '#111111';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            drawRoundedRect(ctx, 330, 247, 40, 26, 8);
-            ctx.strokeStyle = '#111111';
-            ctx.lineWidth = 3;
-            ctx.stroke();
-            ctx.fillStyle = '#1f2937';
-            ctx.font = '600 17px Inter';
-            ctx.fillText('Black outline represents severe weather possible.', 388, 277);
+            const mapFrame = scalePosterLayoutRect(POSTER_MAP_FRAME, renderScale);
+            const validTextLayout = scalePosterTextLayout(POSTER_TEXT_LAYOUT.valid, renderScale);
+            const issuedTextLayout = scalePosterTextLayout(POSTER_TEXT_LAYOUT.issued, renderScale);
+            const lightningTimeWindow = resolveDraftLightningWindow();
+            let posterLightningData = [];
+            let lightningWarning = '';
 
-            ctx.strokeStyle = '#ff7a21';
-            ctx.lineWidth = 8;
-            ctx.lineCap = 'round';
-            ctx.beginPath();
-            ctx.moveTo(circleX, legendTop - 40);
-            ctx.lineTo(circleX, legendTop + (rowSpacing * (riskLevels.length - 1)) + 40);
-            ctx.stroke();
+            if (includeLightning) {
+                try {
+                    posterLightningData = await getPosterUkLightningData();
+                } catch (error) {
+                    console.error('Poster UK lightning load failed, rendering without lightning overlay.', error);
+                    lightningWarning = 'UK lightning overlay unavailable';
+                }
+            }
 
-            riskLevels.forEach((level, index) => {
-                const isIssued = level.issued !== false;
-                const rowY = legendTop + (index * rowSpacing);
+            const lightningStrikeCountInWindow = posterLightningData.filter(strike =>
+                strike?.time instanceof Date
+                && !Number.isNaN(strike.time.getTime())
+                && strike.time.getTime() >= lightningTimeWindow.startTime
+                && strike.time.getTime() <= lightningTimeWindow.endTime
+                && Array.isArray(strike.coordinates)
+                && strike.coordinates.length >= 2
+            ).length;
 
-                ctx.globalAlpha = isIssued ? 1 : 0.28;
-                ctx.strokeStyle = index === riskLevels.length - 1 ? '#cbd5e1' : '#ff7a21';
-                ctx.lineWidth = 8;
-                ctx.beginPath();
-                ctx.moveTo(circleX, rowY);
-                ctx.lineTo(textX - 24, rowY);
-                ctx.stroke();
-                ctx.globalAlpha = isIssued ? 1 : 0.38;
-                ctx.fillStyle = level.color;
-                ctx.beginPath();
-                ctx.arc(circleX, rowY, circleRadius, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.fillStyle = level.rank === 2 ? '#172033' : '#ffffff';
-                ctx.font = '800 34px Inter';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(String(level.rank), circleX, rowY + 2);
+            const mapImage = await renderPosterMapImage(
+                draftGeoJSON.features,
+                Math.round(mapFrame.width),
+                Math.round(mapFrame.height),
+                {
+                    lightningStrikes: posterLightningData,
+                    timeWindow: lightningTimeWindow
+                }
+            );
 
-                ctx.textAlign = 'left';
-                ctx.textBaseline = 'alphabetic';
-                ctx.fillStyle = isIssued ? (level.rank === 2 ? '#c69200' : level.color) : '#94a3b8';
-                ctx.font = '700 40px Inter';
-                ctx.fillText(level.title, textX, rowY - 8);
-                ctx.fillStyle = '#475569';
-                ctx.font = '500 18px Inter';
-                drawCanvasTextBlock(
-                    ctx,
-                    isIssued ? level.description : 'Not issued in this outlook.',
-                    textX,
-                    rowY + 20,
-                    panelWidth - textX - 60,
-                    24,
-                    56
-                );
-                ctx.globalAlpha = 1;
-            });
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+            drawPosterMapPanel(ctx, mapImage, mapFrame);
 
-            ctx.fillStyle = '#24386f';
-            ctx.beginPath();
-            ctx.moveTo(0, footerTop + 26);
-            ctx.lineTo(panelWidth, footerTop - 12);
-            ctx.lineTo(panelWidth, canvas.height);
-            ctx.lineTo(0, canvas.height);
-            ctx.closePath();
-            ctx.fill();
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '700 24px Inter';
-            ctx.fillText('Poster notes', 54, footerTop + 58);
-            ctx.font = '500 17px Inter';
+            ctx.fillStyle = '#111111';
+            ctx.font = `500 ${validTextLayout.fontSize}px Inter`;
             drawCanvasTextBlock(
                 ctx,
-                'Risk levels run from 1 Low through 5 High. Black outlines highlight areas where severe weather is possible.',
-                54,
-                footerTop + 92,
-                panelWidth - 108,
-                24,
-                60
+                buildPosterValidLine(),
+                validTextLayout.x,
+                validTextLayout.y,
+                validTextLayout.maxWidth,
+                validTextLayout.lineHeight,
+                validTextLayout.maxHeight
             );
-            ctx.font = '600 18px Inter';
-            ctx.fillText(`Forecaster: ${getForecasterName()}`, 54, canvas.height - 38);
-            ctx.textAlign = 'right';
-            ctx.fillText(buildExportFileName(issueVersion), panelWidth - 54, canvas.height - 38);
-            ctx.textAlign = 'left';
+
+            ctx.fillStyle = '#111111';
+            ctx.font = `500 ${issuedTextLayout.fontSize}px Inter`;
+            drawCanvasTextBlock(
+                ctx,
+                buildPosterIssuedLine(issuedAt, issueVersion),
+                issuedTextLayout.x,
+                issuedTextLayout.y,
+                issuedTextLayout.maxWidth,
+                issuedTextLayout.lineHeight,
+                issuedTextLayout.maxHeight
+            );
 
             return {
                 dataUrl: canvas.toDataURL('image/png'),
-                fileName: buildExportFileName(issueVersion)
+                fileName: buildExportFileName(issueVersion),
+                lightningRequested: includeLightning,
+                lightningIncluded: includeLightning && lightningStrikeCountInWindow > 0,
+                lightningWarning: lightningWarning
             };
         }
 
@@ -2882,7 +3635,7 @@
                 return;
             }
 
-            const issuedAt = new Date().toISOString();
+            const issuedAt = getDraftIssuedAtValue(new Date().toISOString());
             const issueVersion = getNextIssueVersion();
             const maxRank = Math.max(...draftGeoJSON.features.map(feature => feature.properties.rank || 0));
             let posterArtifact = null;
@@ -2890,7 +3643,11 @@
             showStatus('Publishing outlook and building archive poster...', '#1d4ed8');
 
             try {
-                posterArtifact = await renderForecastPoster(draftGeoJSON, { issueVersion, issuedAt });
+                posterArtifact = await renderForecastPoster(draftGeoJSON, {
+                    issueVersion,
+                    issuedAt,
+                    includeLightning: posterLightningToggle.checked
+                });
             } catch (error) {
                 console.error('Poster render failed before publish.', error);
                 showStatus(`Publishing outlook. Poster rendering failed${error?.message ? `: ${error.message}` : ''}`, '#f59e0b');
@@ -2931,7 +3688,11 @@
                             posterFileName: posterArtifact.fileName,
                             posterUpdatedAt: issuedAt
                         });
-                        showStatus(currentEditingDocId ? 'Outlook updated and poster synced.' : 'Outlook published and poster synced.', 'var(--success)');
+                        const syncMessage = currentEditingDocId ? 'Outlook updated and poster synced.' : 'Outlook published and poster synced.';
+                        const lightningMessage = posterArtifact.lightningRequested
+                            ? (posterArtifact.lightningIncluded ? ' UK lightning overlay included.' : ' UK lightning overlay unavailable.')
+                            : '';
+                        showStatus(`${syncMessage}${lightningMessage}`, 'var(--success)');
                     } catch (error) {
                         console.error('Poster upload failed.', error);
                         showStatus(
@@ -2962,9 +3723,11 @@
 
             try {
                 showStatus('Rendering PNG export...', '#1d4ed8');
+                const issuedAt = getDraftIssuedAtValue(new Date().toISOString());
                 const posterArtifact = await renderForecastPoster(draftGeoJSON, {
                     issueVersion: getNextIssueVersion(),
-                    issuedAt: new Date().toISOString()
+                    issuedAt,
+                    includeLightning: posterLightningToggle.checked
                 });
                 const response = await fetch(posterArtifact.dataUrl);
                 const posterBlob = await response.blob();
@@ -2978,7 +3741,10 @@
                 anchor.remove();
                 window.setTimeout(() => URL.revokeObjectURL(posterObjectUrl), 1000);
 
-                showStatus('PNG export ready. Publish or update the outlook to sync this poster into the archive.', 'var(--success)');
+                const lightningMessage = posterArtifact.lightningRequested
+                    ? (posterArtifact.lightningIncluded ? ' UK lightning overlay included.' : ' UK lightning overlay unavailable.')
+                    : '';
+                showStatus(`PNG export ready. Publish or update the outlook to sync this poster into the archive.${lightningMessage}`, 'var(--success)');
             } catch (error) {
                 console.error(error);
                 showStatus(`Could not render the archive poster PNG${error?.message ? `: ${error.message}` : '.'}`, 'var(--accent)');
@@ -3064,25 +3830,40 @@
             });
             updateLayerStackUI();
             refreshDrawPreview();
+            persistDraftLocally();
         });
 
         map.on('draw.update', () => {
             updateLayerStackUI();
             refreshDrawPreview();
+            persistDraftLocally();
         });
 
         map.on('draw.delete', () => {
             updateLayerStackUI();
             refreshDrawPreview();
+            persistDraftLocally();
         });
 
         riskSelector.addEventListener('change', () => {
             syncSelectedProperties();
             updateLayerStackUI();
             refreshDrawPreview();
+            persistDraftLocally();
         });
 
-        forecastText.addEventListener('input', updateDiscussionUI);
+        forecastText.addEventListener('input', () => {
+            updateDiscussionUI();
+            persistDraftLocally();
+        });
+
+        [validFromInput, validToInput].forEach(input => {
+            input.addEventListener('change', () => {
+                syncAdminHocoDateToInputs();
+                updateKmlImportMeta();
+                persistDraftLocally();
+            });
+        });
 
         document.querySelectorAll('.template-btn[data-snippet]').forEach(button => {
             button.addEventListener('click', () => {
@@ -3116,6 +3897,22 @@
         document.getElementById('clear-draft').addEventListener('click', requestDraftReset);
         document.getElementById('new-btn').addEventListener('click', requestDraftReset);
         document.getElementById('fit-map-btn').addEventListener('click', () => fitMapToFeatures(draw.getAll().features));
+        importKmlButton.addEventListener('click', async () => {
+            try {
+                await importBatchKmlFiles(kmlBatchInput.files);
+            } catch (error) {
+                console.error('KML import failed.', error);
+                setKmlImportStatus(error?.message || 'Could not import the selected KML files.');
+                showStatus(error?.message || 'Could not import the selected KML files.', 'var(--accent)');
+            }
+        });
+        kmlBatchInput.addEventListener('change', () => {
+            if (kmlBatchInput.files?.length) {
+                setKmlImportStatus(`${kmlBatchInput.files.length} file${kmlBatchInput.files.length === 1 ? '' : 's'} selected. Click "Load KML draft" to import.`);
+            } else {
+                setKmlImportStatus();
+            }
+        });
 
         adminHocoDateInput.addEventListener('change', () => {
             setAdminHocoWindow(getWindowFromDateValue(adminHocoDateInput.value));
@@ -3169,11 +3966,13 @@
                     setDefaultDates();
                 } else {
                     syncAdminHocoDateToInputs();
+                    updateKmlImportMeta();
                 }
                 initAdminHocoRuns();
                 updateDiscussionUI();
                 updateLayerStackUI();
                 refreshDrawPreview();
+                restoreLocalDraftIfAvailable();
             } else {
                 document.getElementById('login-overlay').style.display = 'flex';
                 document.getElementById('app-header').style.display = 'none';
@@ -3184,12 +3983,15 @@
                 if (adminHocoUnsubscribe) adminHocoUnsubscribe();
                 historyUnsubscribe = null;
                 adminHocoUnsubscribe = null;
+                pendingLocalDraftRestore = false;
                 closeDiscussionModal();
             }
         });
 
         updateDiscussionUI();
         updateLayerStackUI();
+        updateKmlImportMeta();
+        setKmlImportStatus();
     </script>
 </body>
 </html>

@@ -49,6 +49,90 @@
             background: #fff;
         }
 
+        .map-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px 18px;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+            flex-wrap: wrap;
+        }
+
+        .map-toolbar-copy {
+            display: grid;
+            gap: 6px;
+        }
+
+        .map-toolbar-note {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
+        .map-toolbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .layer-toggle-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #172033;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .layer-toggle-chip input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: #1d4ed8;
+        }
+
+        .status-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            background: #e2e8f0;
+            color: #475569;
+        }
+
+        .status-chip.live {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-chip.loading {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .status-chip.off {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .status-chip.error {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
         #map {
             width: 100%;
             height: 620px;
@@ -153,6 +237,12 @@
             height: auto;
         }
 
+        .poster-meta-note {
+            font-size: 13px;
+            color: #64748b;
+            line-height: 1.6;
+        }
+
         .discussion-text {
             font-size: 15px;
             color: #334155;
@@ -235,6 +325,22 @@
             </div>
 
             <div class="map-card">
+                <div class="map-toolbar">
+                    <div class="map-toolbar-copy">
+                        <div class="page-eyebrow">Live Overlay</div>
+                        <div class="map-toolbar-note">Optional UK lightning layer using the same live strike feed as the main outlook page.</div>
+                    </div>
+                    <div class="map-toolbar-actions">
+                        <label class="layer-toggle-chip" for="lightningToggle">
+                            <input type="checkbox" id="lightningToggle" checked>
+                            <span>UK Lightning</span>
+                        </label>
+                        <select id="lightningLayer" hidden aria-hidden="true" tabindex="-1">
+                            <option value="uk-lightning" selected>UK Lightning</option>
+                        </select>
+                        <div class="status-chip loading" id="lightning-status">Loading UK lightning...</div>
+                    </div>
+                </div>
                 <div id="map"></div>
 
                 <div class="risk-legend">
@@ -274,9 +380,9 @@
                 <div class="discussion-card poster-card" id="poster-card" hidden>
                     <div>
                         <h2>Archive Poster PNG</h2>
-                        <div class="meta-value">This is the synced export image stored with the published outlook for archive use.</div>
+                        <div class="poster-meta-note" id="poster-status">Checking synced archive poster...</div>
                     </div>
-                    <div class="poster-preview-shell">
+                    <div class="poster-preview-shell" id="poster-preview-shell" hidden>
                         <img id="poster-preview-img" alt="Archived forecast poster preview">
                     </div>
                 </div>
@@ -314,7 +420,23 @@
         const copyLinkBtn = document.getElementById('copy-link-btn');
         const posterLinkBtn = document.getElementById('poster-link-btn');
         const posterCard = document.getElementById('poster-card');
+        const posterStatus = document.getElementById('poster-status');
+        const posterPreviewShell = document.getElementById('poster-preview-shell');
         const posterPreviewImg = document.getElementById('poster-preview-img');
+        const lightningToggle = document.getElementById('lightningToggle');
+        const lightningLayerSelect = document.getElementById('lightningLayer');
+        const lightningStatus = document.getElementById('lightning-status');
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
+        const UK_LIGHTNING_SOURCE_ID = 'forecast-detail-uk-lightning-source';
+        const UK_LIGHTNING_GLOW_ID = 'forecast-detail-uk-lightning-glow';
+        const UK_LIGHTNING_CORE_ID = 'forecast-detail-uk-lightning-core';
+        const UK_LIGHTNING_LOOKBACK_MINUTES = 360;
+        let map = null;
+        let ukLightningStrikes = [];
+        let ukLightningLastUpdate = null;
+        let ukLightningRefreshTimer = null;
+        let forecastValidStart = null;
+        let forecastValidEnd = null;
 
         legendHelpBtn.addEventListener('click', () => {
             legendHelpPanel.hidden = !legendHelpPanel.hidden;
@@ -334,6 +456,303 @@
                 window.prompt('Copy this link:', window.location.href);
             }
         });
+
+        function setLightningStatus(message, tone = 'off') {
+            lightningStatus.textContent = message;
+            lightningStatus.className = `status-chip ${tone}`;
+        }
+
+        function stopUkLightningRefresh() {
+            if (ukLightningRefreshTimer) {
+                clearInterval(ukLightningRefreshTimer);
+                ukLightningRefreshTimer = null;
+            }
+        }
+
+        function moveUkLightningLayersToTop() {
+            if (!map) return;
+            if (map.getLayer(UK_LIGHTNING_GLOW_ID)) {
+                map.moveLayer(UK_LIGHTNING_GLOW_ID);
+            }
+            if (map.getLayer(UK_LIGHTNING_CORE_ID)) {
+                map.moveLayer(UK_LIGHTNING_CORE_ID);
+            }
+        }
+
+        function removeUkLightningLayers() {
+            if (!map) return;
+            [UK_LIGHTNING_CORE_ID, UK_LIGHTNING_GLOW_ID].forEach(layerId => {
+                if (map.getLayer(layerId)) {
+                    map.removeLayer(layerId);
+                }
+            });
+            if (map.getSource(UK_LIGHTNING_SOURCE_ID)) {
+                map.removeSource(UK_LIGHTNING_SOURCE_ID);
+            }
+        }
+
+        function resolveForecastLightningWindow(referenceTime = Date.now()) {
+            const nowTime = referenceTime instanceof Date ? referenceTime.getTime() : Number(referenceTime || Date.now());
+            const validStartTime = forecastValidStart instanceof Date && !Number.isNaN(forecastValidStart.getTime())
+                ? forecastValidStart.getTime()
+                : null;
+            const validEndTime = forecastValidEnd instanceof Date && !Number.isNaN(forecastValidEnd.getTime())
+                ? forecastValidEnd.getTime()
+                : null;
+
+            if (validStartTime !== null && validEndTime !== null) {
+                return {
+                    startTime: validStartTime,
+                    endTime: Math.min(validEndTime, nowTime),
+                    referenceTime: Math.min(validEndTime, nowTime)
+                };
+            }
+
+            return {
+                startTime: nowTime - (UK_LIGHTNING_LOOKBACK_MINUTES * 60 * 1000),
+                endTime: nowTime,
+                referenceTime: nowTime
+            };
+        }
+
+        function buildUkLightningGeojson(referenceTime = Date.now()) {
+            const lightningWindow = resolveForecastLightningWindow(referenceTime);
+            const endTime = lightningWindow.endTime;
+            const startTime = lightningWindow.startTime;
+
+            return {
+                type: 'FeatureCollection',
+                features: ukLightningStrikes
+                    .filter(strike => strike?.time instanceof Date && !Number.isNaN(strike.time.getTime()))
+                    .filter(strike => strike.time.getTime() >= startTime && strike.time.getTime() <= endTime)
+                    .map(strike => {
+                        const ageMinutes = Math.max(0, Math.round((lightningWindow.referenceTime - strike.time.getTime()) / 60000));
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: strike.coordinates
+                            },
+                            properties: {
+                                strike_time: strike.strike_time,
+                                ageMinutes: ageMinutes
+                            }
+                        };
+                    })
+            };
+        }
+
+        function renderUkLightningLayers() {
+            if (!map) return;
+            const geojsonData = buildUkLightningGeojson();
+            const strikeCount = geojsonData.features.length;
+
+            if (!map.getSource(UK_LIGHTNING_SOURCE_ID)) {
+                map.addSource(UK_LIGHTNING_SOURCE_ID, {
+                    type: 'geojson',
+                    data: geojsonData
+                });
+            } else {
+                map.getSource(UK_LIGHTNING_SOURCE_ID).setData(geojsonData);
+            }
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+            const beforeId = firstSymbol?.id;
+
+            if (!map.getLayer(UK_LIGHTNING_GLOW_ID)) {
+                map.addLayer({
+                    id: UK_LIGHTNING_GLOW_ID,
+                    type: 'circle',
+                    source: UK_LIGHTNING_SOURCE_ID,
+                    paint: {
+                        'circle-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, '#fff7cc',
+                            30, '#ffd24d',
+                            90, '#ff9f1c',
+                            180, '#fb7185',
+                            360, '#c084fc'
+                        ],
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 12,
+                            30, 10,
+                            90, 8,
+                            180, 6,
+                            360, 4
+                        ],
+                        'circle-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 0.42,
+                            60, 0.32,
+                            180, 0.18,
+                            360, 0.08
+                        ],
+                        'circle-blur': 0.8
+                    }
+                }, beforeId);
+            }
+
+            if (!map.getLayer(UK_LIGHTNING_CORE_ID)) {
+                map.addLayer({
+                    id: UK_LIGHTNING_CORE_ID,
+                    type: 'circle',
+                    source: UK_LIGHTNING_SOURCE_ID,
+                    paint: {
+                        'circle-color': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, '#ffffff',
+                            30, '#ffe066',
+                            90, '#ffb347',
+                            180, '#fb7185',
+                            360, '#d8b4fe'
+                        ],
+                        'circle-radius': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 4.6,
+                            60, 4,
+                            180, 3.2,
+                            360, 2.2
+                        ],
+                        'circle-stroke-color': '#1f2937',
+                        'circle-stroke-width': 0.6,
+                        'circle-opacity': [
+                            'interpolate',
+                            ['linear'],
+                            ['get', 'ageMinutes'],
+                            0, 1,
+                            120, 0.88,
+                            360, 0.55
+                        ]
+                    }
+                }, beforeId);
+            }
+
+            moveUkLightningLayersToTop();
+
+            if (!strikeCount) {
+                setLightningStatus('No UK strikes in forecast valid window', 'off');
+                return;
+            }
+
+            const updatedLabel = ukLightningLastUpdate
+                ? ukLightningLastUpdate.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+                : '--:--';
+            setLightningStatus(`${strikeCount} strikes in valid window / updated ${updatedLabel}`, 'live');
+        }
+
+        async function fetchUkLightningData() {
+            const githubUrl1 = 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data.json';
+            const githubUrl2 = 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json';
+            const metOfficeBaseUrl = 'https://data.consumer-digital.api.metoffice.gov.uk/v1/lightning';
+
+            const fetchJsonOrNull = async url => {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) return null;
+                    return await response.json();
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const asStrikeList = response => response?.lightning_strikes?.map(strike => ({
+                ...strike,
+                time: new Date(strike.strike_time)
+            })) || [];
+
+            const [mainResponse, githubResponse1, githubResponse2] = await Promise.all([
+                fetchJsonOrNull(metOfficeBaseUrl),
+                fetchJsonOrNull(githubUrl1),
+                fetchJsonOrNull(githubUrl2)
+            ]);
+
+            const baseStrikes = asStrikeList(mainResponse);
+            const chunkUrls = (mainResponse?.chunks || []).map(chunk =>
+                `${metOfficeBaseUrl}?last-minutes=1&chunk=${chunk.chunk}`
+            );
+            const chunkResponses = await Promise.all(chunkUrls.map(url => fetchJsonOrNull(url)));
+
+            const githubStrikes1 = asStrikeList(githubResponse1);
+            const githubStrikes2 = asStrikeList(githubResponse2);
+            const chunkStrikes = chunkResponses.flatMap(response => asStrikeList(response));
+            const allStrikes = [...githubStrikes1, ...githubStrikes2, ...baseStrikes, ...chunkStrikes];
+
+            if (!allStrikes.length) {
+                throw new Error('No data returned from the available UK lightning feeds.');
+            }
+
+            const seen = new Map();
+
+            ukLightningStrikes = allStrikes.filter(strike => {
+                const coords = Array.isArray(strike.coordinates) ? strike.coordinates : [null, null];
+                const key = `${strike.strike_time}_${coords[0]}_${coords[1]}`;
+                if (seen.has(key)) return false;
+                seen.set(key, true);
+                return coords[0] !== null && coords[1] !== null && strike.time instanceof Date && !Number.isNaN(strike.time.getTime());
+            });
+            ukLightningLastUpdate = new Date();
+        }
+
+        async function ensureUkLightningLayer() {
+            const isLayerActive = lightningToggle.checked && lightningLayerSelect.value === 'uk-lightning';
+            if (!isLayerActive || !map) return;
+
+            const dataIsFresh = ukLightningLastUpdate && (Date.now() - ukLightningLastUpdate.getTime()) < 60000 && ukLightningStrikes.length;
+            if (!dataIsFresh) {
+                setLightningStatus('Loading UK lightning...', 'loading');
+                await fetchUkLightningData();
+            }
+
+            renderUkLightningLayers();
+        }
+
+        function scheduleUkLightningRefresh() {
+            stopUkLightningRefresh();
+            const isLayerActive = lightningToggle.checked && lightningLayerSelect.value === 'uk-lightning';
+            if (!isLayerActive) return;
+
+            ukLightningRefreshTimer = setInterval(async () => {
+                try {
+                    await fetchUkLightningData();
+                    renderUkLightningLayers();
+                } catch (error) {
+                    console.error('UK lightning refresh error:', error);
+                    setLightningStatus('UK lightning feed unavailable', 'error');
+                }
+            }, 60000);
+        }
+
+        lightningToggle.addEventListener('change', async () => {
+            if (!map) return;
+
+            if (!lightningToggle.checked) {
+                stopUkLightningRefresh();
+                removeUkLightningLayers();
+                setLightningStatus('UK lightning hidden', 'off');
+                return;
+            }
+
+            try {
+                await ensureUkLightningLayer();
+                scheduleUkLightningRefresh();
+            } catch (error) {
+                console.error('UK lightning load error:', error);
+                setLightningStatus('UK lightning feed unavailable', 'error');
+            }
+        });
+
+        window.addEventListener('beforeunload', stopUkLightningRefresh);
 
         // --- GET DATA ID FROM URL ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -365,6 +784,8 @@
             const validFrom = new Date(data.validFrom);
             const validTo = new Date(data.validTo);
             const issuedAt = new Date(data.issuedAt || data.validFrom);
+            forecastValidStart = Number.isNaN(validFrom.getTime()) ? null : validFrom;
+            forecastValidEnd = Number.isNaN(validTo.getTime()) ? null : validTo;
             const forecasterName = data.forecaster
                 || (data.authorEmail ? data.authorEmail.split('@')[0].replace(/[._-]+/g, ' ') : 'Forecast Desk');
 
@@ -376,6 +797,7 @@
             document.getElementById('issued-by').innerText = forecasterName;
             document.getElementById('discussion-content').innerText = data.description;
 
+            posterCard.hidden = false;
             if (data.posterUrl) {
                 posterLinkBtn.hidden = false;
                 posterLinkBtn.href = data.posterUrl;
@@ -385,19 +807,31 @@
                     posterLinkBtn.download = data.posterFileName;
                 }
 
-                posterCard.hidden = false;
+                posterStatus.textContent = 'Loading synced poster preview from archive storage.';
+                posterPreviewShell.hidden = false;
+                posterPreviewImg.onload = () => {
+                    posterStatus.textContent = 'This is the synced export image stored with the published outlook for archive use.';
+                    posterPreviewShell.hidden = false;
+                };
+                posterPreviewImg.onerror = () => {
+                    posterStatus.textContent = 'Poster PNG could not be loaded. Re-publish or update this outlook from Admin to regenerate the archived poster.';
+                    posterPreviewShell.hidden = true;
+                    posterLinkBtn.hidden = true;
+                };
                 posterPreviewImg.src = data.posterUrl;
             } else {
                 posterLinkBtn.hidden = true;
-                posterCard.hidden = true;
+                posterPreviewShell.hidden = true;
+                posterPreviewImg.removeAttribute('src');
+                posterStatus.textContent = 'This outlook does not have a synced poster PNG yet. Re-publish or update it from Admin to generate one.';
             }
 
             const displayFeatures = window.GenWeatherUtils
                 ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
                 : geoJSON.features;
 
-            mapboxgl.accessToken = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
-            const map = new mapboxgl.Map({
+            mapboxgl.accessToken = MAPBOX_TOKEN;
+            map = new mapboxgl.Map({
                 container: 'map',
                 style: 'mapbox://styles/mapbox/light-v11',
                 center: [-2, 54.5],
@@ -457,6 +891,17 @@
                     }
                 });
                 if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 50 });
+
+                if (lightningToggle.checked) {
+                    ensureUkLightningLayer()
+                        .then(() => scheduleUkLightningRefresh())
+                        .catch(error => {
+                            console.error('UK lightning load error:', error);
+                            setLightningStatus('UK lightning feed unavailable', 'error');
+                        });
+                } else {
+                    setLightningStatus('UK lightning hidden', 'off');
+                }
             });
         }
 
