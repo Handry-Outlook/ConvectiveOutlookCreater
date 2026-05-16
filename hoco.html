@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Observations | Thunderstorm Outlook</title>
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-ui.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #09111f;
+            color: #e2e8f0;
+        }
+
+        .obs-shell {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            padding: 18px;
+        }
+
+        .obs-frame-card {
+            flex: 1;
+            min-height: 0;
+            background: #0f172a;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 22px 60px rgba(2, 6, 23, 0.34);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .obs-card-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            padding: 18px 22px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.98));
+            flex-wrap: wrap;
+        }
+
+        .obs-card-head h1 {
+            margin: 8px 0 0;
+            font-size: clamp(24px, 3vw, 34px);
+            color: #f8fafc;
+        }
+
+        .obs-card-head p {
+            margin: 10px 0 0;
+            color: #94a3b8;
+            line-height: 1.6;
+            max-width: 760px;
+        }
+
+        .obs-frame-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .obs-frame {
+            flex: 1;
+            width: 100%;
+            min-height: 780px;
+            border: 0;
+            background: #0b1220;
+        }
+
+        .obs-fallback {
+            padding: 16px 22px 22px;
+            color: #94a3b8;
+            font-size: 13px;
+            line-height: 1.6;
+            border-top: 1px solid rgba(148, 163, 184, 0.12);
+            background: rgba(15, 23, 42, 0.92);
+        }
+
+        @media (max-width: 720px) {
+            .obs-shell {
+                padding: 12px;
+            }
+
+            .obs-card-head,
+            .obs-fallback {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .obs-frame {
+                min-height: 70vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="top-nav">
+        <a href="index.html" class="nav-brand">
+            <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+            <span>Handry Outlook</span>
+        </a>
+        <nav class="nav-left" aria-label="Primary">
+            <a href="index.html">Outlooks </a>
+            <a href="obs.html">Observations <span class="badge" id="outlook-count">Live</span></a>
+            <a href="forecasts.html">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+            <a href="hoco.html"class="active">HOCO</a>
+            <a href="archive.html">Archive</a>
+        </nav>
+        <div class="nav-right">
+            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="obs-shell">
+        <section class="obs-frame-card">
+            <div class="obs-card-head">
+                <div>
+                    <div class="page-eyebrow">HOCO</div>
+                    <h1>Automactic Thunderstorm Forecasting</h1>
+                    <p>Login to HOCO to view more.</p>
+                </div>
+                <div class="obs-frame-actions">
+                    <a class="btn-secondary" href="https://handry-outlook.github.io/HOCO-V2.0/index.html" target="_blank"
+                        rel="noopener">
+                        <i class="fas fa-up-right-from-square"></i> Open standalone
+                    </a>
+                </div>
+            </div>
+
+            <iframe class="obs-frame" src="https://handry-outlook.github.io/HOCO-V2.0/index.html"
+                title="HOCO Forecasting" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen>
+            </iframe>
+
+            <div class="obs-fallback">
+                If your browser blocks the embedded page, use <a
+                    href="https://handry-outlook.github.io/HOCO-V2.0/index.html" target="_blank" rel="noopener">the
+                    standalone HOCO Forecasting view</a>.
+            </div>
+        </section>
+    </main>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { collection, getDocs, getFirestore, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
+            authDomain: "genweather-f9a45.firebaseapp.com",
+            projectId: "genweather-f9a45",
+            storageBucket: "genweather-f9a45.firebasestorage.app",
+            messagingSenderId: "682497500954",
+            appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3"
+        };
+
+        async function refreshForecastsBadge() {
+            const badge = document.getElementById('forecasts-count');
+            if (!badge) return;
+            try {
+                const app = initializeApp(firebaseConfig, 'obs-forecast-badge');
+                const db = getFirestore(app);
+                const nowIso = new Date().toISOString().slice(0, 16);
+                const q = query(
+                    collection(db, "forecasts_v2"),
+                    where("isActive", "==", true),
+                    where("validTo", ">=", nowIso),
+                    orderBy("validTo", "asc")
+                );
+                const snapshot = await getDocs(q);
+                badge.textContent = String(snapshot.size);
+            } catch (error) {
+                badge.textContent = '?';
+            }
+            const now = new Date();
+            const futureCount = new Set(allFeatures
+                .filter(f => new Date(f.properties.validTo) >= now)
+                .map(f => f.properties.docId)
+            ).size;
+            outlookBadge.textContent = futureCount;
+            if (forecastsBadge) forecastsBadge.textContent = futureCount;
+        }
+
+        refreshForecastsBadge();
+    </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>

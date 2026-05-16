@@ -1,9 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forecast Detail | Convective Weather</title>
+    <title>Forecast Detail | Handry Outlook</title>
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -12,6 +15,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="forecast-utils.js"></script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
     <style>
         :root {
             --light-bg: #f4f7fa;
@@ -77,6 +89,33 @@
             gap: 10px;
             flex-wrap: wrap;
             justify-content: flex-end;
+        }
+
+        .hoco-slider-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 18px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            background: #f8fbff;
+        }
+
+        .hoco-slider-row input[type="range"] {
+            flex: 1;
+        }
+
+        .hoco-slider-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            min-width: 180px;
+            text-align: right;
+        }
+
+        .hoco-summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
         }
 
         .layer-toggle-chip {
@@ -257,12 +296,35 @@
             color: #94a3b8;
         }
 
-        .low { background: #67c6ac; color: #fff; }
-        .slgt { background: #ffea00; color: #172033; }
-        .enh { background: #ff7a21; color: #fff; }
-        .mdt { background: #f91522; color: #fff; }
-        .high { background: #b23cc7; color: #fff; }
-        .svr { background: #111111; color: #fff; }
+        .low {
+            background: #67c6ac;
+            color: #fff;
+        }
+
+        .slgt {
+            background: #ffea00;
+            color: #172033;
+        }
+
+        .enh {
+            background: #ff7a21;
+            color: #fff;
+        }
+
+        .mdt {
+            background: #f91522;
+            color: #fff;
+        }
+
+        .high {
+            background: #b23cc7;
+            color: #fff;
+        }
+
+        .svr {
+            background: #111111;
+            color: #fff;
+        }
 
         @media (max-width: 960px) {
             .meta-grid {
@@ -287,9 +349,9 @@
                 margin-left: 0;
             }
         }
-
     </style>
 </head>
+
 <body>
 
     <header>
@@ -301,10 +363,17 @@
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html">Outlooks</a>
                 <a href="obs.html">Observations</a>
+                <a href="forecasts.html">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+                <a href="hoco.html">HOCO</a>
                 <a href="archive.html" class="active">Archive</a>
             </nav>
             <div class="nav-right">
-                <a href="admin.html" class="nav-icon-link" title="Forecaster admin"><i class="fas fa-user"></i></a>
+                <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                    <i class="fas fa-user"></i>
+                </a>
             </div>
         </div>
     </header>
@@ -315,12 +384,15 @@
                 <div>
                     <div class="page-eyebrow">Forecast Detail</div>
                     <h1 id="title-date" class="page-title">Convective Outlook: -- --- ----</h1>
-                    <p class="page-subtitle">Interactive outlook map, issuance timing, and the full convective discussion.</p>
+                    <p class="page-subtitle">Interactive outlook map, issuance timing, and the full convective
+                        discussion.</p>
                 </div>
                 <div class="action-row">
                     <a href="archive.html" class="btn-ghost"><i class="fas fa-arrow-left"></i> Back to archive</a>
-                    <button type="button" class="btn-secondary" id="copy-link-btn"><i class="fas fa-link"></i> Copy link</button>
-                    <a href="#" class="btn-secondary" id="poster-link-btn" hidden><i class="fas fa-image"></i> Poster PNG</a>
+                    <button type="button" class="btn-secondary" id="copy-link-btn"><i class="fas fa-link"></i> Copy
+                        link</button>
+                    <a href="#" class="btn-secondary" id="poster-link-btn" hidden><i class="fas fa-image"></i> Poster
+                        PNG</a>
                 </div>
             </div>
 
@@ -328,12 +400,25 @@
                 <div class="map-toolbar">
                     <div class="map-toolbar-copy">
                         <div class="page-eyebrow">Live Overlay</div>
-                        <div class="map-toolbar-note">Optional UK lightning layer using the same live strike feed as the main outlook page.</div>
+                        <div class="map-toolbar-note">Optional UK lightning layer using the same live strike feed as the
+                            main outlook page.</div>
                     </div>
                     <div class="map-toolbar-actions">
                         <label class="layer-toggle-chip" for="lightningToggle">
                             <input type="checkbox" id="lightningToggle" checked>
                             <span>UK Lightning</span>
+                        </label>
+                        <label class="layer-toggle-chip" for="forecastLayerToggle">
+                            <input type="checkbox" id="forecastLayerToggle" checked>
+                            <span>Show Forecast</span>
+                        </label>
+                        <label class="layer-toggle-chip" for="hocoAutoToggle">
+                            <input type="checkbox" id="hocoAutoToggle">
+                            <span>HOCO Auto</span>
+                        </label>
+                        <label class="layer-toggle-chip" for="hocoEnsembleToggle">
+                            <input type="checkbox" id="hocoEnsembleToggle">
+                            <span>HOCO Ensemble</span>
                         </label>
                         <select id="lightningLayer" hidden aria-hidden="true" tabindex="-1">
                             <option value="uk-lightning" selected>UK Lightning</option>
@@ -341,11 +426,16 @@
                         <div class="status-chip loading" id="lightning-status">Loading UK lightning...</div>
                     </div>
                 </div>
+                <div class="hoco-slider-row">
+                    <input type="range" id="hocoRunSlider" min="0" max="0" value="0" step="1" disabled>
+                    <span class="hoco-slider-label" id="hocoRunIssuedLabel">No HOCO run</span>
+                </div>
                 <div id="map"></div>
 
                 <div class="risk-legend">
                     <div class="legend-item low">Low</div>
                     <div class="legend-item slgt">Slight</div>
+                    <div class="legend-item enh">Enhanced</div>
                     <div class="legend-item mdt">Moderate</div>
                     <div class="legend-item high">High</div>
                     <div class="legend-item svr">Severe</div>
@@ -353,7 +443,9 @@
                 </div>
 
                 <div class="legend-help" id="legend-help" hidden>
-                    <p>These categories describe increasing thunderstorm coverage and severity potential. Nested areas are shown with clipped geometry so the map opacity stays consistent even where polygons overlap.</p>
+                    <p>These categories describe increasing thunderstorm coverage and severity potential. Nested areas
+                        are shown with clipped geometry so the map opacity stays consistent even where polygons overlap.
+                    </p>
                 </div>
             </div>
 
@@ -365,7 +457,8 @@
                     </div>
                     <div class="meta-card">
                         <div class="meta-label">Valid Window</div>
-                        <div class="meta-value" id="valid-time">--:-- UTC --- -- --- ---- - --:-- UTC --- -- --- ----</div>
+                        <div class="meta-value" id="valid-time">--:-- UTC --- -- --- ---- - --:-- UTC --- -- --- ----
+                        </div>
                     </div>
                     <div class="meta-card">
                         <div class="meta-label">Issued</div>
@@ -374,6 +467,25 @@
                     <div class="meta-card">
                         <div class="meta-label">Forecaster</div>
                         <div class="meta-value" id="issued-by">---</div>
+                    </div>
+                </div>
+
+                <div class="hoco-summary-grid">
+                    <div class="meta-card">
+                        <div class="meta-label">HOCO Auto Runs</div>
+                        <div class="meta-value" id="hoco-auto-run-count">0</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Selected Auto Issued</div>
+                        <div class="meta-value" id="hoco-auto-issued">--</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Ensemble Sources</div>
+                        <div class="meta-value" id="hoco-ensemble-source-count">0</div>
+                    </div>
+                    <div class="meta-card">
+                        <div class="meta-label">Ensemble Issued Span</div>
+                        <div class="meta-value" id="hoco-ensemble-issued-span">--</div>
                     </div>
                 </div>
 
@@ -397,11 +509,12 @@
         </div>
     </main>
 
-    <footer>&copy; Convective Weather</footer>
+    <footer>&copy; Handry Outlook</footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { collection, doc, getDoc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getStorage, ref as storageRef, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -415,6 +528,17 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        const hocoConfig = {
+            apiKey: "AIzaSyA8IYTApDl8vhZENPJXIw48rR_SUhfFPVQ",
+            authDomain: "hoco-3b23e.firebaseapp.com",
+            projectId: "hoco-3b23e",
+            storageBucket: "hoco-3b23e.firebasestorage.app",
+            messagingSenderId: "409513272369",
+            appId: "1:409513272369:web:a857d9b039d53710f8a110"
+        };
+        const hocoApp = initializeApp(hocoConfig, 'hoco-forecast-detail');
+        const hocoDb = getFirestore(hocoApp);
+        const hocoStorage = getStorage(hocoApp);
         const legendHelpBtn = document.getElementById('legend-help-btn');
         const legendHelpPanel = document.getElementById('legend-help');
         const copyLinkBtn = document.getElementById('copy-link-btn');
@@ -424,12 +548,28 @@
         const posterPreviewShell = document.getElementById('poster-preview-shell');
         const posterPreviewImg = document.getElementById('poster-preview-img');
         const lightningToggle = document.getElementById('lightningToggle');
+        const forecastLayerToggle = document.getElementById('forecastLayerToggle');
         const lightningLayerSelect = document.getElementById('lightningLayer');
         const lightningStatus = document.getElementById('lightning-status');
+        const hocoAutoToggle = document.getElementById('hocoAutoToggle');
+        const hocoEnsembleToggle = document.getElementById('hocoEnsembleToggle');
+        const hocoRunSlider = document.getElementById('hocoRunSlider');
+        const hocoRunIssuedLabel = document.getElementById('hocoRunIssuedLabel');
+        const forecastsBadge = document.getElementById('forecasts-count');
+        const hocoAutoRunCount = document.getElementById('hoco-auto-run-count');
+        const hocoAutoIssued = document.getElementById('hoco-auto-issued');
+        const hocoEnsembleSourceCount = document.getElementById('hoco-ensemble-source-count');
+        const hocoEnsembleIssuedSpan = document.getElementById('hoco-ensemble-issued-span');
         const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
         const UK_LIGHTNING_SOURCE_ID = 'forecast-detail-uk-lightning-source';
         const UK_LIGHTNING_GLOW_ID = 'forecast-detail-uk-lightning-glow';
         const UK_LIGHTNING_CORE_ID = 'forecast-detail-uk-lightning-core';
+        const HOCO_AUTO_SOURCE_ID = 'forecast-detail-hoco-auto-source';
+        const HOCO_AUTO_FILL_ID = 'forecast-detail-hoco-auto-fill';
+        const HOCO_AUTO_LINE_ID = 'forecast-detail-hoco-auto-line';
+        const HOCO_ENSEMBLE_SOURCE_ID = 'forecast-detail-hoco-ensemble-source';
+        const HOCO_ENSEMBLE_FILL_ID = 'forecast-detail-hoco-ensemble-fill';
+        const HOCO_ENSEMBLE_LINE_ID = 'forecast-detail-hoco-ensemble-line';
         const UK_LIGHTNING_LOOKBACK_MINUTES = 360;
         let map = null;
         let ukLightningStrikes = [];
@@ -437,6 +577,15 @@
         let ukLightningRefreshTimer = null;
         let forecastValidStart = null;
         let forecastValidEnd = null;
+        let selectedForecastWindow = null;
+        let hocoRuns = [];
+        let visibleHocoRuns = [];
+        let selectedHocoRunId = null;
+        let activeHocoAutoGeojson = null;
+        let activeHocoEnsembleGeojson = null;
+        const hocoGeojsonCache = new Map();
+        const hocoEnsembleCache = new Map();
+        let hocoUnsubscribe = null;
 
         legendHelpBtn.addEventListener('click', () => {
             legendHelpPanel.hidden = !legendHelpPanel.hidden;
@@ -460,6 +609,388 @@
         function setLightningStatus(message, tone = 'off') {
             lightningStatus.textContent = message;
             lightningStatus.className = `status-chip ${tone}`;
+        }
+
+        function formatDateKey(date) {
+            if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function parseHocoTime(timeStr) {
+            if (!timeStr) return null;
+            const match = String(timeStr).trim().match(/(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})\s+(\d{1,2}):(\d{2})/);
+            if (!match) return null;
+            const [, dd, mm, yyyy, hh, min] = match;
+            const date = new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min));
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getHocoCreatedDate(run) {
+            if (!run?.createdAt) return null;
+            if (typeof run.createdAt.toDate === 'function') return run.createdAt.toDate();
+            const date = new Date(run.createdAt);
+            return Number.isNaN(date.getTime()) ? null : date;
+        }
+
+        function getHocoStartDate(run) {
+            return parseHocoTime(run?.startTime) || getHocoCreatedDate(run);
+        }
+
+        function getHocoEndDate(run) {
+            return parseHocoTime(run?.endTime || run?.startTime) || getHocoStartDate(run);
+        }
+
+        function getNormalizedAutoValidPeriod(run) {
+            if (run?.type !== 'automated') return null;
+            const start = getHocoStartDate(run);
+            const end = getHocoEndDate(run);
+            if (!start || !end) return null;
+            if (end.getHours() !== 5 || end.getMinutes() !== 59) return null;
+
+            const normalizedStart = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 6, 0, 0, 0);
+            const normalizedEnd = new Date(normalizedStart);
+            normalizedEnd.setDate(normalizedEnd.getDate() + 1);
+            normalizedEnd.setHours(5, 59, 0, 0);
+            if (Math.abs(end.getTime() - normalizedEnd.getTime()) > 60000) return null;
+
+            return { start: normalizedStart, end: normalizedEnd, key: formatDateKey(normalizedStart) };
+        }
+
+        function getHocoLightningColor(value) {
+            return window.GenWeatherUtils?.getHocoLightningColor?.(value) || '#66c2a4';
+        }
+
+        function getHocoProbabilityLabel(value) {
+            const numeric = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
+            return `${numeric}% lightning`;
+        }
+
+        function decodeInlineGeojson(value) {
+            if (!value) return null;
+            if (typeof value === 'string') return JSON.parse(value);
+            return value;
+        }
+
+        function decorateHocoGeojson(geojsonData, metadata = {}) {
+            return {
+                type: 'FeatureCollection',
+                features: (geojsonData?.features || []).map((feature, index) => {
+                    const riskValue = window.GenWeatherUtils?.parseRiskPercent
+                        ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
+                        : Number(feature?.properties?.risk || feature?.properties?.peak_risk || 0);
+                    const hocoColor = getHocoLightningColor(riskValue || feature?.properties?.peak_risk || 0);
+                    return {
+                        ...feature,
+                        properties: {
+                            ...feature.properties,
+                            riskValue: riskValue,
+                            probabilityLabel: getHocoProbabilityLabel(riskValue),
+                            fill: hocoColor,
+                            color: hocoColor,
+                            stroke: hocoColor,
+                            sourceType: 'hoco',
+                            hocoSourceType: metadata.sourceType || 'auto',
+                            validFrom: metadata.validFrom || null,
+                            validTo: metadata.validTo || null,
+                            issuedAt: metadata.issuedAt || null,
+                            issuedStart: metadata.issuedStart || null,
+                            issuedEnd: metadata.issuedEnd || null,
+                            sourceCount: metadata.sourceCount || null,
+                            runLabel: metadata.runLabel || null,
+                            hocoId: `${metadata.runId || metadata.sourceType || 'hoco'}-${index}`
+                        }
+                    };
+                })
+            };
+        }
+
+        async function fetchHocoGeojson(run) {
+            if (!run?.id) throw new Error('Missing HOCO run identifier.');
+            if (hocoGeojsonCache.has(run.id)) return hocoGeojsonCache.get(run.id);
+
+            let geojsonData = null;
+
+            // ── 1. Inline / embedded GeoJSON (always fresh, no URL needed) ──────────
+            if (run.inlineGeojson || run.inlineGeojsonText || run.geojson || run.ensembleGeojson) {
+                geojsonData = decodeInlineGeojson(run.inlineGeojson ?? run.inlineGeojsonText ?? run.geojson ?? run.ensembleGeojson);
+
+            // ── 2. GitHub raw URL — use API first, fall back to raw URL ──────────────
+            } else if (run.geojsonUrl && run.geojsonUrl.includes('raw.githubusercontent.com')) {
+                try {
+                    const parts    = run.geojsonUrl.split('/');
+                    const owner    = parts[3];
+                    const repo     = parts[4];
+                    const refName  = parts[5];
+                    const filePath = parts.slice(6).join('/');
+                    const apiUrl   = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${refName}`;
+                    const response = await fetch(apiUrl, { headers: { Accept: 'application/vnd.github.v3.raw' } });
+                    if (!response.ok) throw new Error(`GitHub API returned ${response.status}`);
+                    geojsonData = await response.json();
+                } catch (_) {
+                    const fallback = await fetch(run.geojsonUrl);
+                    if (!fallback.ok) throw new Error(`Could not fetch HOCO GeoJSON from GitHub (${fallback.status}).`);
+                    geojsonData = await fallback.json();
+                }
+
+            // ── 3. Firebase / GCS Storage URL — re-generate a fresh signed URL ──────
+            //    Old signed URLs expire; getDownloadURL() produces a fresh one from the
+            //    storage path, which is all that's needed for archived HOCO runs.
+            } else if (run.geojsonUrl) {
+                let fetchUrl = run.geojsonUrl;
+
+                if (fetchUrl.includes('firebasestorage.googleapis.com') || fetchUrl.includes('storage.googleapis.com')) {
+                    try {
+                        let storagePath = '';
+                        const urlObj = new URL(fetchUrl);
+                        if (fetchUrl.includes('firebasestorage.googleapis.com')) {
+                            const pathPart = urlObj.pathname.split('/o/')[1];
+                            if (pathPart) storagePath = decodeURIComponent(pathPart);
+                        } else {
+                            const parts = urlObj.pathname.split('/');
+                            if (parts.length > 2) storagePath = decodeURIComponent(parts.slice(2).join('/'));
+                        }
+                        if (storagePath) {
+                            storagePath = storagePath.split('?')[0];
+                            fetchUrl = await getDownloadURL(storageRef(hocoStorage, storagePath));
+                        }
+                    } catch (storageErr) {
+                        console.warn('Could not refresh HOCO storage URL for', run.id, storageErr);
+                        // fetchUrl stays as the original; the fetch below will surface any real error
+                    }
+                }
+
+                const response = await fetch(fetchUrl);
+                if (!response.ok) throw new Error(`Could not fetch HOCO GeoJSON (${response.status}).`);
+                geojsonData = await response.json();
+
+            } else {
+                throw new Error('This HOCO run does not include GeoJSON.');
+            }
+
+            const normalized = getNormalizedAutoValidPeriod(run);
+            const featureCollection = decorateHocoGeojson(geojsonData, {
+                runId: run.id,
+                sourceType: 'auto',
+                validFrom: normalized?.start?.toISOString?.() || getHocoStartDate(run)?.toISOString?.() || null,
+                validTo: normalized?.end?.toISOString?.() || getHocoEndDate(run)?.toISOString?.() || null,
+                issuedAt: getHocoCreatedDate(run)?.toISOString?.() || null,
+                runLabel: `${run.region || 'UK'} automated guidance`
+            });
+            hocoGeojsonCache.set(run.id, featureCollection);
+            return featureCollection;
+        }
+
+        function renderGuidanceLayer(sourceId, fillId, lineId, geojsonData, fillOpacity, lineWidth) {
+            if (!map || !geojsonData) return;
+            if (!map.getSource(sourceId)) map.addSource(sourceId, { type: 'geojson', data: geojsonData });
+            else map.getSource(sourceId).setData(geojsonData);
+
+            const firstSymbol = map.getStyle()?.layers?.find(layer => layer.type === 'symbol');
+            if (!map.getLayer(fillId)) {
+                map.addLayer({
+                    id: fillId,
+                    type: 'fill',
+                    source: sourceId,
+                    paint: {
+                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#38bdf8'],
+                        'fill-opacity': fillOpacity
+                    }
+                }, firstSymbol?.id);
+            }
+            if (!map.getLayer(lineId)) {
+                map.addLayer({
+                    id: lineId,
+                    type: 'line',
+                    source: sourceId,
+                    paint: {
+                        'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
+                        'line-width': lineWidth,
+                        'line-opacity': 0.92
+                    }
+                }, firstSymbol?.id);
+            }
+        }
+
+        function clearGuidanceLayer(sourceId, fillId, lineId) {
+            if (!map) return;
+            if (map.getLayer(lineId)) map.removeLayer(lineId);
+            if (map.getLayer(fillId)) map.removeLayer(fillId);
+            if (map.getSource(sourceId)) map.removeSource(sourceId);
+        }
+
+        function applyHocoLayerVisibility() {
+            const setVis = (id, visible) => { if (map?.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none'); };
+            setVis(HOCO_AUTO_FILL_ID, hocoAutoToggle.checked && !!activeHocoAutoGeojson);
+            setVis(HOCO_AUTO_LINE_ID, hocoAutoToggle.checked && !!activeHocoAutoGeojson);
+            setVis(HOCO_ENSEMBLE_FILL_ID, hocoEnsembleToggle.checked && !!activeHocoEnsembleGeojson);
+            setVis(HOCO_ENSEMBLE_LINE_ID, hocoEnsembleToggle.checked && !!activeHocoEnsembleGeojson);
+        }
+
+        function applyForecastLayerVisibility() {
+            const setVis = (id, visible) => { if (map?.getLayer(id)) map.setLayoutProperty(id, 'visibility', visible ? 'visible' : 'none'); };
+            const visible = !!forecastLayerToggle.checked;
+            setVis('risk-fill', visible);
+            setVis('risk-outline', visible);
+            setVis('risk-severe-outline', visible);
+        }
+
+        function getAutoRunsForSelectedWindow() {
+            if (!selectedForecastWindow) return [];
+            return hocoRuns
+                .filter(run => run.type === 'automated')
+                .filter(run => {
+                    const normalized = getNormalizedAutoValidPeriod(run);
+                    return normalized && normalized.key === selectedForecastWindow.key;
+                })
+                .sort((a, b) => (getHocoCreatedDate(a)?.getTime?.() || 0) - (getHocoCreatedDate(b)?.getTime?.() || 0));
+        }
+
+        function renderHocoSlider() {
+            const fallbackRun = visibleHocoRuns[visibleHocoRuns.length - 1] || null;
+            if (fallbackRun && !visibleHocoRuns.some(run => run.id === selectedHocoRunId)) selectedHocoRunId = fallbackRun.id;
+            const selectedIndex = visibleHocoRuns.findIndex(run => run.id === selectedHocoRunId);
+            hocoRunSlider.max = String(Math.max(visibleHocoRuns.length - 1, 0));
+            hocoRunSlider.disabled = visibleHocoRuns.length <= 1;
+            hocoRunSlider.value = String(Math.max(selectedIndex, 0));
+            hocoAutoRunCount.textContent = String(visibleHocoRuns.length);
+            if (!visibleHocoRuns.length) {
+                hocoRunIssuedLabel.textContent = 'No HOCO run for this valid period';
+                hocoAutoIssued.textContent = '--';
+            } else {
+                const run = visibleHocoRuns.find(item => item.id === selectedHocoRunId) || fallbackRun;
+                const issuedText = getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown run time';
+                hocoRunIssuedLabel.textContent = issuedText;
+                hocoAutoIssued.textContent = issuedText;
+            }
+        }
+
+        async function loadSelectedHocoRun() {
+            const run = visibleHocoRuns.find(item => item.id === selectedHocoRunId) || visibleHocoRuns[visibleHocoRuns.length - 1] || null;
+            if (!run) {
+                activeHocoAutoGeojson = null;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyHocoLayerVisibility();
+                return;
+            }
+            try {
+                const geojson = await fetchHocoGeojson(run);
+                activeHocoAutoGeojson = geojson;
+                renderGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID, geojson, 0.24, 1.8);
+                applyHocoLayerVisibility();
+            } catch (error) {
+                console.warn('HOCO auto load error:', error);
+                activeHocoAutoGeojson = null;
+                clearGuidanceLayer(HOCO_AUTO_SOURCE_ID, HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID);
+                applyHocoLayerVisibility();
+                const issuedText = getHocoCreatedDate(run)?.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) || 'Unknown run time';
+                hocoRunIssuedLabel.textContent = `${issuedText} \u2014 data unavailable`;
+                hocoAutoIssued.textContent = `${issuedText} (unavailable)`;
+            }
+        }
+
+        async function loadSelectedHocoEnsemble() {
+            if (!visibleHocoRuns.length) {
+                activeHocoEnsembleGeojson = null;
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                hocoEnsembleSourceCount.textContent = '0';
+                hocoEnsembleIssuedSpan.textContent = '--';
+                applyHocoLayerVisibility();
+                return;
+            }
+
+            const cacheKey = `${selectedForecastWindow?.key || 'day'}|${visibleHocoRuns.map(run => `${run.id}:${getHocoCreatedDate(run)?.getTime?.() || 0}`).join('|')}`;
+            try {
+                let ensembleGeojson = hocoEnsembleCache.get(cacheKey);
+                if (!ensembleGeojson) {
+                    // Fetch each run individually and skip any that fail (e.g. expired storage URLs
+                    // that getDownloadURL couldn't refresh).
+                    const loadedRuns = (await Promise.all(visibleHocoRuns.map(async run => {
+                        try {
+                            return { createdAt: getHocoCreatedDate(run)?.toISOString?.() || null, geojson: await fetchHocoGeojson(run) };
+                        } catch (_) {
+                            return null;
+                        }
+                    }))).filter(Boolean);
+                    const rawEnsembleGeojson = window.GenWeatherUtils?.buildClientEnsembleGeojson
+                        ? window.GenWeatherUtils.buildClientEnsembleGeojson(loadedRuns, { anomalyAware: true, noiseFilter: true })
+                        : { type: 'FeatureCollection', features: [] };
+                    ensembleGeojson = decorateHocoGeojson(rawEnsembleGeojson, {
+                        sourceType: 'ensemble',
+                        validFrom: selectedForecastWindow?.start?.toISOString?.() || null,
+                        validTo: selectedForecastWindow?.end?.toISOString?.() || null,
+                        issuedStart: getHocoCreatedDate(visibleHocoRuns[0])?.toISOString?.() || null,
+                        issuedEnd: getHocoCreatedDate(visibleHocoRuns[visibleHocoRuns.length - 1])?.toISOString?.() || null,
+                        sourceCount: visibleHocoRuns.length,
+                        runLabel: `${visibleHocoRuns[visibleHocoRuns.length - 1]?.region || 'UK'} HOCO Ensemble`
+                    });
+                    hocoEnsembleCache.set(cacheKey, ensembleGeojson);
+                }
+                activeHocoEnsembleGeojson = ensembleGeojson;
+                if (ensembleGeojson.features.length) {
+                    renderGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID, ensembleGeojson, 0.22, 2.4);
+                } else {
+                    clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                }
+                hocoEnsembleSourceCount.textContent = String(visibleHocoRuns.length);
+                const earliest = getHocoCreatedDate(visibleHocoRuns[0]);
+                const latest = getHocoCreatedDate(visibleHocoRuns[visibleHocoRuns.length - 1]);
+                hocoEnsembleIssuedSpan.textContent = `${earliest ? earliest.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '--'} to ${latest ? latest.toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '--'}`;
+                applyHocoLayerVisibility();
+            } catch (error) {
+                console.error('HOCO ensemble build error:', error);
+                activeHocoEnsembleGeojson = null;
+                clearGuidanceLayer(HOCO_ENSEMBLE_SOURCE_ID, HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID);
+                hocoEnsembleSourceCount.textContent = String(visibleHocoRuns.length);
+                hocoEnsembleIssuedSpan.textContent = 'Unavailable';
+                applyHocoLayerVisibility();
+            }
+        }
+
+        async function refreshHocoForSelectedWindow() {
+            visibleHocoRuns = getAutoRunsForSelectedWindow();
+            if (visibleHocoRuns.length && !visibleHocoRuns.some(run => run.id === selectedHocoRunId)) {
+                selectedHocoRunId = visibleHocoRuns[visibleHocoRuns.length - 1].id;
+            }
+            renderHocoSlider();
+            await Promise.all([loadSelectedHocoRun(), loadSelectedHocoEnsemble()]);
+        }
+
+        function initHocoRuns() {
+            if (hocoUnsubscribe) hocoUnsubscribe();
+
+            // Query scoped to a ±2-day window around the forecast's valid date so that
+            // older forecasts (beyond a fixed limit) are always found. This mirrors how
+            // index.html queries by date rather than using a blanket limit(180) which
+            // silently excludes runs once the collection grows large enough.
+            const anchor = selectedForecastWindow?.start || forecastValidStart || new Date();
+            const windowStart = new Date(anchor);
+            windowStart.setDate(windowStart.getDate() - 2);
+            windowStart.setHours(0, 0, 0, 0);
+            const windowEnd = new Date(anchor);
+            windowEnd.setDate(windowEnd.getDate() + 2);
+            windowEnd.setHours(23, 59, 59, 999);
+
+            const runsQuery = query(
+                collection(hocoDb, 'hoco_requests'),
+                where('createdAt', '>=', windowStart),
+                where('createdAt', '<=', windowEnd),
+                orderBy('createdAt', 'desc')
+            );
+
+            hocoUnsubscribe = onSnapshot(runsQuery, snapshot => {
+                hocoRuns = [];
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    if (data.type !== 'automated') return;
+                    hocoRuns.push({ id: docSnap.id, ...data });
+                });
+                refreshHocoForSelectedWindow();
+            }, error => {
+                console.error('HOCO snapshot error:', error);
+            });
         }
 
         function stopUkLightningRefresh() {
@@ -751,8 +1282,22 @@
                 setLightningStatus('UK lightning feed unavailable', 'error');
             }
         });
+        hocoAutoToggle.addEventListener('change', () => applyHocoLayerVisibility());
+        hocoEnsembleToggle.addEventListener('change', () => applyHocoLayerVisibility());
+        forecastLayerToggle.addEventListener('change', () => applyForecastLayerVisibility());
+        hocoRunSlider.addEventListener('input', async () => {
+            const sliderIndex = Number(hocoRunSlider.value || 0);
+            const run = visibleHocoRuns[sliderIndex];
+            if (!run) return;
+            selectedHocoRunId = run.id;
+            renderHocoSlider();
+            await loadSelectedHocoRun();
+        });
 
         window.addEventListener('beforeunload', stopUkLightningRefresh);
+        window.addEventListener('beforeunload', () => {
+            if (hocoUnsubscribe) hocoUnsubscribe();
+        });
 
         // --- GET DATA ID FROM URL ---
         const urlParams = new URLSearchParams(window.location.search);
@@ -779,6 +1324,23 @@
             }
         }
 
+        async function refreshForecastsBadge() {
+            if (!forecastsBadge) return;
+            try {
+                const nowIso = new Date().toISOString().slice(0, 16);
+                const q = query(
+                    collection(db, "forecasts_v2"),
+                    where("isActive", "==", true),
+                    where("validTo", ">=", nowIso),
+                    orderBy("validTo", "asc")
+                );
+                const snapshot = await getDocs(q);
+                forecastsBadge.textContent = String(snapshot.size);
+            } catch (error) {
+                forecastsBadge.textContent = '?';
+            }
+        }
+
         function renderPage(data) {
             const geoJSON = JSON.parse(data.geoJSON);
             const validFrom = new Date(data.validFrom);
@@ -786,6 +1348,13 @@
             const issuedAt = new Date(data.issuedAt || data.validFrom);
             forecastValidStart = Number.isNaN(validFrom.getTime()) ? null : validFrom;
             forecastValidEnd = Number.isNaN(validTo.getTime()) ? null : validTo;
+            selectedForecastWindow = window.GenWeatherUtils?.getForecastDayWindow
+                ? window.GenWeatherUtils.getForecastDayWindow(validFrom, 0)
+                : {
+                    start: new Date(validFrom.getFullYear(), validFrom.getMonth(), validFrom.getDate(), 6, 0, 0, 0),
+                    end: new Date(validFrom.getFullYear(), validFrom.getMonth(), validFrom.getDate() + 1, 5, 59, 59, 999),
+                    key: formatDateKey(new Date(validFrom.getFullYear(), validFrom.getMonth(), validFrom.getDate(), 6, 0, 0, 0))
+                };
             const forecasterName = data.forecaster
                 || (data.authorEmail ? data.authorEmail.split('@')[0].replace(/[._-]+/g, ' ') : 'Forecast Desk');
 
@@ -836,7 +1405,7 @@
             mapboxgl.accessToken = MAPBOX_TOKEN;
             map = new mapboxgl.Map({
                 container: 'map',
-                style: 'mapbox://styles/mapbox/light-v11',
+                style: 'mapbox://styles/handry20191026/cmd7aol1800u401s9g60ibz29',
                 center: [-2, 54.5],
                 zoom: 5.5
             });
@@ -882,6 +1451,7 @@
                         'line-width': 3
                     }
                 });
+                applyForecastLayerVisibility();
 
                 const bounds = new mapboxgl.LngLatBounds();
                 geoJSON.features.forEach(feature => {
@@ -905,27 +1475,497 @@
                 } else {
                     setLightningStatus('UK lightning hidden', 'off');
                 }
+                initHocoRuns();
             });
         }
 
-        async function attemptLocalPosterRender(data, geoJSON) {
-            if (!window.GenWeatherUtils?.renderForecastPosterPng) {
-                posterStatus.textContent = 'Poster generator not available on this page. Re-publish from Admin to create the archived poster.';
-                return;
+        // ─── Self-contained poster engine (ported from admin.html) ──────────────
+        // All functions below are independent of the draw tool and admin state.
+        // They receive data directly from the Firestore forecast record.
+
+        const POSTER_TEMPLATE_ASSETS = Object.freeze({
+            1: 'assets/low_risk.png',
+            2: 'assets/slight_risk.png',
+            3: 'assets/enhanced_risk.png',
+            4: 'assets/moderate_risk.png',
+            5: 'assets/high_risk.png'
+        });
+        const POSTER_RENDER_SCALE = 0.5;
+        const POSTER_MAP_FRAME = Object.freeze({ x: 3245, y: 2, width: 3876, height: 5016, radius: 42 });
+        const POSTER_TEXT_LAYOUT = Object.freeze({
+            valid:   { x: 520,  y: 414, maxWidth: 2400, lineHeight: 92, maxHeight: 160, fontSize: 100 },
+            issued:  { x: 680,  y: 584, maxWidth: 2440, lineHeight: 92, maxHeight: 150, fontSize: 100 }
+        });
+        const POSTER_LIGHTNING_LOOKBACK_MINUTES = 360;
+        const POSTER_UK_LIGHTNING_FEED_URLS = Object.freeze({
+            githubPrimary:   'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data.json',
+            githubSecondary: 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json',
+            metOfficeBase:   'https://data.consumer-digital.api.metoffice.gov.uk/v1/lightning'
+        });
+        const HANDRY_LOGO_SRC      = 'assets/handry-outlook-logo.png';
+        const HANDRY_LOGO_FALLBACK = 'https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/refs/heads/main/Handry_outlook_icon_pride_small.png';
+
+        let posterUkLightningStrikes   = [];
+        let posterUkLightningLastUpdate = null;
+
+        // ── canvas image loader ──────────────────────────────────────────────────
+        async function loadCanvasImage(source) {
+            const isRemote = /^https?:/i.test(source);
+            let objectUrl = null;
+            if (isRemote) {
+                const response = await fetch(source);
+                if (!response.ok) throw new Error(`Could not fetch image asset (${response.status}).`);
+                const blob = await response.blob();
+                objectUrl = URL.createObjectURL(blob);
+            }
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                const cleanup = () => { if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 0); };
+                img.onload  = () => { cleanup(); resolve(img); };
+                img.onerror = () => { cleanup(); reject(new Error(`Could not load image asset: ${source}`)); };
+                img.src = objectUrl || source;
+            });
+        }
+
+        async function loadPosterLogo() {
+            for (const src of [HANDRY_LOGO_SRC, HANDRY_LOGO_FALLBACK]) {
+                try { return await loadCanvasImage(src); } catch (e) { console.warn('Logo load failed', src, e); }
+            }
+            return null;
+        }
+
+        function normalizePosterTemplateRank(rank) {
+            const n = Number(rank);
+            return Number.isFinite(n) ? Math.max(1, Math.min(5, Math.round(n))) : 1;
+        }
+        function loadPosterTemplate(rank) {
+            return loadCanvasImage(POSTER_TEMPLATE_ASSETS[normalizePosterTemplateRank(rank)] || POSTER_TEMPLATE_ASSETS[1]);
+        }
+
+        // ── timestamp helpers ────────────────────────────────────────────────────
+        function formatPosterTimestamp(value) {
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '--';
+            const datePart = date.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timePart = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+            return `${datePart} ${timePart}`;
+        }
+        function buildPosterValidLine(validFrom, validTo) {
+            return `${formatPosterTimestamp(validFrom)} - ${formatPosterTimestamp(validTo)}`;
+        }
+        function buildPosterIssuedLine(issuedAt, issueVersion) {
+            return `${formatPosterTimestamp(issuedAt)} Version ${issueVersion}`;
+        }
+        function buildDetailExportFileName(validFrom, issueVersion) {
+            const datePart = String(validFrom || '').split('T')[0].replace(/-/g, '');
+            return `convective-outlook-${datePart}-v${issueVersion}.png`;
+        }
+
+        // ── layout scalers ───────────────────────────────────────────────────────
+        function scalePosterLayoutRect(rect, scale) {
+            return { x: rect.x * scale, y: rect.y * scale, width: rect.width * scale, height: rect.height * scale, radius: rect.radius * scale };
+        }
+        function scalePosterTextLayout(layout, scale) {
+            return { x: layout.x * scale, y: layout.y * scale, maxWidth: layout.maxWidth * scale, lineHeight: layout.lineHeight * scale, maxHeight: layout.maxHeight * scale, fontSize: layout.fontSize * scale };
+        }
+
+        // ── canvas drawing helpers ───────────────────────────────────────────────
+        function drawRoundedRect(ctx, x, y, width, height, radius) {
+            const r = Math.min(radius, width / 2, height / 2);
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + width - r, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + r);
+            ctx.lineTo(x + width, y + height - r);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+            ctx.lineTo(x + r, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        function splitCanvasTextIntoLines(ctx, text, maxWidth) {
+            const lines = [];
+            String(text || '').replace(/\r/g, '').split('\n').forEach(paragraph => {
+                const trimmed = paragraph.trim();
+                if (!trimmed) { lines.push(''); return; }
+                let line = '';
+                trimmed.split(/\s+/).forEach(word => {
+                    const candidate = line ? `${line} ${word}` : word;
+                    if (ctx.measureText(candidate).width > maxWidth && line) { lines.push(line); line = word; }
+                    else { line = candidate; }
+                });
+                if (line) lines.push(line);
+            });
+            return lines;
+        }
+
+        function ellipsizeCanvasLine(ctx, line, maxWidth) {
+            let trimmed = String(line || '').trim();
+            while (trimmed && ctx.measureText(`${trimmed}...`).width > maxWidth) {
+                trimmed = trimmed.slice(0, -1).trimEnd();
+            }
+            return trimmed ? `${trimmed}...` : '...';
+        }
+
+        function drawCanvasTextBlock(ctx, text, x, y, maxWidth, lineHeight, maxHeight) {
+            const allLines   = splitCanvasTextIntoLines(ctx, text, maxWidth);
+            const maxLines   = Math.max(1, Math.floor(maxHeight / lineHeight));
+            const visible    = allLines.slice(0, maxLines);
+            const truncated  = allLines.length > maxLines;
+            visible.forEach((line, i) => {
+                const isLast = i === visible.length - 1;
+                ctx.fillText(truncated && isLast ? ellipsizeCanvasLine(ctx, line || allLines[i] || '', maxWidth) : line, x, y + i * lineHeight);
+            });
+            return { bottomY: y + visible.length * lineHeight, truncated };
+        }
+
+        function drawPosterMapPanel(ctx, mapImage, frame) {
+            ctx.save();
+            ctx.shadowColor = 'rgba(15, 23, 42, 0.38)';
+            ctx.shadowBlur = Math.max(12, frame.radius * 1.1);
+            ctx.shadowOffsetY = Math.max(6, frame.radius * 0.3);
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.fillStyle = '#050505'; ctx.fill();
+            ctx.restore();
+
+            ctx.save();
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.clip();
+            ctx.drawImage(mapImage, frame.x, frame.y, frame.width, frame.height);
+            ctx.restore();
+
+            ctx.save();
+            drawRoundedRect(ctx, frame.x, frame.y, frame.width, frame.height, frame.radius);
+            ctx.lineWidth = Math.max(3, frame.radius * 0.18);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.26)';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // ── feature display normalisation ─────────────────────────────────────────
+        function buildRawDisplayFeatures(features) {
+            return (features || [])
+                .filter(f => f?.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'))
+                .map(f => {
+                    const props = f.properties || {};
+                    const isSevere = !!(props.isSevere || props.severe || props.user_severe);
+                    const color = props.color || props.user_color || '#94a3b8';
+                    const rank  = Number(props.rank ?? props.user_rank ?? 0);
+                    return { ...f, properties: { ...props, color, isSevere, rank } };
+                });
+        }
+
+        // ── lightning helpers ─────────────────────────────────────────────────────
+        function getPosterLightningStyle(ageMinutes, scaleFactor = 1) {
+            if (ageMinutes <= 30)  return { glowColor: '#ffd24d', coreColor: '#ffffff', glowRadius: 12 * scaleFactor, coreRadius: 4.6 * scaleFactor, glowOpacity: 0.36, coreOpacity: 1 };
+            if (ageMinutes <= 90)  return { glowColor: '#ff9f1c', coreColor: '#ffe066', glowRadius:  9 * scaleFactor, coreRadius: 4.0 * scaleFactor, glowOpacity: 0.28, coreOpacity: 0.92 };
+            if (ageMinutes <= 180) return { glowColor: '#fb7185', coreColor: '#ffb347', glowRadius:  7 * scaleFactor, coreRadius: 3.4 * scaleFactor, glowOpacity: 0.20, coreOpacity: 0.78 };
+            return                        { glowColor: '#c084fc', coreColor: '#d8b4fe', glowRadius:  5 * scaleFactor, coreRadius: 2.6 * scaleFactor, glowOpacity: 0.14, coreOpacity: 0.62 };
+        }
+
+        function resolvePosterLightningWindow(validFrom, validTo) {
+            const nowTime   = Date.now();
+            const startDate = validFrom ? new Date(validFrom) : null;
+            const endDate   = validTo   ? new Date(validTo)   : null;
+            if (startDate && !Number.isNaN(startDate.getTime()) && endDate && !Number.isNaN(endDate.getTime())) {
+                return { startTime: startDate.getTime(), endTime: Math.min(endDate.getTime(), nowTime), referenceTime: Math.min(endDate.getTime(), nowTime) };
+            }
+            return { startTime: nowTime - POSTER_LIGHTNING_LOOKBACK_MINUTES * 60000, endTime: nowTime, referenceTime: nowTime };
+        }
+
+        function drawPosterLightningStrikes(ctx, projection, strikes, timeWindow, width, height) {
+            const scaleFactor = Math.max(0.85, Math.min(1.45, Math.min(width / 1500, height / 1500) * 1.35));
+            strikes
+                .filter(s => s?.time instanceof Date && !Number.isNaN(s.time.getTime()))
+                .filter(s => Array.isArray(s.coordinates) && s.coordinates.length >= 2)
+                .filter(s => s.time.getTime() >= timeWindow.startTime && s.time.getTime() <= timeWindow.endTime)
+                .sort((a, b) => a.time.getTime() - b.time.getTime())
+                .forEach(s => {
+                    const [x, y] = projection.project(s.coordinates);
+                    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+                    if (x < -40 || x > width + 40 || y < -40 || y > height + 40) return;
+                    const age   = Math.max(0, Math.round((timeWindow.referenceTime - s.time.getTime()) / 60000));
+                    const style = getPosterLightningStyle(age, scaleFactor);
+                    ctx.save();
+                    ctx.fillStyle = style.glowColor; ctx.globalAlpha = style.glowOpacity;
+                    ctx.beginPath(); ctx.arc(x, y, style.glowRadius, 0, Math.PI * 2); ctx.fill();
+                    ctx.fillStyle = style.coreColor; ctx.globalAlpha = style.coreOpacity;
+                    ctx.beginPath(); ctx.arc(x, y, style.coreRadius, 0, Math.PI * 2); ctx.fill();
+                    ctx.globalAlpha = 0.62; ctx.strokeStyle = '#1f2937';
+                    ctx.lineWidth = Math.max(0.8, 0.7 * scaleFactor); ctx.stroke();
+                    ctx.restore();
+                });
+        }
+
+        async function fetchPosterUkLightningData() {
+            const fetchJsonOrNull = async url => {
+                try { const r = await fetch(url); return r.ok ? r.json() : null; } catch { return null; }
+            };
+            const asStrikes = res => res?.lightning_strikes?.map(s => ({ ...s, time: new Date(s.strike_time) })) || [];
+
+            const [main, gh1, gh2] = await Promise.all([
+                fetchJsonOrNull(POSTER_UK_LIGHTNING_FEED_URLS.metOfficeBase),
+                fetchJsonOrNull(POSTER_UK_LIGHTNING_FEED_URLS.githubPrimary),
+                fetchJsonOrNull(POSTER_UK_LIGHTNING_FEED_URLS.githubSecondary)
+            ]);
+            const chunkUrls  = (main?.chunks || []).map(c => `${POSTER_UK_LIGHTNING_FEED_URLS.metOfficeBase}?last-minutes=1&chunk=${c.chunk}`);
+            const chunks     = await Promise.all(chunkUrls.map(fetchJsonOrNull));
+            const all        = [...asStrikes(gh1), ...asStrikes(gh2), ...asStrikes(main), ...chunks.flatMap(asStrikes)];
+
+            if (!all.length) throw new Error('No data from UK lightning feeds.');
+
+            const seen = new Map();
+            posterUkLightningStrikes = all.filter(s => {
+                const coords = Array.isArray(s.coordinates) ? s.coordinates : [null, null];
+                const key = `${s.strike_time}_${coords[0]}_${coords[1]}`;
+                if (seen.has(key)) return false;
+                seen.set(key, true);
+                return coords[0] !== null && coords[1] !== null && s.time instanceof Date && !Number.isNaN(s.time.getTime());
+            });
+            posterUkLightningLastUpdate = new Date();
+            return posterUkLightningStrikes;
+        }
+
+        async function getPosterUkLightningData(forceRefresh = false) {
+            const fresh = !forceRefresh && posterUkLightningLastUpdate
+                && Date.now() - posterUkLightningLastUpdate.getTime() < 60000
+                && posterUkLightningStrikes.length;
+            return fresh ? posterUkLightningStrikes : fetchPosterUkLightningData();
+        }
+
+        // ── map image builder ─────────────────────────────────────────────────────
+        function getPosterMercatorY(lat) {
+            const safeLat = Math.max(-85, Math.min(85, Number(lat) || 0));
+            return Math.log(Math.tan(Math.PI / 4 + safeLat * Math.PI / 180 / 2));
+        }
+
+        function buildPosterProjection(features, width, height, padding = 76) {
+            const displayFeatures = buildRawDisplayFeatures(features);
+            let minLng = Infinity, maxLng = -Infinity, minY = Infinity, maxY = -Infinity;
+            const reg = ([lng, lat]) => {
+                if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
+                minLng = Math.min(minLng, lng); maxLng = Math.max(maxLng, lng);
+                const my = getPosterMercatorY(lat); minY = Math.min(minY, my); maxY = Math.max(maxY, my);
+            };
+            displayFeatures.forEach(f => {
+                if (f.geometry.type === 'Polygon')      f.geometry.coordinates.forEach(r => r.forEach(reg));
+                else if (f.geometry.type === 'MultiPolygon') f.geometry.coordinates.forEach(p => p.forEach(r => r.forEach(reg)));
+            });
+            if (!Number.isFinite(minLng)) { minLng = -10; maxLng = 3; minY = getPosterMercatorY(49); maxY = getPosterMercatorY(61); }
+            const lp = Math.max((maxLng - minLng) * 0.08, 0.8), yp = Math.max((maxY - minY) * 0.08, 0.08);
+            minLng -= lp; maxLng += lp; minY -= yp; maxY += yp;
+            const iw = Math.max(1, width - padding * 2), ih = Math.max(1, height - padding * 2);
+            const scale = Math.min(iw / Math.max(maxLng - minLng, 0.0001), ih / Math.max(maxY - minY, 0.0001));
+            const cw = (maxLng - minLng) * scale, ch = (maxY - minY) * scale;
+            const ox = padding + (iw - cw) / 2, oy = padding + (ih - ch) / 2;
+            return {
+                displayFeatures,
+                project([lng, lat]) { return [ox + (lng - minLng) * scale, oy + (maxY - getPosterMercatorY(lat)) * scale]; },
+                bounds: { minLng, maxLng, minY, maxY }
+            };
+        }
+
+        function getPosterGridStep(span) { return span > 24 ? 5 : span > 12 ? 2 : span > 6 ? 1 : 0.5; }
+
+        function traceProjectedGeometry(ctx, geometry, project) {
+            const traceRing = ring => ring.forEach(([lng, lat], i) => { const [x, y] = project([lng, lat]); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); ctx.closePath(); });
+            if (geometry.type === 'Polygon') geometry.coordinates.forEach(traceRing);
+            else if (geometry.type === 'MultiPolygon') geometry.coordinates.forEach(p => p.forEach(traceRing));
+        }
+
+        function renderPosterMapVectorFallback(features, width, height, options = {}) {
+            const canvas = document.createElement('canvas');
+            canvas.width = width; canvas.height = height;
+            const ctx        = canvas.getContext('2d');
+            const projection = buildPosterProjection(features, width, height);
+            const { minLng, maxLng } = projection.bounds;
+            const [minLat, maxLat]   = [48.5, 61.5];
+
+            const grad = ctx.createLinearGradient(0, 0, 0, height);
+            grad.addColorStop(0, '#d9e7f5'); grad.addColorStop(1, '#eef4fb');
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, width, height);
+
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)'; ctx.lineWidth = 1;
+            const lonStep = getPosterGridStep(maxLng - minLng);
+            const latStep = getPosterGridStep(maxLat - minLat);
+            for (let lon = Math.ceil(minLng / lonStep) * lonStep; lon <= maxLng; lon += lonStep) {
+                const [x0, y0] = projection.project([lon, maxLat]), [x1, y1] = projection.project([lon, minLat]);
+                ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+            }
+            for (let lat = Math.ceil(minLat / latStep) * latStep; lat <= maxLat; lat += latStep) {
+                const [x0, y0] = projection.project([minLng, lat]), [x1, y1] = projection.project([maxLng, lat]);
+                ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
             }
 
-            try {
-                const posterArtifact = await window.GenWeatherUtils.renderForecastPosterPng(geoJSON, {
-                    validFrom: data.validFrom,
-                    validTo: data.validTo,
-                    issuedAt: data.issuedAt || data.validFrom,
-                    issueVersion: data.issueVersion || 1,
-                    mapboxToken: MAPBOX_TOKEN
+            projection.displayFeatures
+                .slice().sort((a, b) => (a.properties?.isSevere ? 999 : a.properties?.rank || 0) - (b.properties?.isSevere ? 999 : b.properties?.rank || 0))
+                .forEach(f => {
+                    const isSevere = !!f.properties?.isSevere;
+                    ctx.save(); ctx.beginPath();
+                    traceProjectedGeometry(ctx, f.geometry, projection.project);
+                    if (!isSevere) { ctx.fillStyle = f.properties?.color || '#94a3b8'; ctx.globalAlpha = 0.42; ctx.fill('evenodd'); }
+                    ctx.globalAlpha = 1;
+                    ctx.strokeStyle = isSevere ? '#111111' : (f.properties?.color || '#94a3b8');
+                    ctx.lineWidth = isSevere ? 4.4 : 3.2; ctx.stroke(); ctx.restore();
                 });
 
-                const response = await fetch(posterArtifact.dataUrl);
-                const blob = await response.blob();
-                const objectUrl = URL.createObjectURL(blob);
+            if (Array.isArray(options.lightningStrikes) && options.lightningStrikes.length) {
+                drawPosterLightningStrikes(ctx, projection, options.lightningStrikes, options.timeWindow, width, height);
+            }
+            ctx.strokeStyle = 'rgba(15, 23, 42, 0.14)'; ctx.lineWidth = 2;
+            ctx.strokeRect(1, 1, width - 2, height - 2);
+            return canvas;
+        }
+
+        function buildPosterStaticGeojson(features) {
+            function toHex(val, fb) { return typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val.trim()) ? val.trim() : fb; }
+            function truncateCoords(geom, dp) {
+                if (!geom) return geom;
+                const rc = c => [+c[0].toFixed(dp), +c[1].toFixed(dp)];
+                const rr = ring => ring.map(rc);
+                const rp = coords => coords.map(rr);
+                switch (geom.type) {
+                    case 'Polygon':         return { ...geom, coordinates: rp(geom.coordinates) };
+                    case 'MultiPolygon':    return { ...geom, coordinates: geom.coordinates.map(rp) };
+                    case 'LineString':      return { ...geom, coordinates: geom.coordinates.map(rc) };
+                    case 'MultiLineString': return { ...geom, coordinates: geom.coordinates.map(rr) };
+                    case 'Point':           return { ...geom, coordinates: rc(geom.coordinates) };
+                    default: return geom;
+                }
+            }
+            const rawFeatures = buildRawDisplayFeatures(features).map(f => {
+                const isSevere  = !!f.properties?.isSevere;
+                const hexFill   = isSevere ? '#cccccc' : toHex(f.properties?.color, '#cccccc');
+                const hexStroke = isSevere ? '#111111' : toHex(f.properties?.color, '#cccccc');
+                return { type: 'Feature', geometry: f.geometry, properties: { fill: hexFill, 'fill-opacity': isSevere ? 0 : 0.42, stroke: hexStroke, 'stroke-width': isSevere ? 4.8 : 4 } };
+            });
+            const BUDGET = 7200;
+            const attempts = [
+                { tolerance: 0, dp: 5 }, { tolerance: 0, dp: 4 }, { tolerance: 0, dp: 3 },
+                { tolerance: 0.001, dp: 4 }, { tolerance: 0.005, dp: 3 }, { tolerance: 0.01, dp: 3 },
+                { tolerance: 0.05, dp: 2 }, { tolerance: 0.1, dp: 2 }, { tolerance: 0.25, dp: 2 },
+                { tolerance: 0.5, dp: 1 }, { tolerance: 1.0, dp: 1 }
+            ];
+            for (const { tolerance, dp } of attempts) {
+                try {
+                    const processed = rawFeatures.map(f => {
+                        let geom = f.geometry;
+                        if (tolerance > 0 && (geom?.type === 'Polygon' || geom?.type === 'MultiPolygon')) {
+                            try { geom = turf.simplify({ type: 'Feature', geometry: geom, properties: {} }, { tolerance, highQuality: false, mutate: false }).geometry; } catch (_) {}
+                        }
+                        return { ...f, geometry: truncateCoords(geom, dp) };
+                    });
+                    const fc = { type: 'FeatureCollection', features: processed };
+                    if (encodeURIComponent(JSON.stringify(fc)).length <= BUDGET) return fc;
+                } catch (_) {}
+            }
+            console.warn('Poster static map: GeoJSON too large, falling back to vector render.');
+            return null;
+        }
+
+        async function renderPosterMapImage(features, width, height, options = {}) {
+            if (Array.isArray(options.lightningStrikes) && options.lightningStrikes.length) {
+                return renderPosterMapVectorFallback(features, width, height, options);
+            }
+            const rw = Math.max(320, Math.min(1280, Math.ceil(width / 2)));
+            const rh = Math.max(320, Math.min(1280, Math.ceil(height / 2)));
+            const staticGeojson = buildPosterStaticGeojson(features);
+            if (staticGeojson) {
+                try {
+                    const encoded = encodeURIComponent(JSON.stringify(staticGeojson));
+                    const url = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encoded})/auto/${rw}x${rh}@2x?padding=90&bearing=0&pitch=0&access_token=${encodeURIComponent(MAPBOX_TOKEN)}`;
+                    return await loadCanvasImage(url);
+                } catch (e) { console.warn('Poster static map failed, falling back.', e); }
+            }
+            return renderPosterMapVectorFallback(features, width, height, options);
+        }
+
+        // ── main render entry point ───────────────────────────────────────────────
+        async function renderDetailForecastPoster(geoJSON, options = {}) {
+            const { validFrom, validTo, issuedAt, issueVersion = 1, includeLightning = false } = options;
+
+            const features   = geoJSON?.features || [];
+            const riskLevels = window.GenWeatherUtils?.summarizeAllRiskLevels
+                ? window.GenWeatherUtils.summarizeAllRiskLevels(features)
+                : (window.GenWeatherUtils?.summarizeRiskLevels
+                    ? window.GenWeatherUtils.summarizeRiskLevels(features).map(r => ({ ...r, issued: true }))
+                    : []);
+            const issued     = riskLevels.filter(r => r.issued);
+            const highest    = issued[issued.length - 1] || { rank: 1 };
+
+            if (document.fonts?.ready) { try { await document.fonts.ready; } catch (_) {} }
+
+            const templateImage   = await loadPosterTemplate(highest.rank);
+            const renderScale     = POSTER_RENDER_SCALE;
+            const canvas          = document.createElement('canvas');
+            canvas.width  = Math.round(templateImage.width  * renderScale);
+            canvas.height = Math.round(templateImage.height * renderScale);
+
+            const mapFrame        = scalePosterLayoutRect(POSTER_MAP_FRAME, renderScale);
+            const validLayout     = scalePosterTextLayout(POSTER_TEXT_LAYOUT.valid,   renderScale);
+            const issuedLayout    = scalePosterTextLayout(POSTER_TEXT_LAYOUT.issued,  renderScale);
+            const lightningWindow = resolvePosterLightningWindow(validFrom, validTo);
+
+            let lightningData    = [];
+            let lightningWarning = '';
+            if (includeLightning) {
+                try   { lightningData = await getPosterUkLightningData(); }
+                catch (e) { console.error('Lightning load failed.', e); lightningWarning = 'UK lightning overlay unavailable'; }
+            }
+
+            const lightningInWindow = lightningData.filter(s =>
+                s?.time instanceof Date && !Number.isNaN(s.time.getTime())
+                && s.time.getTime() >= lightningWindow.startTime
+                && s.time.getTime() <= lightningWindow.endTime
+                && Array.isArray(s.coordinates) && s.coordinates.length >= 2
+            ).length;
+
+            const mapImage = await renderPosterMapImage(
+                features,
+                Math.round(mapFrame.width),
+                Math.round(mapFrame.height),
+                { lightningStrikes: lightningData, timeWindow: lightningWindow }
+            );
+
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(templateImage, 0, 0, canvas.width, canvas.height);
+            drawPosterMapPanel(ctx, mapImage, mapFrame);
+
+            ctx.fillStyle = '#111111';
+            ctx.font = `500 ${validLayout.fontSize}px Inter`;
+            drawCanvasTextBlock(ctx, buildPosterValidLine(validFrom, validTo),       validLayout.x,   validLayout.y,   validLayout.maxWidth,   validLayout.lineHeight,   validLayout.maxHeight);
+
+            ctx.fillStyle = '#111111';
+            ctx.font = `500 ${issuedLayout.fontSize}px Inter`;
+            drawCanvasTextBlock(ctx, buildPosterIssuedLine(issuedAt, issueVersion),  issuedLayout.x,  issuedLayout.y,  issuedLayout.maxWidth,  issuedLayout.lineHeight,  issuedLayout.maxHeight);
+
+            return {
+                dataUrl:           canvas.toDataURL('image/png'),
+                fileName:          buildDetailExportFileName(validFrom, issueVersion),
+                lightningRequested: includeLightning,
+                lightningIncluded:  includeLightning && lightningInWindow > 0,
+                lightningWarning
+            };
+        }
+
+        // ── fallback render caller (replaces old stub) ────────────────────────────
+        async function attemptLocalPosterRender(data, geoJSON) {
+            try {
+                posterStatus.textContent = 'Generating poster locally…';
+
+                const posterArtifact = await renderDetailForecastPoster(geoJSON, {
+                    validFrom:       data.validFrom,
+                    validTo:         data.validTo,
+                    issuedAt:        data.issuedAt || data.validFrom,
+                    issueVersion:    data.issueVersion || 1,
+                    includeLightning: false   // no lightning on fallback render — keep it fast
+                });
+
+                const response   = await fetch(posterArtifact.dataUrl);
+                const blob       = await response.blob();
+                const objectUrl  = URL.createObjectURL(blob);
 
                 posterPreviewImg.onload = () => {
                     posterStatus.textContent = 'Poster PNG generated locally for preview (not synced to archive storage).';
@@ -940,21 +1980,43 @@
                 posterPreviewImg.src = objectUrl;
 
                 posterLinkBtn.hidden = false;
-                posterLinkBtn.href = objectUrl;
+                posterLinkBtn.href   = objectUrl;
                 posterLinkBtn.target = '_blank';
-                posterLinkBtn.rel = 'noopener';
+                posterLinkBtn.rel    = 'noopener';
                 posterLinkBtn.download = posterArtifact.fileName;
 
                 window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
             } catch (error) {
                 console.error('Local poster render failed.', error);
-                posterStatus.textContent = 'Could not generate the poster PNG locally. Re-publish or update from Admin to regenerate the archived poster.';
+                posterStatus.textContent = 'Could not generate the poster PNG locally. Re-publish from Admin to regenerate the archived poster.';
                 posterPreviewShell.hidden = true;
                 posterLinkBtn.hidden = true;
             }
         }
 
+        refreshForecastsBadge();
         fetchForecast();
     </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
+    </script>
 </body>
+
 </html>

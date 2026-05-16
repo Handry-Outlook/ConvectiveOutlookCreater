@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Forecaster Admin</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
     <link rel="stylesheet" href="shared-ui.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.14.1/mapbox-gl.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css" type="text/css">
+    <link rel="stylesheet" href="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-draw/v1.4.0/mapbox-gl-draw.css"
+        type="text/css">
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="forecast-utils.js"></script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
     <style>
         :root {
             --primary: #1e293b;
@@ -21,12 +34,19 @@
             --panel-edge: #dbe4ef;
         }
 
+        html,
+        body {
+            height: 100%;
+        }
+
         body {
             min-height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             background: #f8fafc;
             color: #1f2937;
+            overflow: hidden;
         }
 
         #app-header {
@@ -35,6 +55,7 @@
 
         .admin-shell {
             flex: 1;
+            height: 100%;
             min-height: 0;
             display: flex;
             overflow: hidden;
@@ -96,6 +117,60 @@
             color: #1f2937;
             font-weight: 700;
             cursor: pointer;
+        }
+
+        .map-style-switcher {
+            position: relative;
+        }
+
+        .map-style-menu {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            right: 0;
+            background: rgba(255, 255, 255, 0.98);
+            border: 1px solid rgba(148, 163, 184, 0.45);
+            border-radius: 14px;
+            box-shadow: 0 8px 28px rgba(15, 23, 42, 0.14);
+            overflow: hidden;
+            min-width: 148px;
+            z-index: 10;
+        }
+
+        .map-style-menu.is-open {
+            display: block;
+        }
+
+        .map-style-option {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 11px 15px;
+            border: none;
+            background: transparent;
+            color: #1f2937;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .map-style-option:hover {
+            background: #f1f5f9;
+        }
+
+        .map-style-option.is-active {
+            color: var(--accent);
+            background: #fff8f8;
+        }
+
+        .map-style-option .style-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex: 0 0 auto;
         }
 
         #login-overlay {
@@ -177,9 +252,24 @@
             margin: 14px 0 12px;
         }
 
+        .btn-danger {
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid rgba(185, 28, 28, 0.25);
+        }
+
+        .btn-danger:hover {
+            background: #fecaca;
+        }
+
+        .btn-danger:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
         .sort-row {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr;
             gap: 10px;
         }
 
@@ -244,6 +334,20 @@
             padding: 4px 8px;
             font-size: 10px;
             font-weight: 800;
+        }
+
+        .kml-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: 1px solid rgba(148, 163, 184, 0.8);
+            background: rgba(255, 255, 255, 0.9);
+            color: #0f172a;
+            font-size: 11px;
+            flex: 0 0 auto;
         }
 
         .publish-btn {
@@ -443,13 +547,36 @@
             border: 1px solid #cbd5e1;
             background: linear-gradient(90deg,
                     #ffffff 0%,
+                    #d0cece 1%,
                     #d0cece 5%,
+                    #bea497 5%,
                     #bea497 10%,
-                    #66c2a4 30%,
-                    #fff200 50%,
-                    #ff7f27 70%,
-                    #ec1c24 85%,
-                    #b83dba 100%);
+                    #66c2a4 10%,
+                    #66c2a4 20%,
+                    #b3ff00 20%,
+                    #b3ff00 30%,
+                    #fff200 30%,
+                    #fff200 40%,
+                    #ffb327 40%,
+                    #ffb327 50%,
+                    #ff7f27 50%,
+                    #ff7f27 60%,
+                    #ff5227 60%,
+                    #ff5227 65%,
+                    #ff2e27 65%,
+                    #ff2e27 70%,
+                    #ec1c24 70%,
+                    #ec1c24 75%,
+                    #ec1c5a 75%,
+                    #ec1c5a 80%,
+                    #b83dba 80%,
+                    #b83dba 85%,
+                    #5a099c 85%,
+                    #5a099c 90%,
+                    #3e00e9 90%,
+                    #3e00e9 95%,
+                    #2600ff 95%,
+                    #2600ff 100%);
         }
 
         .admin-hoco-legend-labels {
@@ -625,9 +752,71 @@
 
         .editor-actions {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 10px;
             margin-bottom: 12px;
+        }
+
+        .editor-actions-top {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+        }
+
+        .publish-split-row {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .publish-split-row.is-visible {
+            display: grid;
+        }
+
+        .btn-update {
+            padding: 13px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            background: #fff;
+            color: #334155;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-update:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
+        .btn-new-version {
+            padding: 13px 16px;
+            border: none;
+            border-radius: 14px;
+            background: var(--accent);
+            color: #fff;
+            font-weight: 800;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-new-version:hover {
+            opacity: 0.9;
+        }
+
+        .version-context-note {
+            grid-column: 1 / -1;
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.5;
+            padding: 8px 10px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+        }
+
+        .version-context-note strong {
+            color: #1e293b;
         }
 
         .poster-options-row {
@@ -668,6 +857,71 @@
             gap: 14px;
         }
 
+        .kml-issuance-override-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .kml-issuance-override-row input[type="datetime-local"] {
+            border-radius: 14px;
+        }
+
+        .btn-kml-override-clear {
+            padding: 12px 14px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            background: #fff;
+            color: #475569;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .btn-kml-override-clear:hover {
+            background: #fee2e2;
+            color: #b91c1c;
+            border-color: rgba(185, 28, 28, 0.3);
+        }
+
+        .kml-meta-card.has-detected-date {
+            border-color: #86efac;
+            background: #f0fdf4;
+        }
+
+        .kml-meta-card.has-manual-override {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+
+        .kml-date-source-badge {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .kml-date-source-badge.source-kml {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .kml-date-source-badge.source-file {
+            background: #fef9c3;
+            color: #854d0e;
+        }
+
+        .kml-date-source-badge.source-manual {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
         .kml-import-actions {
             display: flex;
             align-items: center;
@@ -704,8 +958,45 @@
             word-break: break-word;
         }
 
+        .draft-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 8px;
+            border-radius: 999px;
+            background: #fef9c3;
+            color: #854d0e;
+            border: 1px solid #fde047;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+        }
+
+        .new-outlook-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn-save-draft {
+            padding: 15px 16px;
+            border: 1px solid #cbd5e1;
+            border-radius: 14px;
+            background: #fff;
+            color: #334155;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-save-draft:hover {
+            background: #f1f5f9;
+            border-color: #94a3b8;
+        }
+
         .btn-save {
-            width: 100%;
             padding: 15px 16px;
             border: none;
             border-radius: 14px;
@@ -895,8 +1186,9 @@
         }
 
         @media (max-width: 760px) {
+
             .field-grid,
-            .editor-actions,
+            .editor-actions-top,
             .sort-row,
             .admin-hoco-actions,
             .kml-meta-grid {
@@ -920,12 +1212,14 @@
         }
     </style>
 </head>
+
 <body>
     <div id="login-overlay">
         <div class="login-box">
             <div class="page-eyebrow">Forecast Desk</div>
             <h2>Forecaster Portal</h2>
-            <p>Sign in to draw outlook polygons, write the convective discussion, publish updates, and export the finished poster.</p>
+            <p>Sign in to draw outlook polygons, write the convective discussion, publish updates, and export the
+                finished poster.</p>
             <input type="email" id="email" placeholder="Email">
             <input type="password" id="password" placeholder="Password">
             <button id="login-btn">Login</button>
@@ -942,11 +1236,18 @@
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html">Outlooks</a>
                 <a href="obs.html">Observations</a>
+                <a href="forecasts.html">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+                <a href="hoco.html">HOCO</a>
                 <a href="archive.html">Archive</a>
                 <a href="admin.html" class="active">Admin</a>
             </nav>
             <div class="nav-right">
-                <a href="admin.html" class="nav-icon-link active" title="Forecaster admin"><i class="fas fa-user"></i></a>
+                <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                    <i class="fas fa-user"></i>
+                </a>
             </div>
         </div>
     </header>
@@ -968,6 +1269,11 @@
                         <option value="maxRiskRank">Highest risk</option>
                         <option value="validFrom">Valid date</option>
                     </select>
+                    <select id="history-range">
+                        <option value="60" selected>Last 60 days</option>
+                        <option value="180">Last 180 days</option>
+                        <option value="all">All time</option>
+                    </select>
                 </div>
             </div>
             <div id="history-list"></div>
@@ -978,7 +1284,8 @@
                 <div>
                     <div class="page-eyebrow">Issuing Desk</div>
                     <h2 id="editor-title">New Outlook</h2>
-                    <p class="editor-subtitle">Set the risk level, define the validity window, and build the convective discussion before publishing or exporting.</p>
+                    <p class="editor-subtitle">Set the risk level, define the validity window, and build the convective
+                        discussion before publishing or exporting.</p>
                 </div>
                 <button id="logout-btn" class="btn-logout">Logout</button>
             </div>
@@ -1016,26 +1323,43 @@
                 <div class="section-head">
                     <div>
                         <div class="section-title">Batch KML Import</div>
-                        <div class="section-note">Upload one or more outlook KML files and turn them into a locally saved draft.</div>
+                        <div class="section-note">Upload one or more outlook KML files and turn them into a locally
+                            saved draft.</div>
                     </div>
                 </div>
                 <div class="kml-import-shell">
                     <div>
                         <label for="kml-batch-input">KML files</label>
-                        <input type="file" id="kml-batch-input" accept=".kml,.xml,application/vnd.google-earth.kml+xml" multiple>
+                        <input type="file" id="kml-batch-input" accept=".kml,.xml,application/vnd.google-earth.kml+xml"
+                            multiple>
                     </div>
                     <div class="kml-import-actions">
-                        <button type="button" class="btn-secondary" id="import-kml-btn"><i class="fas fa-file-import"></i> Load KML draft</button>
-                        <div class="section-note" id="kml-import-status">Batch KML import reads placemark names as risk levels and saves the result as a local draft.</div>
+                        <button type="button" class="btn-secondary" id="import-kml-btn"><i
+                                class="fas fa-file-import"></i> Load KML draft</button>
+                        <div class="section-note" id="kml-import-status">Batch KML import reads placemark names as risk
+                            levels and saves the result as a local draft.</div>
+                    </div>
+                    <div>
+                        <label for="kml-issued-override">Override Issue / Update Time</label>
+                        <div class="kml-issuance-override-row">
+                            <input type="datetime-local" id="kml-issued-override"
+                                title="Manually set the issuance or last-updated time for this KML draft">
+                            <button type="button" class="btn-kml-override-clear" id="kml-override-clear-btn"
+                                title="Clear override and revert to auto-detected time"><i class="fas fa-xmark"></i>
+                                Clear</button>
+                        </div>
+                        <div class="section-note" style="margin-top:6px;">Leave blank to use the auto-detected date from
+                            the KML content or file metadata. Setting a value here overrides both.</div>
                     </div>
                     <div class="kml-meta-grid">
                         <div class="kml-meta-card">
                             <div class="kml-meta-label">Draft Validity</div>
                             <div class="kml-meta-value" id="kml-validity-meta">--</div>
                         </div>
-                        <div class="kml-meta-card">
+                        <div class="kml-meta-card" id="kml-issued-meta-card">
                             <div class="kml-meta-label">Draft Issuance</div>
                             <div class="kml-meta-value" id="kml-issued-meta">--</div>
+                            <div id="kml-issued-source-badge"></div>
                         </div>
                         <div class="kml-meta-card">
                             <div class="kml-meta-label">Imported Title</div>
@@ -1053,7 +1377,8 @@
                 <summary class="expandable-summary">
                     <div>
                         <div class="section-title">HOCO Loader</div>
-                        <div class="section-note">Compare automated guidance and the blended ensemble as read-only overlays beside your draft.</div>
+                        <div class="section-note">Compare automated guidance and the blended ensemble as read-only
+                            overlays beside your draft.</div>
                     </div>
                     <i class="fas fa-chevron-down expandable-chevron" aria-hidden="true"></i>
                 </summary>
@@ -1062,7 +1387,8 @@
                         <div>
                             <label for="hoco-admin-date">Forecast day</label>
                             <input type="date" id="hoco-admin-date">
-                            <div class="admin-hoco-window" id="hoco-admin-window">Waiting for the selected 06:00 to next-day 05:59 forecast window.</div>
+                            <div class="admin-hoco-window" id="hoco-admin-window">Waiting for the selected 06:00 to
+                                next-day 05:59 forecast window.</div>
                         </div>
 
                         <div class="admin-hoco-card">
@@ -1071,7 +1397,8 @@
                                 <span class="admin-hoco-badge neutral" id="hoco-admin-run-count">0 RUNS</span>
                             </div>
                             <h3 id="hoco-admin-auto-title">Waiting for HOCO runs...</h3>
-                            <p id="hoco-admin-auto-summary">Select a forecast day to preview the latest individual AUTO-HOCO run.</p>
+                            <p id="hoco-admin-auto-summary">Select a forecast day to preview the latest individual
+                                AUTO-HOCO run.</p>
                             <div class="admin-hoco-meta">
                                 <div><strong>Valid:</strong> <span id="hoco-admin-auto-period">--</span></div>
                                 <div><strong>Issued:</strong> <span id="hoco-admin-auto-issued">--</span></div>
@@ -1085,7 +1412,8 @@
                                 <strong id="hoco-admin-run-issued">No run</strong>
                             </div>
                             <input type="range" id="hoco-admin-run-slider" min="0" max="0" value="0" step="1" disabled>
-                            <div class="admin-hoco-slider-caption">Move the slider to step through earlier automated runs for the chosen forecast day. The latest run is selected by default.</div>
+                            <div class="admin-hoco-slider-caption">Move the slider to step through earlier automated
+                                runs for the chosen forecast day. The latest run is selected by default.</div>
                         </div>
 
                         <div class="admin-hoco-card">
@@ -1094,7 +1422,8 @@
                                 <span class="admin-hoco-badge neutral" id="hoco-admin-ensemble-count">0 SOURCES</span>
                             </div>
                             <h3 id="hoco-admin-ensemble-title">Waiting for automated source runs...</h3>
-                            <p id="hoco-admin-ensemble-summary">When runs exist for the selected forecast day, the client ensemble is blended here as a read-only overlay.</p>
+                            <p id="hoco-admin-ensemble-summary">When runs exist for the selected forecast day, the
+                                client ensemble is blended here as a read-only overlay.</p>
                             <div class="admin-hoco-meta">
                                 <div><strong>Valid:</strong> <span id="hoco-admin-ensemble-period">--</span></div>
                                 <div><strong>Issued span:</strong> <span id="hoco-admin-ensemble-issued">--</span></div>
@@ -1104,7 +1433,9 @@
 
                         <div class="admin-hoco-card">
                             <div class="section-title">Lightning Probability Scale</div>
-                            <p style="margin-top:8px;">HOCO uses a lightning-probability scale, then the loader maps those polygons back into the manual `1` to `5` convective risk categories for editing.</p>
+                            <p style="margin-top:8px;">HOCO uses a lightning-probability scale, then the loader maps
+                                those polygons back into the manual `1` to `5` convective risk categories for editing.
+                            </p>
                             <div style="margin-top:12px;">
                                 <div class="admin-hoco-legend-bar"></div>
                                 <div class="admin-hoco-legend-labels">
@@ -1120,12 +1451,17 @@
 
                         <!-- Layer visibility toggles — these only show/hide guidance overlays, never touch drawn polygons -->
                         <div class="forecast-layer-toggle-row">
-                            <button type="button" class="forecast-layer-toggle active" data-layer-toggle="manual">Manual</button>
+                            <button type="button" class="forecast-layer-toggle active"
+                                data-layer-toggle="manual">Manual</button>
                             <button type="button" class="forecast-layer-toggle" data-layer-toggle="auto">Auto</button>
-                            <button type="button" class="forecast-layer-toggle" data-layer-toggle="ensemble">Ensemble</button>
+                            <button type="button" class="forecast-layer-toggle"
+                                data-layer-toggle="ensemble">Ensemble</button>
                         </div>
 
-                        <div class="admin-hoco-note">The HOCO guidance layers shown above are <strong>read-only overlays</strong> — they never modify your drawn polygons. Use the layer toggles to compare guidance against your draft. The slider above updates the Auto overlay for the selected run immediately.</div>
+                        <div class="admin-hoco-note">The HOCO guidance layers shown above are <strong>read-only
+                                overlays</strong> — they never modify your drawn polygons. Use the layer toggles to
+                            compare guidance against your draft. The slider above updates the Auto overlay for the
+                            selected run immediately.</div>
                     </div>
                 </div>
             </details>
@@ -1135,7 +1471,8 @@
                     <div class="section-title">Convective Discussion</div>
                     <div class="section-head-actions">
                         <div class="section-note" id="discussion-stats">0 words</div>
-                        <button type="button" class="editor-link-btn" id="open-discussion-modal"><i class="fas fa-up-right-and-down-left-from-center"></i> Open editor</button>
+                        <button type="button" class="editor-link-btn" id="open-discussion-modal"><i
+                                class="fas fa-up-right-and-down-left-from-center"></i> Open editor</button>
                     </div>
                 </div>
                 <div class="discussion-toolbar">
@@ -1144,26 +1481,52 @@
                     <button type="button" class="template-btn" data-snippet="ENVIRONMENT&#10;&#10;">Environment</button>
                     <button type="button" class="template-btn" data-snippet="TIMING&#10;&#10;">Timing</button>
                     <button type="button" class="template-btn" data-snippet="HAZARDS&#10;- ">Hazards</button>
-                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional Focus</button>
-                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting Factors</button>
+                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional
+                        Focus</button>
+                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting
+                        Factors</button>
                     <button type="button" class="template-btn" data-snippet="IMPACTS&#10;- ">Impacts</button>
                     <button type="button" class="template-btn" data-snippet="CONFIDENCE&#10;&#10;">Confidence</button>
                     <button type="button" class="template-btn" data-snippet="UNCERTAINTY&#10;&#10;">Uncertainty</button>
                     <button type="button" class="template-btn" data-snippet="KEY MESSAGES&#10;- ">Key Messages</button>
                     <button type="button" class="template-btn" id="insert-utc-btn">Insert UTC stamp</button>
                 </div>
-                <div class="discussion-preview is-empty" id="discussion-preview">Discussion preview will appear here.</div>
+                <div class="discussion-preview is-empty" id="discussion-preview">Discussion preview will appear here.
+                </div>
                 <div class="discussion-meta">
                     <span id="discussion-lines">0 lines</span>
                     <span id="discussion-chars">0 characters</span>
                 </div>
-                <div class="discussion-hint">Preview is intentionally capped so long discussions do not stretch the page. Open the popup editor to write the full text.</div>
+                <div class="discussion-hint">Preview is intentionally capped so long discussions do not stretch the
+                    page. Open the popup editor to write the full text.</div>
             </div>
 
-            <div class="editor-actions">
-                <button type="button" class="btn-ghost" id="clear-draft"><i class="fas fa-rotate-left"></i> Clear draft</button>
-                <button type="button" class="btn-secondary" id="export-png"><i class="fas fa-file-export"></i> Export PNG</button>
-                <button class="btn-save" id="save-forecast"><i class="fas fa-bullhorn"></i> Publish Outlook</button>
+            <div class="editor-actions" id="editor-actions">
+                <div class="editor-actions-top">
+                    <button type="button" class="btn-ghost" id="clear-draft"><i class="fas fa-rotate-left"></i> Clear
+                        draft</button>
+                    <button type="button" class="btn-ghost btn-danger" id="delete-forecast" disabled><i
+                            class="fas fa-trash"></i> Delete forecast</button>
+                    <button type="button" class="btn-secondary" id="export-png"><i class="fas fa-file-export"></i>
+                        Export
+                        PNG</button>
+                </div>
+                <!-- New-outlook actions: shown for new (unsaved) drafts only -->
+                <div class="new-outlook-actions" id="new-outlook-actions">
+                    <button type="button" class="btn-save-draft" id="save-draft"><i class="fas fa-floppy-disk"></i> Save Draft</button>
+                    <button class="btn-save" id="save-forecast"><i class="fas fa-bullhorn"></i> Publish Outlook</button>
+                </div>
+                <!-- Split row — shown only when editing an existing published forecast -->
+                <div class="publish-split-row" id="publish-split-row">
+                    <div class="version-context-note" id="version-context-note"></div>
+                    <button type="button" class="btn-save-draft" id="save-as-draft" style="display:none; grid-column: 1 / -1;"><i class="fas fa-floppy-disk"></i> Save as New Draft</button>
+                    <button type="button" class="btn-update" id="update-forecast">
+                        <i class="fas fa-floppy-disk"></i> Update Outlook
+                    </button>
+                    <button type="button" class="btn-new-version" id="publish-new-version">
+                        <i class="fas fa-bullhorn"></i> Publish as New Version
+                    </button>
+                </div>
             </div>
 
             <div class="poster-options-row">
@@ -1171,7 +1534,8 @@
                     <input type="checkbox" id="poster-lightning-toggle">
                     <span>Include UK lightning on poster/export</span>
                 </label>
-                <div class="section-note">Uses the same live UK lightning feeds as the main outlook page and overlays strikes that fall inside the forecast valid window when enabled.</div>
+                <div class="section-note">Uses the same live UK lightning feeds as the main outlook page and overlays
+                    strikes that fall inside the forecast valid window when enabled.</div>
             </div>
 
             <div id="status"></div>
@@ -1187,8 +1551,17 @@
 
         <section id="map-wrap">
             <div class="map-toolbar">
+                <div class="action-row map-style-switcher">
+                    <button type="button" class="small-btn" id="map-style-btn">
+                        <i class="fas fa-layer-group"></i> <span id="map-style-label">Handry Outlook Map Style</span>
+                    </button>
+                    <div class="map-style-menu" id="map-style-menu">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
                 <div class="action-row">
-                    <button type="button" class="small-btn" id="fit-map-btn"><i class="fas fa-expand"></i> Fit polygons</button>
+                    <button type="button" class="small-btn" id="fit-map-btn"><i class="fas fa-expand"></i> Fit
+                        polygons</button>
                 </div>
             </div>
             <div id="map"></div>
@@ -1201,9 +1574,11 @@
                 <div>
                     <div class="page-eyebrow">Forecast Discussion</div>
                     <h3 class="modal-title" id="discussion-modal-title">Write the full discussion</h3>
-                    <p class="editor-subtitle" style="margin-top:10px;">Use the forecast structure buttons, keep the main editor tidy, and close the window when you are happy with the wording.</p>
+                    <p class="editor-subtitle" style="margin-top:10px;">Use the forecast structure buttons, keep the
+                        main editor tidy, and close the window when you are happy with the wording.</p>
                 </div>
-                <button type="button" class="modal-close-btn" id="close-discussion-modal"><i class="fas fa-xmark"></i> Close</button>
+                <button type="button" class="modal-close-btn" id="close-discussion-modal"><i class="fas fa-xmark"></i>
+                    Close</button>
             </div>
             <div class="modal-body">
                 <div class="discussion-toolbar">
@@ -1212,8 +1587,10 @@
                     <button type="button" class="template-btn" data-snippet="ENVIRONMENT&#10;&#10;">Environment</button>
                     <button type="button" class="template-btn" data-snippet="TIMING&#10;&#10;">Timing</button>
                     <button type="button" class="template-btn" data-snippet="HAZARDS&#10;- ">Hazards</button>
-                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional Focus</button>
-                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting Factors</button>
+                    <button type="button" class="template-btn" data-snippet="REGIONAL FOCUS&#10;&#10;">Regional
+                        Focus</button>
+                    <button type="button" class="template-btn" data-snippet="LIMITING FACTORS&#10;&#10;">Limiting
+                        Factors</button>
                     <button type="button" class="template-btn" data-snippet="IMPACTS&#10;- ">Impacts</button>
                     <button type="button" class="template-btn" data-snippet="CONFIDENCE&#10;&#10;">Confidence</button>
                     <button type="button" class="template-btn" data-snippet="UNCERTAINTY&#10;&#10;">Uncertainty</button>
@@ -1229,9 +1606,11 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <div class="modal-meta-note">The admin page keeps only a short preview. The full text is still saved and exported.</div>
+                <div class="modal-meta-note">The admin page keeps only a short preview. The full text is still saved and
+                    exported.</div>
                 <div class="modal-footer-actions">
-                    <button type="button" class="btn-secondary" id="discussion-done-btn"><i class="fas fa-check"></i> Done</button>
+                    <button type="button" class="btn-secondary" id="discussion-done-btn"><i class="fas fa-check"></i>
+                        Done</button>
                 </div>
             </div>
         </div>
@@ -1243,7 +1622,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
         import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
-        import { addDoc, collection, doc, getFirestore, limit, onSnapshot, orderBy, query, updateDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { addDoc, collection, deleteDoc, doc, getDocs, getFirestore, limit, onSnapshot, orderBy, query, updateDoc, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
         import { getStorage, getDownloadURL, ref, uploadString } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-storage.js";
 
         const firebaseConfig = {
@@ -1278,12 +1657,12 @@
         });
         const POSTER_TEXT_LAYOUT = Object.freeze({
             valid: {
-                x: 640,
+                x: 520,
                 y: 414,
                 maxWidth: 2400,
                 lineHeight: 92,
                 maxHeight: 160,
-                fontSize: 86
+                fontSize: 100
             },
             issued: {
                 x: 680,
@@ -1291,12 +1670,21 @@
                 maxWidth: 2440,
                 lineHeight: 92,
                 maxHeight: 150,
-                fontSize: 86
+                fontSize: 100
             }
         });
         const POSTER_LIGHTNING_LOOKBACK_MINUTES = 360;
         const LOCAL_DRAFT_STORAGE_KEY = 'handry-admin-draft-v1';
         const KML_IMPORT_DEFAULT_STATUS = 'Batch KML import reads placemark names as risk levels and saves the result as a local draft.';
+        mapboxgl.accessToken = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
+        const MAP_STYLES = [
+            { id: 'handry', label: 'Handry', url: `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29?access_token=${mapboxgl.accessToken}` },
+            { id: 'light', label: 'Light', url: 'mapbox://styles/mapbox/light-v11' },
+            { id: 'dark', label: 'Dark', url: 'mapbox://styles/mapbox/dark-v11' },
+            { id: 'satellite', label: 'Satellite', url: 'mapbox://styles/mapbox/satellite-streets-v12' },
+
+        ];
+        let currentMapStyleIndex = 0;
         const UK_LIGHTNING_FEED_URLS = Object.freeze({
             githubPrimary: 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data.json',
             githubSecondary: 'https://raw.githubusercontent.com/HandryOutlook/lightning_data_new/refs/heads/main/lightning_data_2025_autumn.json',
@@ -1327,17 +1715,21 @@
         const discussionLinesModal = document.getElementById('discussion-lines-modal');
         const discussionCharsModal = document.getElementById('discussion-chars-modal');
         const discussionModal = document.getElementById('discussion-modal');
+        const forecastsBadge = document.getElementById('forecasts-count');
         const statusEl = document.getElementById('status');
         const historyList = document.getElementById('history-list');
         const layerStack = document.getElementById('layer-stack');
         const layerCount = document.getElementById('layer-count');
-        const saveButton = document.getElementById('save-forecast');
         const posterLightningToggle = document.getElementById('poster-lightning-toggle');
         const kmlBatchInput = document.getElementById('kml-batch-input');
         const importKmlButton = document.getElementById('import-kml-btn');
         const kmlImportStatus = document.getElementById('kml-import-status');
         const kmlValidityMeta = document.getElementById('kml-validity-meta');
         const kmlIssuedMeta = document.getElementById('kml-issued-meta');
+        const kmlIssuedMetaCard = document.getElementById('kml-issued-meta-card');
+        const kmlIssuedSourceBadge = document.getElementById('kml-issued-source-badge');
+        const kmlIssuedOverrideInput = document.getElementById('kml-issued-override');
+        const kmlOverrideClearBtn = document.getElementById('kml-override-clear-btn');
         const kmlTitleMeta = document.getElementById('kml-title-meta');
         const kmlFilesMeta = document.getElementById('kml-files-meta');
         const validFromInput = document.getElementById('valid-from');
@@ -1391,24 +1783,26 @@
         let posterUkLightningStrikes = [];
         let posterUkLightningLastUpdate = null;
         let draftIssuedAtOverride = null;
+        let draftIssuedAtSource = null; // 'kml' | 'file' | 'manual' | null
         let importedDraftTitle = '';
         let importedDraftFiles = [];
         let pendingLocalDraftRestore = false;
         let adminMapReady = false;
 
-        mapboxgl.accessToken = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
+
 
         const draw = new MapboxDraw({
             displayControlsDefault: false,
             controls: { polygon: true, trash: true },
             userProperties: true,
             styles: [
+                // ─── Polygon fills (opacity 0 — visible fill comes from the preview overlay) ───
                 {
                     id: 'gl-draw-polygon-fill-active',
                     type: 'fill',
                     filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
                     paint: {
-                        'fill-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'fill-color': ['coalesce', ['get', 'user_user_color'], '#94a3b8'],
                         'fill-opacity': 0
                     }
                 },
@@ -1417,19 +1811,35 @@
                     type: 'fill',
                     filter: ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
                     paint: {
-                        'fill-color': ['coalesce', ['get', 'user_color'], '#334155'],
+                        'fill-color': ['coalesce', ['get', 'user_user_color'], '#94a3b8'],
                         'fill-opacity': 0
                     }
                 },
+                // ─── Polygon strokes ───────────────────────────────────────────────────────────
+                // NOTE: with userProperties:true MapboxDraw prefixes every custom property with
+                // 'user_' when writing to the GL source, so our property 'user_color' is exposed
+                // in GL expressions as 'user_user_color'. Using ['get','user_color'] resolves to
+                // null and the coalesce fell back to the static green init-time colour. Fixed by
+                // targeting the correctly-prefixed name 'user_user_color'.
                 {
                     id: 'gl-draw-polygon-stroke-active',
                     type: 'line',
-                    filter: ['all', ['==', '$type', 'Polygon']],
+                    filter: ['all', ['==', '$type', 'Polygon'], ['!=', 'mode', 'static']],
                     paint: {
-                        'line-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'line-color': ['coalesce', ['get', 'user_user_color'], '#94a3b8'],
                         'line-width': 3
                     }
                 },
+                {
+                    id: 'gl-draw-polygon-stroke-static',
+                    type: 'line',
+                    filter: ['all', ['==', '$type', 'Polygon'], ['==', 'mode', 'static']],
+                    paint: {
+                        'line-color': ['coalesce', ['get', 'user_user_color'], '#94a3b8'],
+                        'line-width': 2.5
+                    }
+                },
+                // ─── Vertex points ─────────────────────────────────────────────────────────────
                 {
                     id: 'gl-draw-point-active',
                     type: 'circle',
@@ -1437,7 +1847,7 @@
                     paint: {
                         'circle-radius': 6,
                         'circle-color': '#fff',
-                        'circle-stroke-color': ['coalesce', ['get', 'user_color'], getSelectedColor()],
+                        'circle-stroke-color': ['coalesce', ['get', 'user_user_color'], '#94a3b8'],
                         'circle-stroke-width': 2
                     }
                 }
@@ -1446,15 +1856,19 @@
 
         const map = new mapboxgl.Map({
             container: 'map',
-            style: 'mapbox://styles/mapbox/light-v11',
+            style: 'mapbox://styles/handry20191026/cmd7aol1800u401s9g60ibz29',
             center: [-2.5, 54.5],
             zoom: 5,
+            projection: 'mercator',
             preserveDrawingBuffer: true
         });
 
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         map.on('load', () => {
+            if (typeof map.setProjection === 'function') {
+                map.setProjection('mercator');
+            }
             adminMapReady = true;
             map.addControl(draw, 'top-left');
             ensurePreviewLayers();
@@ -1467,6 +1881,9 @@
 
         map.on('style.load', () => {
             ensurePreviewLayers();
+            // Repopulate the preview overlay after a style change (ensurePreviewLayers adds
+            // the source with empty data; refreshDrawPreview re-fills it from current draw state).
+            refreshDrawPreview();
             // ─── FIX 2: Re-render guidance overlays after style change without
             //     touching draw polygons ─────────────────────────────────────────
             if (adminActiveHocoAutoGeojson) {
@@ -1507,11 +1924,11 @@
                 : (window.GenWeatherUtils?.getFeatureMeta?.(sourceFeature)
                     || window.GenWeatherUtils?.getRiskMeta?.(sourceFeature.properties.user_rank ?? sourceFeature.properties.rank)
                     || {
-                        label: 'Outlook',
-                        title: 'Outlook',
-                        color: '#94a3b8',
-                        description: 'Thunderstorm outlook information.'
-                    });
+                    label: 'Outlook',
+                    title: 'Outlook',
+                    color: '#94a3b8',
+                    description: 'Thunderstorm outlook information.'
+                });
             const rank = severe ? 0 : (window.GenWeatherUtils?.getFeatureRank?.(sourceFeature) || 0);
 
             return {
@@ -1530,7 +1947,9 @@
         }
 
         function getNextIssueVersion() {
-            return currentEditingDocId ? ((currentEditingData?.issueVersion || 1) + 1) : 1;
+            if (!currentEditingDocId) return 1;
+            if (currentEditingData?.isDraft) return currentEditingData?.issueVersion || 1;
+            return (currentEditingData?.issueVersion || 1) + 1;
         }
 
         function escapeHtml(value) {
@@ -1603,7 +2022,45 @@
 
         function updateKmlImportMeta() {
             kmlValidityMeta.textContent = formatDraftMetaWindow();
-            kmlIssuedMeta.textContent = draftIssuedAtOverride ? formatDraftMetaDate(draftIssuedAtOverride) : '--';
+
+            // Display effective issuance: manual override input takes highest priority,
+            // but this function is read-only — it never writes back to draftIssuedAtOverride.
+            // State mutations happen only in the kmlIssuedOverrideInput 'change' listener
+            // and in the import loop itself.
+            const manualInputValue = kmlIssuedOverrideInput.value;
+            let effectiveIssuedAt = draftIssuedAtOverride;
+            let effectiveSource = draftIssuedAtSource;
+
+            if (manualInputValue) {
+                const manualDate = new Date(manualInputValue);
+                if (!Number.isNaN(manualDate.getTime())) {
+                    effectiveIssuedAt = manualDate.toISOString();
+                    // Only treat as 'manual' if the user explicitly typed/changed it
+                    // (draftIssuedAtSource tracks the true origin; don't override it here)
+                    if (!effectiveSource) effectiveSource = 'manual';
+                }
+            }
+
+            if (effectiveIssuedAt) {
+                kmlIssuedMeta.textContent = formatDraftMetaDate(effectiveIssuedAt);
+            } else {
+                kmlIssuedMeta.textContent = '--';
+            }
+
+            // Source badge
+            kmlIssuedSourceBadge.innerHTML = '';
+            kmlIssuedMetaCard.classList.remove('has-detected-date', 'has-manual-override');
+            if (effectiveSource === 'manual') {
+                kmlIssuedMetaCard.classList.add('has-manual-override');
+                kmlIssuedSourceBadge.innerHTML = '<span class="kml-date-source-badge source-manual"><i class="fas fa-pen"></i> Manual override</span>';
+            } else if (effectiveSource === 'kml') {
+                kmlIssuedMetaCard.classList.add('has-detected-date');
+                kmlIssuedSourceBadge.innerHTML = '<span class="kml-date-source-badge source-kml"><i class="fas fa-file-code"></i> From KML content</span>';
+            } else if (effectiveSource === 'file') {
+                kmlIssuedMetaCard.classList.add('has-detected-date');
+                kmlIssuedSourceBadge.innerHTML = '<span class="kml-date-source-badge source-file"><i class="fas fa-clock"></i> From file metadata</span>';
+            }
+
             kmlTitleMeta.textContent = importedDraftTitle || 'No KML draft loaded.';
             kmlFilesMeta.textContent = importedDraftFiles.length
                 ? `${importedDraftFiles.length} file${importedDraftFiles.length === 1 ? '' : 's'}: ${importedDraftFiles.join(', ')}`
@@ -1612,8 +2069,10 @@
 
         function clearImportedDraftMetadata() {
             draftIssuedAtOverride = null;
+            draftIssuedAtSource = null;
             importedDraftTitle = '';
             importedDraftFiles = [];
+            kmlIssuedOverrideInput.value = '';
             updateKmlImportMeta();
             setKmlImportStatus();
         }
@@ -1652,6 +2111,70 @@
             }
             matches.push(...Array.from(root.getElementsByTagName('*')).filter(node => node.localName === localName));
             return matches;
+        }
+
+        /**
+         * Attempt to extract an issuance/updated date from KML XML content.
+         * Checks (in priority order):
+         *   1. <atom:updated> or <updated> — RFC3339/ISO date used by GE/KML exports
+         *   2. <TimeStamp><when> on the Document or first Placemark
+         *   3. <TimeSpan><begin> — valid-from timestamp, less precise but still useful
+         *   4. <description> text — looks for ISO or DD/MM/YYYY date patterns
+         *   5. <name> text — looks for ISO or DD/MM/YYYY date patterns (e.g. "Issued: 01/05/2024 12:00")
+         * Returns { date: Date, source: 'kml' } or null.
+         */
+        /**
+         * Attempt to extract an issuance/updated date from KML XML metadata fields only.
+         * Deliberately does NOT scan <name> or <description> — those elements contain the
+         * validity window title (e.g. "Convective Outlook: 01/05/2024 12:00 - ...") which
+         * is the forecast valid period, not the issuance time. Scanning them returns the
+         * wrong date. If no explicit metadata field is found, the caller falls back to
+         * file.lastModified which is the correct source for issuance time.
+         *
+         * Checks (in priority order):
+         *   1. <atom:updated> / <updated> / <lastUpdated> / <modified>
+         *   2. <TimeStamp><when> on the Document or first Placemark
+         *   3. <TimeSpan><begin> — valid-from, only used when nothing else is present
+         * Returns { date: Date, source: 'kml' } or null.
+         */
+        function extractKmlIssuanceDate(xml) {
+            // 1. atom:updated / updated element
+            const updatedCandidates = [
+                ...getElementsByLocalName(xml, 'updated'),
+                ...getElementsByLocalName(xml, 'lastUpdated'),
+                ...getElementsByLocalName(xml, 'modified')
+            ];
+            for (const node of updatedCandidates) {
+                const text = node.textContent?.trim();
+                if (text) {
+                    const date = new Date(text);
+                    if (!Number.isNaN(date.getTime())) return { date, source: 'kml' };
+                }
+            }
+
+            // 2. TimeStamp/when on Document, Folder, or first Placemark
+            const timeStampNodes = getElementsByLocalName(xml, 'TimeStamp');
+            for (const tsNode of timeStampNodes) {
+                const whenNode = getElementsByLocalName(tsNode, 'when')[0];
+                const text = whenNode?.textContent?.trim();
+                if (text) {
+                    const date = new Date(text);
+                    if (!Number.isNaN(date.getTime())) return { date, source: 'kml' };
+                }
+            }
+
+            // 3. TimeSpan/begin — least preferred, only if nothing above matched
+            const timeSpanNodes = getElementsByLocalName(xml, 'TimeSpan');
+            for (const tsNode of timeSpanNodes) {
+                const beginNode = getElementsByLocalName(tsNode, 'begin')[0];
+                const text = beginNode?.textContent?.trim();
+                if (text) {
+                    const date = new Date(text);
+                    if (!Number.isNaN(date.getTime())) return { date, source: 'kml' };
+                }
+            }
+
+            return null;
         }
 
         function getDirectChildText(parent, localName) {
@@ -1755,11 +2278,28 @@
                 });
             });
 
+            // Try to detect issuance date from KML content first, then fall back to file metadata.
+            // file.lastModified of 0 means the browser couldn't read the real mtime — treat as absent.
+            const kmlDateResult = extractKmlIssuanceDate(xml);
+            let detectedDate = null;
+            let detectedDateSource = null;
+
+            if (kmlDateResult) {
+                detectedDate = kmlDateResult.date;
+                detectedDateSource = kmlDateResult.source; // 'kml'
+            } else if (file.lastModified && file.lastModified > 0) {
+                detectedDate = new Date(file.lastModified);
+                detectedDateSource = 'file';
+            }
+
             return {
                 fileName: file.name,
                 title,
                 validWindow,
                 features,
+                detectedDate,
+                detectedDateSource,
+                // Keep lastModified for backwards-compat with buildKmlEntrySignature
                 lastModified: file.lastModified ? new Date(file.lastModified) : null
             };
         }
@@ -1853,10 +2393,6 @@
             }
         }
 
-        function getHocoLightningColor(value) {
-            return window.GenWeatherUtils?.getHocoLightningColor?.(value) || '#66c2a4';
-        }
-
         function getHocoProbabilityLabel(value) {
             const numeric = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
             return `${numeric}% lightning`;
@@ -1869,7 +2405,7 @@
                     const riskValue = window.GenWeatherUtils?.parseRiskPercent
                         ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
                         : Number(feature?.properties?.risk || feature?.properties?.peak_risk || 0);
-                    const hocoColor = getHocoLightningColor(riskValue || feature?.properties?.peak_risk || 0);
+                    const hocoColor = window.GenWeatherUtils.getHocoLightningColor(riskValue);
                     return {
                         ...feature,
                         properties: {
@@ -2034,7 +2570,7 @@
                     type: 'fill',
                     source: sourceId,
                     paint: {
-                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#38bdf8'],
+                        'fill-color': window.GenWeatherUtils.buildHocoColorExpression('riskValue'),
                         'fill-opacity': fillOpacity
                     }
                 }, firstSymbol?.id);
@@ -2045,7 +2581,7 @@
                     type: 'line',
                     source: sourceId,
                     paint: {
-                        'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
+                        'line-color': window.GenWeatherUtils.buildHocoColorExpression('riskValue'),
                         'line-width': lineWidth,
                         'line-opacity': 0.92
                     }
@@ -2344,6 +2880,7 @@
                 description: forecastText.value || '',
                 geoJSON: createDraftGeoJSON(),
                 issuedAtOverride: draftIssuedAtOverride || null,
+                issuedAtSource: draftIssuedAtSource || null,
                 importedTitle: importedDraftTitle || '',
                 importedFiles: importedDraftFiles.slice(),
                 savedAt: new Date().toISOString()
@@ -2370,7 +2907,8 @@
         }
 
         function persistDraftLocally() {
-            if (currentEditingDocId) return;
+            // Only skip persistence when editing a published (non-draft) forecast from history
+            if (currentEditingDocId && !currentEditingData?.isDraft) return;
 
             const snapshot = buildLocalDraftSnapshot();
             if (!hasPersistableDraftContent(snapshot)) {
@@ -2395,6 +2933,16 @@
             draftIssuedAtOverride = snapshot.issuedAtOverride || null;
             importedDraftTitle = snapshot.importedTitle || '';
             importedDraftFiles = Array.isArray(snapshot.importedFiles) ? snapshot.importedFiles : [];
+
+            // Restore the override input value and source exactly as persisted
+            draftIssuedAtSource = snapshot.issuedAtSource || null;
+            if (draftIssuedAtOverride) {
+                const d = new Date(draftIssuedAtOverride);
+                kmlIssuedOverrideInput.value = Number.isNaN(d.getTime()) ? '' : toLocalInputValue(d);
+            } else {
+                kmlIssuedOverrideInput.value = '';
+                draftIssuedAtSource = null;
+            }
 
             draw.deleteAll();
             const geoJSON = typeof snapshot.geoJSON === 'string' ? JSON.parse(snapshot.geoJSON) : snapshot.geoJSON;
@@ -2616,11 +3164,77 @@
             }
         }
 
-        function setEditorMode(editing) {
+        async function refreshForecastsBadge() {
+            if (!forecastsBadge) return;
+            try {
+                const nowIso = new Date().toISOString().slice(0, 16);
+                const q = query(
+                    collection(db, "forecasts_v2"),
+                    where("isActive", "==", true),
+                    where("validTo", ">=", nowIso),
+                    orderBy("validTo", "asc"),
+                    limit(500)
+                );
+                const snapshot = await getDocs(q);
+                forecastsBadge.textContent = String(snapshot.size);
+            } catch (error) {
+                forecastsBadge.textContent = '?';
+            }
+        }
+
+        function setEditorMode(editing, data) {
             document.getElementById('editor-title').textContent = editing ? 'Edit Outlook' : 'New Outlook';
-            saveButton.innerHTML = editing
-                ? '<i class="fas fa-floppy-disk"></i> Update Outlook'
-                : '<i class="fas fa-bullhorn"></i> Publish Outlook';
+
+            const newOutlookActions = document.getElementById('new-outlook-actions');
+            const splitRow = document.getElementById('publish-split-row');
+            const saveAsDraftBtn = document.getElementById('save-as-draft');
+            const deleteButton = document.getElementById('delete-forecast');
+            const versionNote = document.getElementById('version-context-note');
+
+            const isPublishedEdit = editing && data && !data.isDraft;
+            const isEditingAny = editing && !!currentEditingDocId;
+
+            if (isEditingAny) {
+                // Hide the new-outlook actions, show the split row
+                newOutlookActions.style.display = 'none';
+                splitRow.classList.add('is-visible');
+
+                if (isPublishedEdit) {
+                    // Existing published forecast — Update keeps version, New Version increments
+                    // Also show Save as Draft to let the forecaster stage a modified copy
+                    const existingVersion = data.issueVersion || 1;
+                    const issuedDate = data.issuedAt || data.updatedAt || data.createdAt || null;
+                    const dateStr = issuedDate
+                        ? new Date(issuedDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                        : '—';
+                    versionNote.innerHTML =
+                        `<strong>Currently loaded:</strong> v${existingVersion} · issued ${dateStr}<br>` +
+                        `<strong>Save as New Draft</strong> — stage your changes as a draft (v${existingVersion + 1}) without touching the live forecast.<br>` +
+                        `<strong>Update Outlook</strong> — fix typos/small changes in-place, keeps the same version.<br>` +
+                        `<strong>Publish as New Version</strong> — new issuance, increments to v${existingVersion + 1}.`;
+                    saveAsDraftBtn.style.display = '';
+                    document.getElementById('update-forecast').innerHTML = '<i class="fas fa-floppy-disk"></i> Update Outlook';
+                    document.getElementById('publish-new-version').innerHTML = '<i class="fas fa-bullhorn"></i> Publish as New Version';
+                } else {
+                    // Draft loaded from history — Update saves draft changes; Publish issues it
+                    const draftVersion = data.issueVersion || 1;
+                    versionNote.innerHTML =
+                        `<strong>Editing draft</strong> v${draftVersion} (not yet published).<br>` +
+                        `<strong>Update Draft</strong> — save edits back to this draft without publishing.<br>` +
+                        `<strong>Publish Outlook</strong> — issue this draft as a live forecast.`;
+                    saveAsDraftBtn.style.display = 'none';
+                    document.getElementById('update-forecast').innerHTML = '<i class="fas fa-floppy-disk"></i> Update Draft';
+                    document.getElementById('publish-new-version').innerHTML = '<i class="fas fa-bullhorn"></i> Publish Outlook';
+                }
+            } else {
+                // New draft mode: show both Save Draft + Publish Outlook buttons
+                newOutlookActions.style.display = '';
+                splitRow.classList.remove('is-visible');
+            }
+
+            if (deleteButton) {
+                deleteButton.disabled = !editing;
+            }
         }
 
         function resetForm() {
@@ -2673,11 +3287,59 @@
             showStatus(nextState ? 'Outlook published.' : 'Outlook unpublished.', nextState ? 'var(--success)' : '#475569');
         }
 
+        async function deleteCurrentForecast() {
+            if (!currentEditingDocId) {
+                showStatus('Load a forecast first to delete it.', '#475569');
+                return;
+            }
+
+            const firstConfirm = window.confirm('Delete this forecast from Firebase? This cannot be undone.');
+            if (!firstConfirm) {
+                showStatus('Delete canceled.', '#475569');
+                return;
+            }
+
+            const typed = window.prompt('Type DELETE to permanently delete this forecast.');
+            if (typed !== 'DELETE') {
+                showStatus('Delete canceled. Type \"DELETE\" exactly if you still want to delete it.', '#475569');
+                return;
+            }
+
+            try {
+                showStatus('Deleting forecast...', '#1d4ed8');
+                await deleteDoc(doc(db, 'forecasts_v2', currentEditingDocId));
+                resetForm();
+                showStatus('Forecast deleted.', 'var(--success)');
+            } catch (error) {
+                console.error('Delete forecast failed.', error);
+                showStatus(`Could not delete forecast${error?.message ? `: ${error.message}` : '.'}`, 'var(--accent)');
+            }
+        }
+
         function loadToEdit(id, data) {
             currentEditingDocId = id;
             currentEditingData = data;
             clearImportedDraftMetadata();
-            setEditorMode(true);
+
+            // When loading a KML draft from history, restore the issuance date and
+            // imported file metadata that were stored in Firestore at import time.
+            // clearImportedDraftMetadata() above resets draftIssuedAtOverride to null,
+            // so without this block getDraftIssuedAtValue() would fall back to system
+            // time at publish, ignoring the KML-derived date stored in data.issuedAt.
+            if (data.isDraft && (data.importedByKml || (Array.isArray(data.importedFiles) && data.importedFiles.length))) {
+                if (data.issuedAt) {
+                    const restoredDate = new Date(data.issuedAt);
+                    if (!Number.isNaN(restoredDate.getTime())) {
+                        draftIssuedAtOverride = data.issuedAt;
+                        draftIssuedAtSource = 'kml';
+                        kmlIssuedOverrideInput.value = toLocalInputValue(restoredDate);
+                    }
+                }
+                importedDraftTitle = data.importedTitle || '';
+                importedDraftFiles = Array.isArray(data.importedFiles) ? data.importedFiles.slice() : [];
+            }
+
+            setEditorMode(true, data);
             validFromInput.value = data.validFrom;
             validToInput.value = data.validTo;
             syncAdminHocoDateToInputs();
@@ -2846,6 +3508,47 @@
             };
         }
 
+        function hashText(value) {
+            const input = String(value || '');
+            let hash = 2166136261;
+            for (let index = 0; index < input.length; index += 1) {
+                hash ^= input.charCodeAt(index);
+                hash = Math.imul(hash, 16777619);
+            }
+            return (hash >>> 0).toString(16);
+        }
+
+        function buildKmlEntrySignature(entry) {
+            const validStart = entry?.validWindow?.start instanceof Date && !Number.isNaN(entry.validWindow.start.getTime())
+                ? entry.validWindow.start.toISOString()
+                : '';
+            const validEnd = entry?.validWindow?.end instanceof Date && !Number.isNaN(entry.validWindow.end.getTime())
+                ? entry.validWindow.end.toISOString()
+                : '';
+            const modifiedAt = entry?.lastModified instanceof Date && !Number.isNaN(entry.lastModified.getTime())
+                ? entry.lastModified.toISOString()
+                : '';
+            const featureDigest = JSON.stringify(
+                (entry?.features || []).map(feature => ({
+                    geometry: feature?.geometry || null,
+                    properties: {
+                        risk: feature?.properties?.risk || '',
+                        rank: Number(feature?.properties?.rank) || 0,
+                        color: feature?.properties?.color || '',
+                        severe: !!feature?.properties?.severe
+                    }
+                }))
+            );
+            return hashText([
+                entry?.fileName || '',
+                entry?.title || '',
+                validStart,
+                validEnd,
+                modifiedAt,
+                featureDigest
+            ].join('|'));
+        }
+
         async function importBatchKmlFiles(fileList) {
             const files = Array.from(fileList || []);
             if (!files.length) {
@@ -2862,13 +3565,24 @@
             showStatus('Importing KML draft...', '#1d4ed8');
 
             const parsedFiles = await Promise.all(files.map(file => parseKmlFile(file)));
-            const importedFeatures = parsedFiles.flatMap(entry => entry.features || []);
+            const filesWithFeatures = parsedFiles
+                .filter(entry => Array.isArray(entry.features) && entry.features.length)
+                .sort((a, b) => {
+                    const aTime = a.lastModified instanceof Date && !Number.isNaN(a.lastModified.getTime())
+                        ? a.lastModified.getTime()
+                        : 0;
+                    const bTime = b.lastModified instanceof Date && !Number.isNaN(b.lastModified.getTime())
+                        ? b.lastModified.getTime()
+                        : 0;
+                    if (aTime !== bTime) return aTime - bTime;
+                    return String(a.fileName || '').localeCompare(String(b.fileName || ''));
+                });
 
-            if (!importedFeatures.length) {
+            if (!filesWithFeatures.length) {
                 throw new Error('No polygons were found in the selected KML files.');
             }
 
-            const validWindows = parsedFiles
+            const validWindows = filesWithFeatures
                 .map(entry => entry.validWindow)
                 .filter(Boolean);
             const primaryWindow = validWindows[0] || null;
@@ -2876,50 +3590,156 @@
                 primaryWindow
                 && (windowEntry.start.getTime() !== primaryWindow.start.getTime() || windowEntry.end.getTime() !== primaryWindow.end.getTime())
             );
+            const importedByKml = true;
+            let savedCount = 0;
+            let newerCount = 0;
+            let latestImportedEntry = null;
+            const duplicateSkippedFiles = [];
+            const noDateFiles = []; // files where no issuance date could be determined
+            // In-memory set to catch within-batch duplicates before Firestore propagates
+            const savedSignaturesThisBatch = new Set();
 
-            const latestLastModified = parsedFiles
-                .map(entry => entry.lastModified)
-                .filter(date => date instanceof Date && !Number.isNaN(date.getTime()))
-                .sort((a, b) => a.getTime() - b.getTime())
-                .pop() || null;
+            // Capture any manual override the forecaster typed BEFORE the import loop begins.
+            // This value is stable for the entire batch — it is not updated mid-loop.
+            // We deliberately read it once here so that auto-detected dates written into
+            // kmlIssuedOverrideInput during a previous iteration are never mistaken for a
+            // forecaster-typed value on the next iteration.
+            const preImportManualValue = kmlIssuedOverrideInput.value;
+            const preImportManualDate = preImportManualValue ? new Date(preImportManualValue) : null;
+            const hasPreImportManualOverride = preImportManualDate && !Number.isNaN(preImportManualDate.getTime());
 
-            currentEditingDocId = null;
-            currentEditingData = null;
-            setEditorMode(false);
-            forecastText.value = '';
-            draw.deleteAll();
+            for (const entry of filesWithFeatures) {
+                currentEditingDocId = null;
+                currentEditingData = null;
+                setEditorMode(false);
+                forecastText.value = '';
+                draw.deleteAll();
 
-            importedFeatures.forEach(feature => {
-                const state = getOutlookFeatureState(feature);
-                draw.add({
-                    type: 'Feature',
-                    geometry: feature.geometry,
-                    properties: {
-                        user_color: feature.properties?.user_color || state.color,
-                        user_risk: feature.properties?.user_risk || state.risk,
-                        user_rank: feature.properties?.user_rank ?? state.rank,
-                        user_severe: feature.properties?.user_severe ?? state.severe
-                    }
+                entry.features.forEach(feature => {
+                    const state = getOutlookFeatureState(feature);
+                    draw.add({
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            user_color: feature.properties?.user_color || state.color,
+                            user_risk: feature.properties?.user_risk || state.risk,
+                            user_rank: feature.properties?.user_rank ?? state.rank,
+                            user_severe: feature.properties?.user_severe ?? state.severe
+                        }
+                    });
                 });
-            });
 
-            if (primaryWindow) {
-                validFromInput.value = toLocalInputValue(primaryWindow.start);
-                validToInput.value = toLocalInputValue(primaryWindow.end);
+                if (entry.validWindow) {
+                    validFromInput.value = toLocalInputValue(entry.validWindow.start);
+                    validToInput.value = toLocalInputValue(entry.validWindow.end);
+                }
+
+                // Determine issuance date — priority order:
+                //   1. Manual override typed by the forecaster BEFORE the import started
+                //      (captured once above; mid-loop auto-populated values are intentionally ignored)
+                //   2. Date detected from KML XML content (e.g. <atom:updated>, <TimeStamp>)
+                //   3. File last-modified metadata (file.lastModified from the browser) — this is
+                //      always auto-populated into the override input so the forecaster can review/edit it
+                //   4. Nothing — leave null; current system time is NOT used here.
+                //      getDraftIssuedAtValue() applies a current-time fallback only at
+                //      publish/export time, which is intentional and separate from import.
+                if (hasPreImportManualOverride) {
+                    draftIssuedAtOverride = preImportManualDate.toISOString();
+                    draftIssuedAtSource = 'manual';
+                    kmlIssuedOverrideInput.value = toLocalInputValue(preImportManualDate);
+                } else if (entry.detectedDate instanceof Date && !Number.isNaN(entry.detectedDate.getTime())) {
+                    draftIssuedAtOverride = entry.detectedDate.toISOString();
+                    draftIssuedAtSource = entry.detectedDateSource || 'file';
+                    // Always sync detected date (from KML content or file metadata) into the
+                    // override input so the forecaster can see the auto-detected value and adjust it
+                    kmlIssuedOverrideInput.value = toLocalInputValue(entry.detectedDate);
+                } else {
+                    // No date determinable from the KML content or file metadata.
+                    // Leave issuance unset — do NOT fall back to current system time here,
+                    // as that would silently stamp the wrong (import) time onto the record.
+                    draftIssuedAtOverride = null;
+                    draftIssuedAtSource = null;
+                    kmlIssuedOverrideInput.value = '';
+                    noDateFiles.push(entry.fileName || 'Unknown KML');
+                }
+
+                importedDraftTitle = entry.validWindow?.title || entry.title || '';
+                importedDraftFiles = [entry.fileName];
+
+                updateDiscussionUI();
+                updateLayerStackUI();
+                refreshDrawPreview();
+                syncAdminHocoDateToInputs();
+                updateKmlImportMeta();
+
+                // Use the detected/overridden issuedAt as-is — null means unknown, not 'now'.
+                const issuedAtForCompare = draftIssuedAtOverride || null;
+                const matchResult = await detectExistingForecastForWindow(validFromInput.value, validToInput.value);
+                const kmlSignature = buildKmlEntrySignature(entry);
+
+                // Guard against within-batch duplicates: Firestore writes from earlier
+                // iterations haven't propagated to the snapshot yet, so the Firestore
+                // duplicate check below would miss them. Catch them in-memory first.
+                if (savedSignaturesThisBatch.has(kmlSignature)) {
+                    duplicateSkippedFiles.push(entry.fileName || 'Unknown KML');
+                    continue;
+                }
+
+                const duplicateMatch = (matchResult?.matches || []).find(match => {
+                    const data = match?.data || {};
+                    if (data.kmlSignature && data.kmlSignature === kmlSignature) return true;
+                    const importedFiles = Array.isArray(data.importedFiles) ? data.importedFiles : [];
+                    return Boolean(
+                        importedFiles.includes(entry.fileName)
+                        && String(data.issuedAt || '') === String(issuedAtForCompare || '')
+                    );
+                });
+                if (duplicateMatch) {
+                    duplicateSkippedFiles.push(entry.fileName || 'Unknown KML');
+                    continue;
+                }
+                // Assign a chronologically correct draft version using the same logic
+                // that saveForecast uses at publish time. This ensures the history list
+                // shows v1/v2 in the right order even before anything is published.
+                // matchResult includes both drafts and published docs (excludeDrafts=false)
+                // so that each KML in a multi-file batch gets a distinct slot.
+                const existingIssuedAts = matchResult?.allIssuedAts || [];
+                const suggestedVersion = resolveVersionForIssuedAt(issuedAtForCompare, existingIssuedAts);
+                const importedIsNewer = suggestedVersion > (matchResult?.newestIssueVersion || 0);
+
+                await autoSaveImportedKmlDraftToFirebase({
+                    issueVersion: suggestedVersion,
+                    issuedAt: issuedAtForCompare,
+                    importedByKml,
+                    existingMatch: matchResult,
+                    kmlSignature
+                });
+
+                savedSignaturesThisBatch.add(kmlSignature);
+
+                if (importedIsNewer) newerCount += 1;
+                savedCount += 1;
+                latestImportedEntry = entry;
             }
 
-            draftIssuedAtOverride = latestLastModified ? latestLastModified.toISOString() : null;
-            importedDraftTitle = primaryWindow?.title || parsedFiles.find(entry => entry.title)?.title || '';
-            importedDraftFiles = parsedFiles.map(entry => entry.fileName);
+            if (latestImportedEntry?.features?.length) {
+                fitMapToFeatures(latestImportedEntry.features);
+            }
+            kmlBatchInput.value = '';
 
-            updateDiscussionUI();
+            // Clear the editor after the batch — all KML drafts are saved in Firestore
+            // and visible in the history list. The forecaster must explicitly click
+            // the one they want to publish; the editor must not silently retain
+            // whichever file happened to be last in the loop.
+            currentEditingDocId = null;
+            currentEditingData = null;
+            draw.deleteAll();
+            clearImportedDraftMetadata();
+            clearLocalDraft();
+            setEditorMode(false);
             updateLayerStackUI();
             refreshDrawPreview();
-            fitMapToFeatures(importedFeatures);
-            syncAdminHocoDateToInputs();
             updateKmlImportMeta();
-            persistDraftLocally();
-            kmlBatchInput.value = '';
 
             const importWarnings = [];
             if (!primaryWindow) {
@@ -2928,10 +3748,152 @@
             if (hasValidityMismatch) {
                 importWarnings.push('Some KML files had different title validity windows; the first window was used.');
             }
+            if (duplicateSkippedFiles.length) {
+                importWarnings.push(`${duplicateSkippedFiles.length} duplicate KML file${duplicateSkippedFiles.length === 1 ? '' : 's'} were skipped.`);
+                window.alert(`Duplicate KML upload skipped for:\n- ${duplicateSkippedFiles.join('\n- ')}`);
+            }
+            if (noDateFiles.length) {
+                importWarnings.push(`${noDateFiles.length} file${noDateFiles.length === 1 ? '' : 's'} had no detectable issuance date — use the Override Issue Time field to set it manually.`);
+            }
 
-            const successMessage = `Imported ${parsedFiles.length} KML file${parsedFiles.length === 1 ? '' : 's'} into a local draft.${importWarnings.length ? ` ${importWarnings.join(' ')}` : ''}`;
+            const successMessage = `Imported ${filesWithFeatures.length} KML file${filesWithFeatures.length === 1 ? '' : 's'} as ${savedCount} separate draft forecast${savedCount === 1 ? '' : 's'} (${newerCount} newer than existing matches).${importWarnings.length ? ` ${importWarnings.join(' ')}` : ''}`;
             setKmlImportStatus(successMessage);
-            showStatus('KML draft loaded and saved locally.', 'var(--success)');
+            showStatus(`${savedCount} KML draft forecast${savedCount === 1 ? '' : 's'} saved.`, 'var(--success)');
+        }
+
+        // Assigns a chronologically-correct version number to a new forecast.
+        // Instead of simply doing "max + 1" (which breaks when publishing out of order),
+        // this slots the candidate's issuedAt into a sorted list of all existing
+        // issuance timestamps and returns its 1-based position.
+        //
+        // existingIssuedAts: array of ISO strings from already-stored forecasts (any mix
+        //                    of drafts and published — callers decide what to include).
+        // candidateIssuedAt: the new forecast's issuedAt (may be null/unknown).
+        //
+        // Examples (existing = [T1, T3], candidate = T2)  → returns 2
+        //          (existing = [T1, T2], candidate = T3)  → returns 3
+        //          (existing = [T2, T3], candidate = T1)  → returns 1   ← out-of-order publish
+        //          (existing = [T1],     candidate = null) → returns 2  ← unknown date, append last
+        function resolveVersionForIssuedAt(candidateIssuedAt, existingIssuedAts) {
+            const existing = (existingIssuedAts || [])
+                .map(ts => new Date(ts).getTime())
+                .filter(ms => !Number.isNaN(ms));
+
+            const candidateMs = candidateIssuedAt ? new Date(candidateIssuedAt).getTime() : NaN;
+
+            if (!existing.length) return 1;
+
+            if (Number.isNaN(candidateMs)) {
+                // Unknown issuance time — append after all known ones
+                return existing.length + 1;
+            }
+
+            // Build sorted unique list of all timestamps including the candidate
+            const all = [...new Set([...existing, candidateMs])].sort((a, b) => a - b);
+            return all.indexOf(candidateMs) + 1;
+        }
+
+        async function detectExistingForecastForWindow(validFromValue, validToValue, { excludeDrafts = false } = {}) {
+            const validFrom = String(validFromValue || '').trim();
+            if (!validFrom) return { hasMatches: false, newestIssuedAt: null, newestIssueVersion: 0, matches: [] };
+
+            const baseQuery = query(
+                collection(db, 'forecasts_v2'),
+                where('validFrom', '==', validFrom),
+                orderBy('createdAt', 'desc'),
+                limit(40)
+            );
+
+            const snapshot = await getDocs(baseQuery);
+            const matches = [];
+
+            snapshot.forEach(docSnap => {
+                const data = docSnap.data();
+                if (!data) return;
+                if (validToValue && data.validTo && String(data.validTo) !== String(validToValue)) return;
+                // When publishing, exclude draft staging records from version counting so that
+                // publishing a draft doesn't incorrectly increment to v2.
+                // When importing KML, keep drafts in the count so multiple imports for the same
+                // window each get a correctly incrementing version number.
+                if (excludeDrafts && data.isDraft) return;
+                matches.push({ id: docSnap.id, data });
+            });
+
+            if (!matches.length) return { hasMatches: false, newestIssuedAt: null, newestIssueVersion: 0, matches: [] };
+
+            // Map each doc to its true issuance time and version.
+            // Priority for issuedAt: the explicit issuedAt field (KML forecast issuance timestamp)
+            // then fall back to updatedAt / createdAt (upload time) only when issuedAt is absent.
+            const mapped = matches
+                .map(entry => entry.data)
+                .filter(Boolean)
+                .map(data => ({
+                    issuedAt: data.issuedAt || data.updatedAt || data.createdAt || null,
+                    issueVersion: Number(data.issueVersion) || 1,
+                    isDraft: !!data.isDraft
+                }));
+
+            // Track the latest issuance time and the highest version independently —
+            // they may belong to different docs (e.g. a re-issued older version).
+            const newestByTime = mapped
+                .filter(entry => entry.issuedAt)
+                .sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime())[0] || null;
+
+            const highestVersion = mapped.reduce((max, entry) => Math.max(max, entry.issueVersion), 0);
+
+            // allIssuedAts: chronologically sorted list of issuedAt values across ALL matched docs
+            // (drafts + published). Used by resolveVersionForIssuedAt() to place new forecasts
+            // into the correct version slot regardless of publish order.
+            const allIssuedAts = mapped
+                .filter(entry => entry.issuedAt)
+                .map(entry => entry.issuedAt)
+                .sort((a, b) => new Date(a).getTime() - new Date(b).getTime());
+
+            return {
+                hasMatches: true,
+                newestIssuedAt: newestByTime?.issuedAt || null,
+                newestIssueVersion: highestVersion,
+                allIssuedAts,
+                matches
+            };
+        }
+
+        async function autoSaveImportedKmlDraftToFirebase({ issueVersion, issuedAt, importedByKml, existingMatch, kmlSignature }) {
+            if (!currentUser) return;
+            const uploadedAt = new Date().toISOString();
+
+            const draftGeoJSON = createDraftGeoJSON();
+            const maxRank = draftGeoJSON?.features?.length
+                ? Math.max(...draftGeoJSON.features.map(feature => Number(feature?.properties?.rank) || 0))
+                : 0;
+
+            const payload = {
+                geoJSON: JSON.stringify(draftGeoJSON),
+                validFrom: validFromInput.value || '',
+                validTo: validToInput.value || '',
+                description: forecastText.value || '',
+                isActive: false,
+                isDraft: true,
+                importedByKml: !!importedByKml,
+                kmlSignature: kmlSignature || '',
+                importedTitle: importedDraftTitle || '',
+                importedFiles: importedDraftFiles.slice(),
+                authorEmail: currentUser.email,
+                authorUid: currentUser.uid,
+                forecaster: getForecasterName(),
+                issuedAt: issuedAt,
+                uploadedAt: uploadedAt,
+                issueVersion: issueVersion || 1,
+                maxRiskRank: maxRank,
+                updatedAt: uploadedAt,
+                createdAt: uploadedAt,
+                kmlExistingMatch: existingMatch?.hasMatches ? true : false
+            };
+
+            const docRef = await addDoc(collection(db, 'forecasts_v2'), payload);
+            currentEditingDocId = docRef.id;
+            currentEditingData = payload;
+            setEditorMode(true, payload);
         }
 
         function normalizePosterTemplateRank(rank) {
@@ -3170,42 +4132,102 @@
             return { bounds, hasBounds };
         }
 
+
         function buildPosterStaticGeojson(features) {
-            const baseGeojson = {
-                type: 'FeatureCollection',
-                features: buildRawDisplayFeatures(features).map(feature => {
-                    const isSevere = !!feature.properties?.isSevere;
-                    return {
-                        type: 'Feature',
-                        geometry: feature.geometry,
-                        properties: {
-                            fill: isSevere ? 'rgba(0,0,0,0)' : feature.properties.color,
-                            'fill-opacity': isSevere ? 0 : 0.24,
-                            stroke: isSevere ? '#111111' : feature.properties.color,
-                            'stroke-width': isSevere ? 4.8 : 4
-                        }
-                    };
-                })
-            };
+            // Mapbox Static API only accepts hex colours — rgba(...) causes a 400/invalid response.
+            function toHex(val, fallback) {
+                if (typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val.trim())) return val.trim();
+                return fallback;
+            }
 
-            const candidates = [baseGeojson];
-            [0.005, 0.01, 0.02, 0.04, 0.08].forEach(tolerance => {
-                try {
-                    candidates.push(turf.simplify(baseGeojson, { tolerance, highPrecision: false }));
-                } catch (error) {
-                    console.warn('Poster map simplify failed for tolerance', tolerance, error);
-                }
-            });
-
-            for (const candidate of candidates) {
-                const serialized = JSON.stringify(candidate);
-                if (serialized.length < 7800) {
-                    return candidate;
+            // Reduce coordinate decimal precision without changing topology.
+            // 6dp = ~11cm, 5dp = ~1m, 4dp = ~11m, 3dp = ~111m — all fine for a thumbnail.
+            function truncateCoords(geometry, dp) {
+                if (!geometry) return geometry;
+                function rc(c) { return [+c[0].toFixed(dp), +c[1].toFixed(dp)]; }
+                function rr(ring) { return ring.map(rc); }
+                function rp(coords) { return coords.map(rr); }
+                switch (geometry.type) {
+                    case 'Polygon': return { ...geometry, coordinates: rp(geometry.coordinates) };
+                    case 'MultiPolygon': return { ...geometry, coordinates: geometry.coordinates.map(rp) };
+                    case 'LineString': return { ...geometry, coordinates: geometry.coordinates.map(rc) };
+                    case 'MultiLineString': return { ...geometry, coordinates: geometry.coordinates.map(rr) };
+                    case 'Point': return { ...geometry, coordinates: rc(geometry.coordinates) };
+                    default: return geometry;
                 }
             }
 
+            const rawFeatures = buildRawDisplayFeatures(features).map(feature => {
+                const isSevere = !!feature.properties?.isSevere;
+                const rawColor = feature.properties?.color || '#cccccc';
+                const hexFill = isSevere ? '#cccccc' : toHex(rawColor, '#cccccc');
+                const hexStroke = isSevere ? '#111111' : toHex(rawColor, '#cccccc');
+                return {
+                    type: 'Feature',
+                    geometry: feature.geometry,
+                    properties: {
+                        fill: hexFill,
+                        'fill-opacity': isSevere ? 0 : 0.42,
+                        stroke: hexStroke,
+                        'stroke-width': isSevere ? 4.8 : 4
+                    }
+                };
+            });
+
+            // Mapbox Static API hard limit is 8192 chars total.
+            // Poster URLs have higher overhead than archive/forecasts (~750 chars for custom
+            // style + @2x + padding + token), so we use a tighter encoded budget of 7200 chars.
+            // We check the ENCODED length (post encodeURIComponent) because special characters
+            // like [, ], comma, dot, and minus are each inflated to 3 chars (%XX), meaning
+            // raw JSON length is a poor proxy for the actual URL size.
+            const POSTER_URL_BUDGET = 7200;
+
+            // Try progressively more aggressive simplification + precision combinations.
+            // tolerance is in degrees (~0.001° ≈ 111m). highQuality:false uses the faster
+            // Radial Distance algorithm which is sufficient for poster thumbnail rendering.
+            const attempts = [
+                { tolerance: 0, dp: 5 },
+                { tolerance: 0, dp: 4 },
+                { tolerance: 0, dp: 3 },
+                { tolerance: 0.001, dp: 4 },
+                { tolerance: 0.005, dp: 3 },
+                { tolerance: 0.01, dp: 3 },
+                { tolerance: 0.05, dp: 2 },
+                { tolerance: 0.1, dp: 2 },
+                { tolerance: 0.25, dp: 2 },
+                { tolerance: 0.5, dp: 1 },
+                { tolerance: 1.0, dp: 1 },
+            ];
+
+            for (const { tolerance, dp } of attempts) {
+                try {
+                    const processedFeatures = rawFeatures.map(f => {
+                        let geom = f.geometry;
+                        if (tolerance > 0 && (geom?.type === 'Polygon' || geom?.type === 'MultiPolygon')) {
+                            try {
+                                const simplified = turf.simplify(
+                                    { type: 'Feature', geometry: geom, properties: {} },
+                                    { tolerance, highQuality: false, mutate: false }
+                                );
+                                geom = simplified.geometry;
+                            } catch (_) { }
+                        }
+                        return { ...f, geometry: truncateCoords(geom, dp) };
+                    });
+
+                    const fc = { type: 'FeatureCollection', features: processedFeatures };
+                    // Check encoded length — this is what actually goes into the URL
+                    if (encodeURIComponent(JSON.stringify(fc)).length <= POSTER_URL_BUDGET) {
+                        return fc; // caller does its own JSON.stringify + encodeURIComponent
+                    }
+                } catch (_) { }
+            }
+
+            // Nothing fit — return null so the caller falls back to the vector poster renderer
+            console.warn('Poster static map: GeoJSON too large even at maximum simplification, falling back to vector render.');
             return null;
         }
+
 
         function getPosterMercatorY(lat) {
             const safeLat = Math.max(-85, Math.min(85, Number(lat) || 0));
@@ -3358,7 +4380,7 @@
 
                 if (!isSevere) {
                     fallbackCtx.fillStyle = feature.properties?.color || '#94a3b8';
-                    fallbackCtx.globalAlpha = 0.28;
+                    fallbackCtx.globalAlpha = 0.42;
                     fallbackCtx.fill('evenodd');
                 }
 
@@ -3483,7 +4505,7 @@
             if (staticGeojson) {
                 try {
                     const encodedGeojson = encodeURIComponent(JSON.stringify(staticGeojson));
-                    const staticMapUrl = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
+                    const staticMapUrl = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encodedGeojson})/auto/${requestWidth}x${requestHeight}@2x?padding=90&bearing=0&pitch=0&access_token=${encodeURIComponent(mapboxgl.accessToken)}`;
                     return await loadCanvasImage(staticMapUrl);
                 } catch (error) {
                     console.warn('Poster static map load failed, falling back to the vector poster map.', error);
@@ -3625,7 +4647,12 @@
             return getDownloadURL(storageRef);
         }
 
-        async function saveForecast() {
+        // ─── Core publish helper ────────────────────────────────────────────────────
+        // mode: 'new'    → always creates a new Firestore doc with a bumped version
+        //       'update' → patches the existing doc in-place, preserving issueVersion
+        //                  (used for typo fixes / grammatical corrections)
+        // ────────────────────────────────────────────────────────────────────────────
+        async function saveForecast(mode = 'new') {
             const draftGeoJSON = createDraftGeoJSON();
             const validationErrors = validateDraftGeoJSON(draftGeoJSON);
 
@@ -3635,8 +4662,98 @@
                 return;
             }
 
-            const issuedAt = getDraftIssuedAtValue(new Date().toISOString());
-            const issueVersion = getNextIssueVersion();
+            const now = new Date().toISOString();
+            const isPublishedEdit = currentEditingDocId && !currentEditingData?.isDraft;
+            const isDraftEdit = currentEditingDocId && !!currentEditingData?.isDraft;
+
+            if (mode === 'update' && (isPublishedEdit || isDraftEdit)) {
+                // ── UPDATE MODE ────────────────────────────────────────────────────────
+                // For published forecasts: patch content + timestamps, keep issueVersion.
+                // For drafts: save edits back to the draft doc without publishing.
+                const keepVersion = currentEditingData?.issueVersion || 1;
+                const keepIssuedAt = currentEditingData?.issuedAt || currentEditingData?.createdAt || now;
+                const maxRank = Math.max(...draftGeoJSON.features.map(f => f.properties.rank || 0));
+
+                showStatus(isDraftEdit ? 'Updating draft...' : 'Updating outlook...', '#1d4ed8');
+                try {
+                    await updateDoc(doc(db, 'forecasts_v2', currentEditingDocId), {
+                        geoJSON: JSON.stringify(draftGeoJSON),
+                        validFrom: validFromInput.value,
+                        validTo: validToInput.value,
+                        description: forecastText.value,
+                        isActive: currentEditingData?.isActive ?? !isDraftEdit,
+                        authorEmail: currentUser.email,
+                        authorUid: currentUser.uid,
+                        forecaster: getForecasterName(),
+                        issuedAt: keepIssuedAt,
+                        issueVersion: keepVersion,
+                        maxRiskRank: maxRank,
+                        updatedAt: now
+                    });
+                    showStatus(
+                        isDraftEdit
+                            ? `Draft updated (v${keepVersion} — not yet published).`
+                            : `Outlook updated (v${keepVersion} — no new version issued).`,
+                        'var(--success)'
+                    );
+                    resetForm();
+                } catch (error) {
+                    console.error('Update failed.', error);
+                    showStatus(error.message, 'var(--accent)');
+                }
+                return;
+            }
+
+            // ── PUBLISH NEW VERSION / NEW DRAFT MODE ───────────────────────────────
+            const issuedAt = getDraftIssuedAtValue(now);
+
+            // Resolve the chronologically correct version for this forecast.
+            //
+            // We query only PUBLISHED docs (excludeDrafts:true) so that:
+            //   • A draft being published is never counted as an existing version slot,
+            //     which previously caused "publish a draft → lands on v2" (bug).
+            //   • Publishing v1 after v2 has already been published still yields v1
+            //     (it slots into the earlier issuedAt position).
+            //   • Out-of-order KML publishes are still handled correctly: if v1 and v3
+            //     are already published, T2 naturally slots into position 2.
+            let issueVersion;
+            let windowMatch;
+            try {
+                windowMatch = await detectExistingForecastForWindow(validFromInput.value, validToInput.value, { excludeDrafts: true });
+                // allIssuedAts contains the issuedAt of every PUBLISHED doc for this window.
+                // The draft being published is not in this list, so no extra filtering needed.
+                const existingIssuedAts = windowMatch?.allIssuedAts || [];
+                issueVersion = resolveVersionForIssuedAt(issuedAt, existingIssuedAts);
+            } catch (err) {
+                console.warn('Could not query existing forecasts for version check; falling back.', err);
+                issueVersion = getNextIssueVersion();
+            }
+
+            // ── DUPLICATE VERSION GUARD ────────────────────────────────────────────────
+            // Block the publish if a non-draft doc with the same validFrom + issueVersion
+            // already exists in Firestore. This prevents accidentally publishing the same
+            // version twice (e.g. double-clicking Publish, or re-submitting a stale draft).
+            // We skip this check when the user is updating the doc in-place (mode='update').
+            const duplicateVersionDoc = (windowMatch?.matches || []).find(match => {
+                const d = match?.data || {};
+                return !d.isDraft
+                    && Number(d.issueVersion) === issueVersion
+                    && match.id !== currentEditingDocId;   // allow re-publish of the same doc via "New Version"
+            });
+            if (duplicateVersionDoc) {
+                const dupDate = duplicateVersionDoc.data?.issuedAt || duplicateVersionDoc.data?.createdAt || '';
+                const dupDateStr = dupDate ? new Date(dupDate).toLocaleString('en-GB') : 'unknown date';
+                showStatus(`v${issueVersion} already published for this window.`, 'var(--accent)');
+                alert(
+                    `Cannot publish: Version ${issueVersion} for this forecast window already exists\n` +
+                    `(issued ${dupDateStr}).\n\n` +
+                    `Use "Publish as New Version" to issue a higher version, or load the existing\n` +
+                    `record from the history panel and use "Update Outlook" to correct it.`
+                );
+                return;
+            }
+            // ── END DUPLICATE VERSION GUARD ────────────────────────────────────────────
+
             const maxRank = Math.max(...draftGeoJSON.features.map(feature => feature.properties.rank || 0));
             let posterArtifact = null;
 
@@ -3665,20 +4782,16 @@
                 issuedAt: issuedAt,
                 issueVersion: issueVersion,
                 maxRiskRank: maxRank,
-                updatedAt: issuedAt
+                updatedAt: issuedAt,
+                createdAt: issuedAt
             };
 
             try {
-                let docId = currentEditingDocId;
-
-                if (currentEditingDocId) {
-                    payload.createdAt = currentEditingData?.createdAt || issuedAt;
-                    await updateDoc(doc(db, 'forecasts_v2', currentEditingDocId), payload);
-                } else {
-                    payload.createdAt = issuedAt;
-                    const docRef = await addDoc(collection(db, 'forecasts_v2'), payload);
-                    docId = docRef.id;
-                }
+                // Always create a new Firestore document for a new-version publish.
+                // This means "Publish as New Version" from an existing doc creates a
+                // fresh record — the old doc is preserved in history as-is.
+                const docRef = await addDoc(collection(db, 'forecasts_v2'), payload);
+                const docId = docRef.id;
 
                 if (posterArtifact) {
                     try {
@@ -3688,25 +4801,110 @@
                             posterFileName: posterArtifact.fileName,
                             posterUpdatedAt: issuedAt
                         });
-                        const syncMessage = currentEditingDocId ? 'Outlook updated and poster synced.' : 'Outlook published and poster synced.';
                         const lightningMessage = posterArtifact.lightningRequested
                             ? (posterArtifact.lightningIncluded ? ' UK lightning overlay included.' : ' UK lightning overlay unavailable.')
                             : '';
-                        showStatus(`${syncMessage}${lightningMessage}`, 'var(--success)');
+                        showStatus(`Outlook published as v${issueVersion} and poster synced.${lightningMessage}`, 'var(--success)');
                     } catch (error) {
                         console.error('Poster upload failed.', error);
-                        showStatus(
-                            `${currentEditingDocId ? 'Outlook updated, but poster upload failed' : 'Outlook published, but poster upload failed'}${error?.message ? `: ${error.message}` : ''}.`,
-                            '#f59e0b'
-                        );
+                        showStatus(`Outlook published as v${issueVersion}, but poster upload failed${error?.message ? `: ${error.message}` : ''}.`, '#f59e0b');
                     }
                 } else {
-                    showStatus(currentEditingDocId ? 'Outlook updated, but poster could not be rendered.' : 'Outlook published, but poster could not be rendered.', '#f59e0b');
+                    showStatus(`Outlook published as v${issueVersion}, but poster could not be rendered.`, '#f59e0b');
+                }
+
+                // If we just published from a KML draft doc, remove the draft from Firestore
+                // BEFORE calling resetForm() so the onSnapshot never briefly shows both the
+                // new published doc AND the stale draft at the same time (which caused users
+                // to click "Publish now" on the draft, creating a duplicate active doc).
+                const supersededDraftId = currentEditingDocId && currentEditingData?.isDraft
+                    ? currentEditingDocId
+                    : null;
+
+                if (supersededDraftId) {
+                    try {
+                        await deleteDoc(doc(db, 'forecasts_v2', supersededDraftId));
+                    } catch (err) {
+                        console.warn('Could not remove superseded KML draft after publish.', err);
+                    }
                 }
 
                 resetForm();
             } catch (error) {
                 console.error(error);
+                showStatus(error.message, 'var(--accent)');
+            }
+        }
+
+        async function saveDraftForecast() {
+            if (!validFromInput.value || !validToInput.value) {
+                showStatus('Set valid from/to dates before saving a draft.', 'var(--accent)');
+                return;
+            }
+
+            const draftGeoJSON = createDraftGeoJSON();
+            const now = new Date().toISOString();
+            const issuedAt = getDraftIssuedAtValue(now);
+            const maxRank = draftGeoJSON?.features?.length
+                ? Math.max(...draftGeoJSON.features.map(f => Number(f?.properties?.rank) || 0))
+                : 0;
+
+            // ── Resolve the correct issue version ─────────────────────────────────────
+            // The history panel hides any draft whose validFrom + issueVersion already
+            // matches a published entry. Hardcoding v1 means the draft disappears the
+            // moment a published v1 exists for the same window (e.g. today's default).
+            //
+            // • Branching from a published outlook → next version after the loaded doc.
+            // • Brand new draft → query Firebase to find the highest published version
+            //   for the window and use the next slot, falling back to 1 if none exist.
+            // ──────────────────────────────────────────────────────────────────────────
+            const isFromPublished = currentEditingDocId && currentEditingData && !currentEditingData.isDraft;
+            let baseVersion = 1;
+
+            if (isFromPublished) {
+                baseVersion = (currentEditingData.issueVersion || 1) + 1;
+            } else {
+                try {
+                    const windowMatch = await detectExistingForecastForWindow(validFromInput.value, validToInput.value);
+                    if (windowMatch?.hasMatches) {
+                        baseVersion = (windowMatch.newestIssueVersion || 0) + 1;
+                    }
+                } catch (err) {
+                    console.warn('Could not detect existing version for draft; defaulting to v1.', err);
+                }
+            }
+
+            showStatus('Saving draft...', '#1d4ed8');
+            try {
+                const payload = {
+                    geoJSON: JSON.stringify(draftGeoJSON),
+                    validFrom: validFromInput.value,
+                    validTo: validToInput.value,
+                    description: forecastText.value,
+                    isActive: false,
+                    isDraft: true,
+                    importedByKml: false,
+                    importedTitle: importedDraftTitle || '',
+                    importedFiles: importedDraftFiles.slice(),
+                    authorEmail: currentUser.email,
+                    authorUid: currentUser.uid,
+                    forecaster: getForecasterName(),
+                    issuedAt: issuedAt,
+                    issueVersion: baseVersion,
+                    maxRiskRank: maxRank,
+                    updatedAt: now,
+                    createdAt: now
+                };
+                const docRef = await addDoc(collection(db, 'forecasts_v2'), payload);
+                currentEditingDocId = docRef.id;
+                currentEditingData = payload;
+                setEditorMode(true, payload);
+                // Ensure the history panel reflects the new draft immediately
+                initHistoryListener();
+                const sourceNote = isFromPublished ? ` (branched from published v${baseVersion - 1})` : '';
+                showStatus(`Draft saved as v${baseVersion}${sourceNote} — review thoroughly before publishing.`, 'var(--success)');
+            } catch (error) {
+                console.error('Draft save failed.', error);
                 showStatus(error.message, 'var(--accent)');
             }
         }
@@ -3724,8 +4922,19 @@
             try {
                 showStatus('Rendering PNG export...', '#1d4ed8');
                 const issuedAt = getDraftIssuedAtValue(new Date().toISOString());
+                // Resolve the correct version against Firebase so the exported PNG filename
+                // and poster stamp match what would actually be published.
+                let exportVersion = getNextIssueVersion();
+                try {
+                    const windowMatch = await detectExistingForecastForWindow(validFromInput.value, validToInput.value, { excludeDrafts: true });
+                    if (windowMatch?.hasMatches && !(currentEditingDocId && !currentEditingData?.isDraft)) {
+                        exportVersion = (windowMatch.newestIssueVersion || 0) + 1;
+                    }
+                } catch (vErr) {
+                    console.warn('Could not resolve export version from Firebase; using local fallback.', vErr);
+                }
                 const posterArtifact = await renderForecastPoster(draftGeoJSON, {
-                    issueVersion: getNextIssueVersion(),
+                    issueVersion: exportVersion,
                     issuedAt,
                     includeLightning: posterLightningToggle.checked
                 });
@@ -3757,51 +4966,122 @@
 
             const filter = document.getElementById('filter-author').value;
             const sortField = document.getElementById('sort-by').value;
-            let historyQuery = query(collection(db, 'forecasts_v2'), orderBy(sortField, 'desc'));
+            const historyRange = document.getElementById('history-range').value;
+            const historyConstraints = [];
 
-            if (filter === 'mine') {
-                historyQuery = query(
-                    collection(db, 'forecasts_v2'),
-                    where('authorUid', '==', currentUser.uid),
-                    orderBy(sortField, 'desc')
-                );
+            if (historyRange !== 'all') {
+                const days = parseInt(historyRange, 10);
+                if (Number.isFinite(days) && days > 0) {
+                    const cutoff = new Date();
+                    cutoff.setDate(cutoff.getDate() - days);
+                    historyConstraints.push(where('createdAt', '>=', cutoff.toISOString()));
+                }
             }
+
+            // Always order by createdAt to keep Firestore indexes simple/stable.
+            // We apply the chosen sort field client-side.
+            const historyQuery = query(
+                collection(db, 'forecasts_v2'),
+                ...historyConstraints,
+                orderBy('createdAt', 'desc'),
+                limit(800)
+            );
 
             historyUnsubscribe = onSnapshot(historyQuery, snapshot => {
                 historyList.innerHTML = '';
+                const entries = [];
 
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-                    const item = document.createElement('div');
-                    item.className = `history-item ${id === currentEditingDocId ? 'active-item' : ''}`;
-
-                    const version = data.issueVersion ? `v${data.issueVersion}` : 'v1';
-                    item.innerHTML = `
-                        <div class="history-meta">
-                            <span>${new Date(data.createdAt).toLocaleDateString('en-GB')}</span>
-                            <span class="risk-badge">Max ${data.maxRiskRank || 0}</span>
-                        </div>
-                        <div class="history-title">${data.authorEmail || 'Forecast Desk'} - ${version}</div>
-                        <div class="history-detail">Valid from ${String(data.validFrom || '').replace('T', ' ')}</div>
-                        <div class="history-detail">Updated ${new Date(data.updatedAt || data.createdAt).toLocaleString('en-GB')}</div>
-                        <button class="publish-btn ${data.isActive ? 'is-active' : ''}">
-                            ${data.isActive ? 'Published' : 'Publish now'}
-                        </button>
-                    `;
-
-                    item.addEventListener('click', event => {
-                        if (event.target instanceof HTMLButtonElement) return;
-                        loadToEdit(id, data);
-                    });
-
-                    item.querySelector('.publish-btn').addEventListener('click', async event => {
-                        event.stopPropagation();
-                        await togglePublish(id, !data.isActive);
-                    });
-
-                    historyList.appendChild(item);
+                    entries.push({ id: docSnap.id, data: docSnap.data() });
                 });
+
+                // Hide a draft only when that exact version has been published.
+                // Match on validFrom + issueVersion so that e.g. a v1 draft is hidden
+                // once v1 is published, but a v2 draft (or a separately published v1)
+                // remains visible independently.
+                const publishedKeys = new Set(
+                    entries
+                        .filter(entry => !entry.data?.isDraft && entry.data?.isActive)
+                        .map(entry => `${entry.data?.validFrom}__${entry.data?.issueVersion ?? 1}`)
+                        .filter(Boolean)
+                );
+                const dedraftedEntries = entries.filter(entry => {
+                    if (!entry.data?.isDraft) return true;
+                    const key = `${entry.data?.validFrom}__${entry.data?.issueVersion ?? 1}`;
+                    return !publishedKeys.has(key);
+                });
+
+                const filteredEntries = filter === 'mine'
+                    ? dedraftedEntries.filter(entry => entry.data?.authorUid === currentUser.uid)
+                    : dedraftedEntries;
+
+                const compareValues = (a, b) => {
+                    if (sortField === 'maxRiskRank') {
+                        return (Number(b?.maxRiskRank) || 0) - (Number(a?.maxRiskRank) || 0);
+                    }
+
+                    const aValue = a?.[sortField] || a?.createdAt || '';
+                    const bValue = b?.[sortField] || b?.createdAt || '';
+                    const aTime = new Date(aValue).getTime();
+                    const bTime = new Date(bValue).getTime();
+                    if (!Number.isNaN(aTime) && !Number.isNaN(bTime)) return bTime - aTime;
+                    return String(bValue).localeCompare(String(aValue));
+                };
+
+                filteredEntries
+                    .sort((left, right) => compareValues(left.data, right.data))
+                    .forEach(({ id, data }) => {
+                        const item = document.createElement('div');
+                        item.className = `history-item ${id === currentEditingDocId ? 'active-item' : ''}`;
+
+                        const version = data.issueVersion ? `v${data.issueVersion}` : 'v1';
+                        const kmlIcon = (data.importedByKml || (Array.isArray(data.importedFiles) && data.importedFiles.length))
+                            ? `<span class="kml-badge" title="Imported from KML"><i class="fas fa-file-import"></i></span>`
+                            : '';
+                        const isTrueDraft = !!data.isDraft && !data.isActive;
+                        item.innerHTML = `
+                            <div class="history-meta">
+                                <span>${new Date(data.createdAt).toLocaleDateString('en-GB')}</span>
+                                <span style="display:flex; align-items:center; gap:8px;">
+                                    ${isTrueDraft ? `<span class="draft-pill"><i class="fas fa-pen-to-square"></i> Draft</span>` : ''}
+                                    ${kmlIcon}
+                                    <span class="risk-badge">Max ${data.maxRiskRank || 0}</span>
+                                </span>
+                            </div>
+                            <div class="history-title">${data.authorEmail || 'Forecast Desk'} - ${version}</div>
+                            <div class="history-detail">Valid from ${String(data.validFrom || '').replace('T', ' ')}</div>
+                            <div class="history-detail">Updated ${new Date(data.updatedAt || data.createdAt).toLocaleString('en-GB')}</div>
+                            <button class="publish-btn ${data.isActive ? 'is-active' : ''}" ${isTrueDraft ? 'style="background:#fef9c3;color:#854d0e;border-color:#fde047;"' : ''}>
+                                ${isTrueDraft ? '⚠ Draft – load to publish' : (data.isActive ? 'Published' : 'Publish now')}
+                            </button>
+                        `;
+
+                        item.addEventListener('click', event => {
+                            if (event.target instanceof HTMLButtonElement) return;
+                            loadToEdit(id, data);
+                        });
+
+                        item.querySelector('.publish-btn').addEventListener('click', async function (event) {
+                            event.stopPropagation();
+                            // True drafts must be published through the editor.
+                            // Load the draft into the editor so the user can then hit "Publish Outlook".
+                            if (isTrueDraft) {
+                                loadToEdit(id, data);
+                                showStatus('Draft loaded — review then click "Publish Outlook".', '#1d4ed8');
+                                return;
+                            }
+                            const btn = event.currentTarget;
+                            const currentlyActive = btn.classList.contains('is-active');
+                            btn.disabled = true;
+                            try {
+                                await togglePublish(id, !currentlyActive);
+                            } finally {
+                                btn.disabled = false;
+                            }
+                        });
+
+                        historyList.appendChild(item);
+                    });
             });
         }
 
@@ -3892,11 +5172,60 @@
             }
         });
 
-        document.getElementById('save-forecast').addEventListener('click', saveForecast);
+        document.getElementById('save-draft').addEventListener('click', saveDraftForecast);
+        document.getElementById('save-as-draft').addEventListener('click', saveDraftForecast);
+        document.getElementById('save-forecast').addEventListener('click', () => saveForecast('new'));
+        document.getElementById('update-forecast').addEventListener('click', () => saveForecast('update'));
+        document.getElementById('publish-new-version').addEventListener('click', () => saveForecast('new'));
         document.getElementById('export-png').addEventListener('click', exportForecastPng);
         document.getElementById('clear-draft').addEventListener('click', requestDraftReset);
+        document.getElementById('delete-forecast').addEventListener('click', deleteCurrentForecast);
         document.getElementById('new-btn').addEventListener('click', requestDraftReset);
         document.getElementById('fit-map-btn').addEventListener('click', () => fitMapToFeatures(draw.getAll().features));
+
+        // ─── Map style switcher ───────────────────────────────────────────────────────
+        const mapStyleBtn = document.getElementById('map-style-btn');
+        const mapStyleMenu = document.getElementById('map-style-menu');
+        const mapStyleLabel = document.getElementById('map-style-label');
+
+        // Style dot colours used in the menu
+        const STYLE_DOTS = { handry: '#da2128', light: '#e2e8f0', dark: '#334155', satellite: '#0ea5e9' };
+
+        function buildMapStyleMenu() {
+            mapStyleMenu.innerHTML = '';
+            MAP_STYLES.forEach((style, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `map-style-option${index === currentMapStyleIndex ? ' is-active' : ''}`;
+                btn.innerHTML = `<span class="style-dot" style="background:${STYLE_DOTS[style.id] || '#94a3b8'}"></span>${style.label}`;
+                btn.addEventListener('click', () => {
+                    if (index === currentMapStyleIndex) {
+                        mapStyleMenu.classList.remove('is-open');
+                        return;
+                    }
+                    currentMapStyleIndex = index;
+                    mapStyleLabel.textContent = style.label;
+                    map.setStyle(style.url);
+                    mapStyleMenu.classList.remove('is-open');
+                    buildMapStyleMenu();
+                });
+                mapStyleMenu.appendChild(btn);
+            });
+        }
+
+        buildMapStyleMenu();
+
+        mapStyleBtn.addEventListener('click', event => {
+            event.stopPropagation();
+            mapStyleMenu.classList.toggle('is-open');
+        });
+
+        // Close the menu when clicking anywhere outside the switcher
+        document.addEventListener('click', event => {
+            if (!mapStyleBtn.closest('.map-style-switcher').contains(event.target)) {
+                mapStyleMenu.classList.remove('is-open');
+            }
+        });
         importKmlButton.addEventListener('click', async () => {
             try {
                 await importBatchKmlFiles(kmlBatchInput.files);
@@ -3917,6 +5246,33 @@
         adminHocoDateInput.addEventListener('change', () => {
             setAdminHocoWindow(getWindowFromDateValue(adminHocoDateInput.value));
             refreshAdminHocoForSelectedDay();
+        });
+
+        // KML issuance manual override: update the draft immediately when changed
+        kmlIssuedOverrideInput.addEventListener('change', () => {
+            const manualDate = kmlIssuedOverrideInput.value ? new Date(kmlIssuedOverrideInput.value) : null;
+            if (manualDate && !Number.isNaN(manualDate.getTime())) {
+                draftIssuedAtOverride = manualDate.toISOString();
+                draftIssuedAtSource = 'manual';
+            } else {
+                // If cleared, keep the previously auto-detected value if available
+                if (!kmlIssuedOverrideInput.value) {
+                    // Will be re-populated on next import; set to null until then
+                    draftIssuedAtOverride = null;
+                    draftIssuedAtSource = null;
+                }
+            }
+            updateKmlImportMeta();
+            persistDraftLocally();
+        });
+
+        kmlOverrideClearBtn.addEventListener('click', () => {
+            kmlIssuedOverrideInput.value = '';
+            draftIssuedAtOverride = null;
+            draftIssuedAtSource = null;
+            updateKmlImportMeta();
+            persistDraftLocally();
+            showStatus('Issuance override cleared.', '#475569');
         });
 
         // ─── FIX 7: Slider input triggers the auto-run plot directly ─────────────
@@ -3942,6 +5298,7 @@
 
         document.getElementById('filter-author').addEventListener('change', initHistoryListener);
         document.getElementById('sort-by').addEventListener('change', initHistoryListener);
+        document.getElementById('history-range').addEventListener('change', initHistoryListener);
         document.getElementById('logout-btn').addEventListener('click', () => signOut(auth));
         document.getElementById('login-btn').addEventListener('click', () => {
             signInWithEmailAndPassword(auth, document.getElementById('email').value, document.getElementById('password').value)
@@ -3973,6 +5330,7 @@
                 updateLayerStackUI();
                 refreshDrawPreview();
                 restoreLocalDraftIfAvailable();
+                refreshForecastsBadge();
             } else {
                 document.getElementById('login-overlay').style.display = 'flex';
                 document.getElementById('app-header').style.display = 'none';
@@ -3993,5 +5351,26 @@
         updateKmlImportMeta();
         setKmlImportStatus();
     </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
+    </script>
 </body>
+
 </html>

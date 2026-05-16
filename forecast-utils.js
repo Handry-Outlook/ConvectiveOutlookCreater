@@ -1,4 +1,5 @@
 (function () {
+    const FORECAST_POLYGON_FILL_OPACITY = 0.42;
     const RISK_META = {
         1: { short: 'LOW', label: '1 Low', title: 'Low', color: '#67c6ac', description: 'Isolated thunderstorms possible.' },
         2: { short: 'SLGT', label: '2 Slight', title: 'Slight', color: '#ffea00', description: 'Scattered thunderstorms possible.' },
@@ -16,16 +17,25 @@
     const HOCO_LIGHTNING_COLORS = [
         "#ffffff", "#d0cece", "#d0cece", "#d0cece", "#d0cece", "#bea497", "#bea497", "#bea497", "#bea497", "#bea497",
         "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4",
-        "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4", "#66c2a4",
+        "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00", "#b3ff00",
         "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200",
-        "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200", "#fff200",
+        "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327", "#ffb327",
         "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27",
-        "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27", "#ff7f27",
-        "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24",
-        "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba",
-        "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba"
-    ];
-
+        "#ff5227", "#ff5227", "#ff5227", "#ff5227", "#ff5227", "#ff2e27", "#ff2e27", "#ff2e27", "#ff2e27", "#ff2e27",
+        "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c24", "#ec1c5a", "#ec1c5a", "#ec1c5a", "#ec1c5a", "#ec1c5a",
+        "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#b83dba", "#5a099c", "#5a099c", "#5a099c", "#5a099c", "#5a099c",
+        "#3e00e9", "#3e00e9", "#3e00e9", "#3e00e9", "#3e00e9", "#2600ff", "#2600ff", "#2600ff", "#2600ff", "#2600ff",
+    ]
+    function buildHocoColorExpression(property) {
+        var prop = property || 'riskValue';
+        var stops = getHocoLightningGradientStops();
+        // ['step', input, default_output, threshold, output, threshold, output, ...]
+        var expr = ['step', ['coalesce', ['get', prop], 0], stops[0].color];
+        for (var i = 1; i < stops.length; i++) {
+            expr.push(stops[i].value, stops[i].color);
+        }
+        return expr;
+    }
     function clone(value) {
         return JSON.parse(JSON.stringify(value));
     }
@@ -129,7 +139,7 @@
                 severe: severe,
                 displayId: displayId,
                 fill: severe ? 'rgba(0, 0, 0, 0)' : meta.color,
-                'fill-opacity': severe ? 0 : 0.36,
+                'fill-opacity': severe ? 0 : FORECAST_POLYGON_FILL_OPACITY,
                 stroke: meta.color,
                 'stroke-width': severe ? 3 : 2
             }
@@ -998,14 +1008,15 @@
         height: 5016,
         radius: 42
     });
+
     const POSTER_TEXT_LAYOUT = Object.freeze({
         valid: {
-            x: 700,
+            x: 520,
             y: 414,
             maxWidth: 2400,
             lineHeight: 92,
             maxHeight: 160,
-            fontSize: 76
+            fontSize: 100
         },
         issued: {
             x: 680,
@@ -1013,7 +1024,7 @@
             maxWidth: 2440,
             lineHeight: 92,
             maxHeight: 150,
-            fontSize: 76
+            fontSize: 100
         }
     });
 
@@ -1189,16 +1200,32 @@
         if (!window.turf) return null;
 
         const displayFeatures = normalizeDisplayFeatures(features);
+        if (!displayFeatures || displayFeatures.length === 0) {
+            return { type: 'FeatureCollection', features: [] }; // Return empty FeatureCollection instead of null
+        }
+
+        // Apply turf.cleanCoords to each feature's geometry to remove redundant points
+        const cleanedFeatures = displayFeatures.map(feature => {
+            try {
+                if (feature.geometry) {
+                    return { ...feature, geometry: turf.cleanCoords(feature.geometry, { mutate: false }) };
+                }
+            } catch (error) {
+                console.warn('Error cleaning coordinates for poster feature:', error);
+            }
+            return feature; // Return original if cleaning fails
+        });
+
         const baseGeojson = {
             type: 'FeatureCollection',
-            features: displayFeatures.map(feature => {
+            features: cleanedFeatures.map(feature => {
                 const isSevere = !!feature.properties?.isSevere;
                 return {
                     type: 'Feature',
                     geometry: feature.geometry,
                     properties: {
                         fill: isSevere ? 'rgba(0,0,0,0)' : feature.properties.color,
-                        'fill-opacity': isSevere ? 0 : 0.24,
+                        'fill-opacity': isSevere ? 0 : FORECAST_POLYGON_FILL_OPACITY,
                         stroke: isSevere ? '#111111' : feature.properties.color,
                         'stroke-width': isSevere ? 4.8 : 4
                     }
@@ -1206,12 +1233,58 @@
             })
         };
 
+        let geojsonToProcess = turf.rewind(baseGeojson, { mutate: false });
+
+        // Mapbox Static API hard limit is 8192 chars total.
+        // Poster URLs have higher overhead (~750 chars for custom style + @2x + padding + token),
+        // so we use a tighter encoded budget of 7200 chars.
+        // We check the ENCODED length (post encodeURIComponent) because special characters
+        // like [, ], comma, dot, and minus are each inflated to 3 chars (%XX), meaning
+        // raw JSON length is a poor proxy for the actual URL size.
+        const POSTER_URL_BUDGET = 7200;
+
+        const simplificationTolerances = [0, 0.001, 0.005, 0.01, 0.02, 0.04, 0.08, 0.1, 0.15, 0.2, 0.3, 0.4, 0.5, 1.0];
+        const candidates = [];
+
+        // Add original rewound GeoJSON as first candidate (tolerance 0 = no simplification)
+        candidates.push(geojsonToProcess);
+
+        // Try simplifying the rewound GeoJSON with various tolerances
+        simplificationTolerances.forEach(tolerance => {
+            if (tolerance === 0) return; // already added above
+            try {
+                candidates.push(turf.simplify(geojsonToProcess, { tolerance, highQuality: false, mutate: false }));
+            } catch (error) {
+                console.warn('Poster map simplify failed for tolerance', tolerance, error);
+            }
+        });
+
+        // As a last-ditch effort, try repairing geometry with buffer(0) and then re-simplifying
+        let bufferedGeojson = null;
         try {
-            const simplified = turf.simplify(baseGeojson, { tolerance: 0.03, highQuality: false, mutate: false });
-            return simplified || baseGeojson;
-        } catch (error) {
-            return baseGeojson;
+            bufferedGeojson = turf.buffer(geojsonToProcess, 0, { units: 'meters' });
+            if (bufferedGeojson) {
+                candidates.push(bufferedGeojson);
+                simplificationTolerances.forEach(tolerance => {
+                    if (tolerance === 0) return;
+                    try { candidates.push(turf.simplify(bufferedGeojson, { tolerance, highQuality: false, mutate: false })); } catch (error) { console.warn('Poster map simplify failed after buffer(0) for tolerance', tolerance, error); }
+                });
+            }
+        } catch (error) { console.warn('Poster map buffer(0) failed for geometry repair', error); }
+
+        // Sort by encoded length ascending so we try the smallest valid candidate first
+        candidates.sort((a, b) => encodeURIComponent(JSON.stringify(a)).length - encodeURIComponent(JSON.stringify(b)).length);
+
+        for (const candidate of candidates) {
+            // Check the ENCODED length -- this is what actually goes into the URL
+            if (encodeURIComponent(JSON.stringify(candidate)).length <= POSTER_URL_BUDGET) {
+                return candidate;
+            }
         }
+
+        // Nothing fit -- return null to trigger vector fallback in renderPosterMapImage
+        console.warn('Poster static map: GeoJSON too large even at maximum simplification, falling back to vector render.');
+        return null;
     }
 
     function renderPosterMapVectorFallback(features, width, height) {
@@ -1375,6 +1448,8 @@
         formatUtc: formatUtc,
         wrapCanvasText: wrapCanvasText,
         slugify: slugify,
+        buildHocoColorExpression: buildHocoColorExpression,
+        FORECAST_POLYGON_FILL_OPACITY: FORECAST_POLYGON_FILL_OPACITY,
         renderForecastPosterPng: renderForecastPosterPng
     };
 })();

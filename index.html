@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Thunderstorm Outlook & Radar</title>
-
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared-ui.css">
@@ -18,6 +19,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="forecast-utils.js"></script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
     <style>
         /* --- RESET & VARIABLES --- */
         * {
@@ -54,101 +64,50 @@
             list-style: none;
         }
 
-        /* --- HEADER & NAV --- */
-        .top-nav {
-            background-color: #1a2a44;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 20px;
-            height: 50px;
-            font-size: 14px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-        }
 
-        .nav-left {
-            display: flex;
-            align-items: center;
-            height: 100%;
-        }
-
-        .nav-left a {
-            padding: 0 15px;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            border-right: 1px solid rgba(255, 255, 255, 0.1);
-            transition: background 0.2s;
-        }
-
-        .nav-left a:first-child {
-            border-left: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .nav-left a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .badge {
-            background-color: #da2128;
-            color: white;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 4px;
-            margin-left: 6px;
-            font-weight: 700;
-        }
-
-        .nav-right i {
-            margin-left: 0;
-            cursor: pointer;
-            color: #ccc;
-            transition: color 0.2s;
-        }
-
-        .nav-right i:hover {
-            color: white;
-        }
 
         /* --- HERO SECTION --- */
         .hero {
             background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url('https://images.unsplash.com/photo-1534088568595-a066f410bcda?q=80&w=2851&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
-            height: 220px;
+            min-height: 160px;
             position: relative;
             display: flex;
             align-items: center;
-            padding-left: 10%;
+            justify-content: flex-start;
+            padding: 20px 10%;
         }
 
         .weather-widget {
-            background: rgba(255, 255, 255, 0.95);
-            display: inline-flex;
+            background: rgba(255, 255, 255, 0.97);
+            display: flex;
+            flex-wrap: wrap;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
             backdrop-filter: blur(5px);
+            max-width: 100%;
         }
 
         .widget-city {
-            padding: 15px 25px;
+            padding: 14px 20px;
             font-weight: 700;
-            font-size: 18px;
+            font-size: 16px;
             border-right: 1px solid #eee;
             display: flex;
             align-items: center;
-            min-width: 140px;
             justify-content: center;
             color: #1a2a44;
+            flex: 0 0 auto;
         }
 
         .widget-day {
-            padding: 12px 18px;
+            padding: 12px 14px;
             text-align: center;
             border-right: 1px solid #eee;
-            min-width: 100px;
+            flex: 1 1 72px;
+            min-width: 72px;
         }
 
         .widget-day:last-child {
@@ -156,24 +115,28 @@
         }
 
         .day-name {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
             color: #555;
             display: block;
             margin-bottom: 6px;
             text-transform: uppercase;
+            white-space: nowrap;
         }
 
         .risk-badge {
             display: inline-block;
             color: white;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
-            padding: 4px 8px;
+            padding: 4px 6px;
             text-transform: uppercase;
             border-radius: 4px;
             width: 100%;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         /* --- OUTLOOK SECTION --- */
@@ -578,13 +541,36 @@
             border: 1px solid rgba(255, 255, 255, 0.18);
             background: linear-gradient(90deg,
                     #ffffff 0%,
+                    #d0cece 1%,
                     #d0cece 5%,
+                    #bea497 5%,
                     #bea497 10%,
-                    #66c2a4 30%,
-                    #fff200 50%,
-                    #ff7f27 70%,
-                    #ec1c24 85%,
-                    #b83dba 100%);
+                    #66c2a4 10%,
+                    #66c2a4 20%,
+                    #b3ff00 20%,
+                    #b3ff00 30%,
+                    #fff200 30%,
+                    #fff200 40%,
+                    #ffb327 40%,
+                    #ffb327 50%,
+                    #ff7f27 50%,
+                    #ff7f27 60%,
+                    #ff5227 60%,
+                    #ff5227 65%,
+                    #ff2e27 65%,
+                    #ff2e27 70%,
+                    #ec1c24 70%,
+                    #ec1c24 75%,
+                    #ec1c5a 75%,
+                    #ec1c5a 80%,
+                    #b83dba 80%,
+                    #b83dba 85%,
+                    #5a099c 85%,
+                    #5a099c 90%,
+                    #3e00e9 90%,
+                    #3e00e9 95%,
+                    #2600ff 95%,
+                    #2600ff 100%);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
         }
 
@@ -641,7 +627,8 @@
         }
 
         .date-display {
-            min-width: 300px;
+            min-width: 0;
+            flex-shrink: 1;
             text-align: center;
             color: var(--primary-blue);
             font-weight: 800;
@@ -649,13 +636,17 @@
             padding: 6px 12px;
             border-radius: 999px;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
             font-size: 12px;
+            max-width: 260px;
         }
 
         .hoco-time-copy {
             display: flex;
             flex-direction: column;
-            min-width: 132px;
+            min-width: 110px;
+            flex-shrink: 0;
             gap: 4px;
             color: #334155;
         }
@@ -670,6 +661,7 @@
         .hoco-time-copy strong {
             font-size: 13px;
             color: #172033;
+            white-space: nowrap;
         }
 
         #map {
@@ -1019,17 +1011,78 @@
             }
 
             .hero {
-                padding-left: 20px;
+                padding: 20px 16px;
+                justify-content: center;
+                min-height: 140px;
+            }
+
+            .weather-widget {
+                width: 100%;
+            }
+
+            .widget-city {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+                padding: 12px 16px;
+                justify-content: flex-start;
+                font-size: 14px;
+            }
+
+            .widget-day {
+                flex: 1 1 calc(33.33% - 2px);
+                min-width: 0;
+                padding: 10px 8px;
+            }
+
+            .risk-badge {
+                font-size: 9px;
+                padding: 3px 4px;
             }
 
             .map-wrapper {
-                height: 500px;
+                height: 480px;
+            }
+
+            /* Fix time-control: stack on mobile so slider isn't covered */
+            .time-control {
+                flex-wrap: wrap;
+                gap: 8px;
+                padding: 10px 14px;
+            }
+
+            .time-control .slider-container {
+                flex: 1 1 100%;
+                margin: 0;
+                order: 2;
+            }
+
+            .time-control .date-display {
+                flex: 1 1 100%;
+                order: 3;
+                max-width: 100%;
+                text-align: center;
+            }
+
+            .time-control #label-left-hint,
+            .time-control .hoco-time-copy {
+                order: 1;
+                min-width: auto;
+            }
+
+            #hoco-run-issued-label {
+                order: 3;
+                flex: 1 1 100%;
+                max-width: 100%;
+                text-align: center;
+                white-space: normal;
+                font-size: 11px;
             }
 
             .radar-timeline-container {
                 flex-wrap: wrap;
-                gap: 10px;
-                padding: 10px;
+                gap: 8px;
+                padding: 10px 14px;
             }
 
             .radar-slider-wrapper {
@@ -1041,15 +1094,52 @@
                 min-width: 0;
                 width: 100%;
                 white-space: normal;
+                max-width: 100%;
             }
 
             .map-controls-overlay {
-                bottom: 104px;
+                bottom: 112px;
             }
 
             .hoco-filter-row,
             .outlook-mode-tabs {
-                grid-template-columns: 1fr;
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .widget-day {
+                flex: 1 1 33%;
+                min-width: 0;
+                padding: 8px 4px;
+            }
+
+            .day-name {
+                font-size: 10px;
+            }
+
+            .risk-badge {
+                font-size: 8px;
+                padding: 3px 2px;
+            }
+
+            .outlook-mode-tabs {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .forecast-layer-toggle-row {
+                grid-template-columns: 1fr 1fr 1fr;
+                gap: 6px;
+            }
+
+            .forecast-layer-toggle {
+                padding: 10px 6px;
+                font-size: 10px;
+            }
+
+            .mode-tab {
+                padding: 10px 8px;
+                font-size: 11px;
             }
         }
     </style>
@@ -1065,11 +1155,19 @@
             </a>
             <nav class="nav-left" aria-label="Primary">
                 <a href="index.html" class="active">Outlooks <span class="badge" id="outlook-count">0</span></a>
-                <a href="obs.html">Observations</a>
+                <a href="obs.html">Observations <span class="badge" id="outlook-count">Live</span></a>
+                <a href="forecasts.html">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+                <a href="hoco.html">HOCO</a>
                 <a href="archive.html">Archive</a>
             </nav>
+
             <div class="nav-right">
-                <a href="admin.html" class="nav-icon-link" title="Forecaster admin"><i class="fas fa-user"></i></a>
+                <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                    <i class="fas fa-user"></i>
+                </a>
             </div>
         </div>
     </header>
@@ -1102,7 +1200,9 @@
             <span class="close-modal">&times;</span>
             <h2 style="margin-bottom: 15px; border-bottom: 2px solid var(--risk-5); padding-bottom: 10px;">Severe
                 Criteria</h2>
-            <p style="margin-bottom: 10px; font-size: 14px;">Black outlines on the map mark areas where <strong>severe weather is possible</strong>. A severe thunderstorm is defined as meeting one or more of the following:</p>
+            <p style="margin-bottom: 10px; font-size: 14px;">Black outlines on the map mark areas where <strong>severe
+                    weather is possible</strong>. A severe thunderstorm is defined as meeting one or more of the
+                following:</p>
             <ul style="list-style: disc; padding-left: 20px; line-height: 1.6; font-size: 13px;">
                 <li><strong>Wind:</strong> Gusts of 50 knots (58 mph) or greater.</li>
                 <li><strong>Hail:</strong> 2.0 cm (approx 0.75 inch) diameter or larger.</li>
@@ -1117,12 +1217,14 @@
 
             <div class="outlook-sidebar">
                 <div class="outlook-mode-tabs">
-                    <button type="button" class="mode-tab active" data-forecast-mode="official">Official Outlook</button>
+                    <button type="button" class="mode-tab active" data-forecast-mode="official">Official
+                        Outlook</button>
                     <button type="button" class="mode-tab" data-forecast-mode="hoco">HOCO</button>
                 </div>
 
                 <div class="forecast-layer-toggle-row">
-                    <button type="button" class="forecast-layer-toggle active" data-layer-toggle="manual">Manual</button>
+                    <button type="button" class="forecast-layer-toggle active"
+                        data-layer-toggle="manual">Manual</button>
                     <button type="button" class="forecast-layer-toggle" data-layer-toggle="auto">Auto</button>
                     <button type="button" class="forecast-layer-toggle" data-layer-toggle="ensemble">Ensemble</button>
                 </div>
@@ -1163,7 +1265,8 @@
                 </div>
 
                 <div id="hoco-sidebar-panel" class="outlook-sidebar-panel" hidden>
-                    <div class="hoco-day-chip"><i class="fas fa-calendar-day"></i> <span id="hoco-selected-day-label">Selected day</span></div>
+                    <div class="hoco-day-chip"><i class="fas fa-calendar-day"></i> <span
+                            id="hoco-selected-day-label">Selected day</span></div>
 
                     <div class="hoco-preview-card">
                         <div class="hoco-section-title">Latest automated guidance</div>
@@ -1172,7 +1275,8 @@
                             <span class="hoco-badge neutral" id="hoco-preview-count">0 RUNS</span>
                         </div>
                         <h3 id="hoco-preview-title">Loading HOCO guidance...</h3>
-                        <p id="hoco-preview-summary">The latest automated guidance or client-side ensemble for the selected valid day will appear here.</p>
+                        <p id="hoco-preview-summary">The latest automated guidance or client-side ensemble for the
+                            selected valid day will appear here.</p>
                         <div class="hoco-meta-list">
                             <div><strong>Valid:</strong> <span id="hoco-preview-period">--</span></div>
                             <div><strong>Issued:</strong> <span id="hoco-preview-issued">--</span></div>
@@ -1187,7 +1291,8 @@
                             <span class="hoco-badge neutral" id="ensemble-preview-count">0 SOURCES</span>
                         </div>
                         <h3 id="ensemble-preview-title">Waiting for automated source runs...</h3>
-                        <p id="ensemble-preview-summary">When automated runs exist for the selected valid day, the ensemble is blended in the browser immediately.</p>
+                        <p id="ensemble-preview-summary">When automated runs exist for the selected valid day, the
+                            ensemble is blended in the browser immediately.</p>
                         <div class="hoco-meta-list">
                             <div><strong>Valid:</strong> <span id="ensemble-preview-period">--</span></div>
                             <div><strong>Issued span:</strong> <span id="ensemble-preview-issued">--</span></div>
@@ -1197,7 +1302,8 @@
 
                     <div class="hoco-preview-card hoco-ensemble-card">
                         <div class="hoco-section-title">Lightning Probability Scale</div>
-                        <p>HOCO polygons use a lightning-probability scale rather than the manual `1` to `5` convective risk categories.</p>
+                        <p>HOCO polygons use a lightning-probability scale rather than the manual `1` to `5` convective
+                            risk categories.</p>
                         <div class="hoco-legend">
                             <div class="hoco-legend-bar"></div>
                             <div class="hoco-legend-labels">
@@ -1310,7 +1416,7 @@
                             <select id="lightningLayer" onchange="lightningLayerTypeHandler()">
                                 <option value="uk-lightning">UK Lightning</option>
                                 <option value="xweather-lightning">Live Strikes (Global)</option>
-                                
+
                             </select>
                         </div>
 
@@ -1320,7 +1426,7 @@
         </div>
     </section>
 
-    <footer>&copy; Weather 2026 | RadarLoop Integration</footer>
+    <footer>&copy; Handry Outlook | RadarLoop | HOCO</footer>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -1386,7 +1492,7 @@
         // --- GLOBAL VARIABLES & UTILS ---
         const sixDaysInMs = 7 * 24 * 60 * 60 * 1000;
         let lastValidTileUrls = {};
-        
+
         // Parallel Plotting Flags (Fixes animation freezing)
         let isRadarPlotting = false;
         let isSatellitePlotting = false;
@@ -1431,13 +1537,14 @@
         const lightningOptions = {
             'uk-lightning': { type: 'custom-uk' },
             'xweather-lightning': { type: 'mapsgl', id: 'lightning-strikes' },
-            
+
         };
 
         const slider = document.getElementById('day-slider');
         const dateDisplay = document.getElementById('slider-date-display');
         const sidebarDate = document.getElementById('sidebar-date');
         const outlookBadge = document.getElementById('outlook-count');
+        const forecastsBadge = document.getElementById('forecasts-count');
         const severeBtn = document.getElementById('severe-btn-trigger');
         const modal = document.getElementById('severeModal');
         const closeModal = document.querySelector('.close-modal');
@@ -1542,9 +1649,7 @@
             });
         }
 
-        function getHocoLightningColor(value) {
-            return window.GenWeatherUtils?.getHocoLightningColor?.(value) || '#66c2a4';
-        }
+
 
         function getHocoProbabilityLabel(value) {
             const numeric = Math.max(0, Math.min(100, Math.round(Number(value) || 0)));
@@ -1638,7 +1743,7 @@
                     const riskValue = window.GenWeatherUtils?.parseRiskPercent
                         ? window.GenWeatherUtils.parseRiskPercent(feature?.properties)
                         : Number(feature?.properties?.risk || feature?.properties?.peak_risk || 0);
-                    const hocoColor = getHocoLightningColor(riskValue || feature?.properties?.peak_risk || 0);
+                    const hocoColor = window.GenWeatherUtils.getHocoLightningColor(riskValue);
                     return {
                         ...feature,
                         properties: {
@@ -1741,7 +1846,7 @@
                 }, firstSymbol?.id);
             }
 
-            moveUkLightningLayersToTop();
+            enforceLayerOrder();
         }
 
         function setLayerVisibility(layerId, visible) {
@@ -1791,7 +1896,7 @@
                     type: 'fill',
                     source: sourceId,
                     paint: {
-                        'fill-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#38bdf8'],
+                        'line-color': window.GenWeatherUtils.buildHocoColorExpression('riskValue'),
                         'fill-opacity': fillOpacity
                     }
                 }, firstSymbol?.id);
@@ -1803,14 +1908,14 @@
                     type: 'line',
                     source: sourceId,
                     paint: {
-                        'line-color': ['coalesce', ['get', 'fill'], ['get', 'color'], '#ffffff'],
+                        'line-color': window.GenWeatherUtils.buildHocoColorExpression('riskValue'),
                         'line-width': lineWidth,
                         'line-opacity': 0.92
                     }
                 }, firstSymbol?.id);
             }
 
-            moveUkLightningLayersToTop();
+            enforceLayerOrder();
         }
 
         function clearGuidanceLayer(sourceId, fillId, lineId) {
@@ -2104,12 +2209,32 @@
         }
 
         function moveUkLightningLayersToTop() {
-            if (map.getLayer(UK_LIGHTNING_GLOW_ID)) {
-                map.moveLayer(UK_LIGHTNING_GLOW_ID);
+            enforceLayerOrder();
+        }
+
+        // Enforces strict z-order: satellite → radar → forecast/HOCO → lightning.
+        // Call this any time a layer is added or re-added.
+        // moveLayer(id) with no beforeId = move to absolute top of stack.
+        // moveLayer(id, beforeId) = insert directly below beforeId.
+        function enforceLayerOrder() {
+            // Step 1: satellite sits below radar
+            if (map.getLayer('satellite-layer') && map.getLayer('radar-layer')) {
+                map.moveLayer('satellite-layer', 'radar-layer');
             }
-            if (map.getLayer(UK_LIGHTNING_CORE_ID)) {
-                map.moveLayer(UK_LIGHTNING_CORE_ID);
-            }
+
+            // Step 2: forecast outlines + HOCO guidance above radar, in order
+            const midLayerIds = [
+                'forecast-fill', 'forecast-line', 'forecast-severe-line',
+                HOCO_AUTO_FILL_ID, HOCO_AUTO_LINE_ID,
+                HOCO_ENSEMBLE_FILL_ID, HOCO_ENSEMBLE_LINE_ID,
+            ];
+            midLayerIds.forEach(id => {
+                if (map.getLayer(id)) map.moveLayer(id);
+            });
+
+            // Step 3: lightning always on the very top
+            if (map.getLayer(UK_LIGHTNING_GLOW_ID)) map.moveLayer(UK_LIGHTNING_GLOW_ID);
+            if (map.getLayer(UK_LIGHTNING_CORE_ID)) map.moveLayer(UK_LIGHTNING_CORE_ID);
         }
 
         function removeUkLightningLayers() {
@@ -2412,7 +2537,7 @@
             const interval = layerConfig.interval || 5 * 60 * 1000;
             const baseDate = new Date(timestamp);
             baseDate.setMinutes(Math.floor(baseDate.getMinutes() / (interval / 60 / 1000)) * (interval / 60 / 1000));
-            baseDate.setSeconds(0); 
+            baseDate.setSeconds(0);
             baseDate.setMilliseconds(0);
 
             const formatISO = (d) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
@@ -2423,17 +2548,17 @@
                 const url = layerConfig.url
                     .replace(/\${iso}/g, formatISO(checkTime))
                     .replace(/\${iso2}/g, formatISO2(checkTime));
-                
+
                 try {
                     // FIX: Changed from HEAD to GET to avoid 403 errors
                     const checkUrl = url.replace('{z}/{x}/{y}', '0/0/0');
                     const res = await fetch(checkUrl, { method: 'GET' });
-                    
+
                     if (res.ok) {
                         return url;
                     }
                 } catch (e) {
-                    continue; 
+                    continue;
                 }
             }
             return null;
@@ -2485,7 +2610,8 @@
                 paint: { 'raster-opacity': parseFloat(document.getElementById(type + 'Opacity').value) }
             }, beforeId);
 
-            moveUkLightningLayersToTop();
+            // Enforce strict z-order: satellite < radar < HOCO < lightning
+            enforceLayerOrder();
 
             if (type === 'radar') isRadarPlotting = false;
             else isSatellitePlotting = false;
@@ -2657,6 +2783,7 @@
                 .map(f => f.properties.docId)
             ).size;
             outlookBadge.textContent = futureCount;
+            if (forecastsBadge) forecastsBadge.textContent = futureCount;
         }
 
         function autoLocateUser() {
@@ -2707,7 +2834,7 @@
                     : `This polygon comes from an individual AUTO-HOCO run${props.runLabel ? `: ${props.runLabel}` : ''}.`)
                 : (isSevere
                     ? 'Black outlines highlight areas where severe weather is possible.'
-                    : (props.description || 'Official convective outlook area.'));
+                    : 'Official convective outlook area.');
 
             new mapboxgl.Popup()
                 .setLngLat(lngLat)
@@ -2740,9 +2867,23 @@
         function initForecasts() {
             onSnapshot(collection(db, "forecasts_v2"), (snapshot) => {
                 allFeatures = [];
+
+                // Group docs by validFrom date key; keep only the highest issueVersion per date
+                const bestByDate = new Map();
                 snapshot.forEach((doc) => {
                     const data = doc.data();
                     if (data.isActive === false) return;
+                    const dateKey = data.validFrom
+                        ? String(data.validFrom).split('T')[0]
+                        : doc.id;
+                    const existing = bestByDate.get(dateKey);
+                    const thisVersion = Number(data.issueVersion) || 1;
+                    if (!existing || thisVersion > existing.version) {
+                        bestByDate.set(dateKey, { doc, data, version: thisVersion });
+                    }
+                });
+
+                bestByDate.forEach(({ doc, data }) => {
                     try {
                         const geoJSON = typeof data.geoJSON === 'string' ? JSON.parse(data.geoJSON) : data.geoJSON;
                         if (geoJSON.features) {
@@ -2769,7 +2910,8 @@
                                         description: data.description,
                                         issuedAt: data.issuedAt,
                                         validFrom: data.validFrom,
-                                        validTo: data.validTo
+                                        validTo: data.validTo,
+                                        issueVersion: Number(data.issueVersion) || 1
                                     }
                                 });
                             });
@@ -2861,6 +3003,27 @@
 
         updateLayerToggleButtons();
         setForecastMode('official');
+
+    </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
     </script>
 </body>
 

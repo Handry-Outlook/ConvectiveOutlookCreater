@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forecasts | Thunderstorm Outlook</title>
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="shared-ui.css">
+    <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
+    <script src="forecast-utils.js"></script>
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
+    <style>
+        :root {
+            --dark-grey: #333;
+            --light-bg: #f4f7fa;
+            --risk-severe: #111111;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            color: #334155;
+        }
+
+        .archive-wrapper {
+            width: 100%;
+            padding: 40px;
+        }
+
+        .archive-header {
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 30px;
+            padding-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 10px 0 0;
+            font-weight: 800;
+            font-size: clamp(30px, 4vw, 38px);
+            color: #172033;
+        }
+
+        .intro-text {
+            font-size: 15px;
+            color: #64748b;
+            margin-bottom: 30px;
+            line-height: 1.7;
+            max-width: 760px;
+        }
+
+        .archive-list {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .archive-card {
+            background: #fff;
+            border: 1px solid #dbe4ef;
+            border-radius: 16px;
+            color: inherit;
+            transition: all 0.2s ease-in-out;
+            overflow: hidden;
+        }
+
+        .archive-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.08);
+        }
+
+        .archive-card-main {
+            display: grid;
+            grid-template-columns: 240px 100px 1fr;
+            text-decoration: none;
+            color: inherit;
+            position: relative;
+            z-index: 1;
+        }
+
+        .map-thumb {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            background: #eee;
+            border-right: 1px solid #eee;
+        }
+
+        .poster-thumb {
+            object-fit: contain;
+            object-position: center top;
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+            padding: 8px;
+        }
+
+        .risk-col {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #fcfcfc;
+            border-right: 1px solid #eee;
+        }
+
+        .badge-main {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 800;
+            font-size: 18px;
+            text-align: center;
+            box-shadow: 0 12px 20px rgba(15, 23, 42, 0.12);
+        }
+
+        .badge-main span {
+            font-size: 9px;
+            text-transform: uppercase;
+            font-weight: 400;
+            margin-top: -2px;
+        }
+
+        .info-col {
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-col h3 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+            color: var(--dark-grey);
+            font-weight: 700;
+        }
+
+        .info-col p {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .info-col strong {
+            color: #333;
+        }
+
+        .archive-card-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 16px 24px 20px;
+            border-top: 1px solid #e2e8f0;
+            background: #fcfdff;
+            flex-wrap: wrap;
+            position: relative;
+            z-index: 2;
+        }
+
+        .poster-link,
+        .detail-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 999px;
+            padding: 10px 14px;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 800;
+        }
+
+        .detail-link {
+            background: #eef4fb;
+            color: var(--primary-blue);
+        }
+
+        .poster-link {
+            background: #172033;
+            color: #fff;
+        }
+
+        .poster-pending {
+            font-size: 12px;
+            font-weight: 700;
+            color: #94a3b8;
+        }
+
+        .loading-state {
+            text-align: center;
+            padding: 60px;
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .archive-wrapper {
+                padding: 24px;
+            }
+
+            .archive-card-main {
+                grid-template-columns: 1fr;
+            }
+
+            .map-thumb {
+                height: 150px;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+
+            .risk-col {
+                padding: 15px;
+                border-right: none;
+                border-bottom: 1px solid #eee;
+            }
+
+            .archive-card-actions {
+                padding: 14px 16px 18px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header class="top-nav">
+        <a href="index.html" class="nav-brand">
+            <img src="assets/handry-outlook-logo.png" alt="Handry Outlook logo">
+            <span>Handry Outlook</span>
+        </a>
+        <nav class="nav-left" aria-label="Primary">
+            <a href="index.html">Outlooks</a>
+            <a href="obs.html">Observations <span class="badge" id="outlook-count">Live</span></a>
+            <a href="forecasts.html" class="active">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+            <a href="hoco.html">HOCO</a>
+            <a href="archive.html">Archive</a>
+        </nav>
+        <div class="nav-right">
+            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                <i class="fas fa-user"></i>
+            </a>
+        </div>
+    </header>
+
+    <main class="page-shell">
+        <div class="archive-wrapper page-panel">
+            <div class="archive-header">
+                <div>
+                    <div class="page-eyebrow">Upcoming Outlooks</div>
+                    <h1>Future Forecasts</h1>
+                </div>
+                <div class="action-row">
+                    <a href="index.html" class="btn-ghost"><i class="fas fa-bolt"></i> Live outlook</a>
+                    <a href="archive.html" class="btn-secondary"><i class="fas fa-box-archive"></i> Full archive</a>
+                </div>
+            </div>
+
+            <p class="intro-text">
+                Published convective outlooks that are still in the future. Open any forecast to view the full
+                discussion and map detail.
+            </p>
+
+            <div id="archive-list" class="archive-list">
+                <div class="loading-state">Fetching future forecasts...</div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { collection, getDocs, getFirestore, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyD2lgPAtAYksA4guBCITLq_4RkBpavcXjs",
+            authDomain: "genweather-f9a45.firebaseapp.com",
+            projectId: "genweather-f9a45",
+            storageBucket: "genweather-f9a45.firebasestorage.app",
+            messagingSenderId: "682497500954",
+            appId: "1:682497500954:web:54c400f45cd9b8b6cf2ea3"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const MAPBOX_TOKEN = 'pk.eyJ1IjoiaGFuZHJ5MjAxOTEwMjYiLCJhIjoiY21jYWg2eG1lMDNkYTJxczVyOWM5bW9mciJ9.bA-qxiByTB_RseY1fgU4rg';
+
+        // ─── Static preview GeoJSON builder ──────────────────────────────────────────
+        // Strategy: reduce coordinate decimal precision (no topology simplification).
+        // 6dp = ~11cm, 5dp = ~1m, 4dp = ~11m, 3dp = ~111m — all fine for a thumbnail.
+        // The Mapbox Static API URL limit is ~8192 chars total; non-GeoJSON overhead
+        // is ~650 chars, so we target a raw GeoJSON budget of 7000 chars.
+        const STATIC_GEOJSON_BUDGET = 7000;
+
+        function toHex(val, fallback) {
+            if (typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val.trim())) return val.trim();
+            return fallback;
+        }
+
+        function truncateCoords(geometry, dp) {
+            if (!geometry) return geometry;
+            function rc(c) { return [+c[0].toFixed(dp), +c[1].toFixed(dp)]; }
+            function rr(ring) { return ring.map(rc); }
+            function rp(coords) { return coords.map(rr); }
+            switch (geometry.type) {
+                case 'Polygon': return { ...geometry, coordinates: rp(geometry.coordinates) };
+                case 'MultiPolygon': return { ...geometry, coordinates: geometry.coordinates.map(rp) };
+                case 'LineString': return { ...geometry, coordinates: geometry.coordinates.map(rc) };
+                case 'MultiLineString': return { ...geometry, coordinates: geometry.coordinates.map(rr) };
+                case 'Point': return { ...geometry, coordinates: rc(geometry.coordinates) };
+                default: return geometry;
+            }
+        }
+
+        const STATIC_URL_BUDGET = 7900;
+        const forecastFillOpacity = window.GenWeatherUtils?.FORECAST_POLYGON_FILL_OPACITY ?? 0.42;
+
+        function buildStaticPreviewGeojson(features) {
+            if (!features || features.length === 0) {
+                return encodeURIComponent(JSON.stringify({ type: 'FeatureCollection', features: [] }));
+            }
+
+            const minimalFeatures = features.map(feature => {
+                try {
+                    const rawFill = feature.properties?.fill;
+                    const rawStroke = feature.properties?.stroke || rawFill;
+                    const fillOpacity = feature.properties?.['fill-opacity'] ?? forecastFillOpacity;
+                    const hexFill = toHex(rawFill, '#cccccc');
+                    const hexStroke = toHex(rawStroke, hexFill);
+                    return {
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            fill: hexFill,
+                            'fill-opacity': typeof fillOpacity === 'number' ? fillOpacity : forecastFillOpacity,
+                            stroke: hexStroke,
+                            'stroke-width': feature.properties?.['stroke-width'] ?? 2
+                        }
+                    };
+                } catch (e) {
+                    return {
+                        type: 'Feature', geometry: feature.geometry,
+                        properties: { fill: '#cccccc', 'fill-opacity': forecastFillOpacity, stroke: '#cccccc', 'stroke-width': 2 }
+                    };
+                }
+            });
+
+            const attempts = [
+                { tolerance: 0, dp: 5 },
+                { tolerance: 0, dp: 4 },
+                { tolerance: 0, dp: 3 },
+                { tolerance: 0.001, dp: 4 },
+                { tolerance: 0.005, dp: 3 },
+                { tolerance: 0.01, dp: 3 },
+                { tolerance: 0.05, dp: 2 },
+                { tolerance: 0.1, dp: 2 },
+                { tolerance: 0.25, dp: 2 },
+                { tolerance: 0.5, dp: 1 },
+                { tolerance: 1.0, dp: 1 },
+            ];
+
+            for (const { tolerance, dp } of attempts) {
+                try {
+                    const processedFeatures = minimalFeatures.map(f => {
+                        let geom = f.geometry;
+                        if (geom?.type === 'Polygon' || geom?.type === 'MultiPolygon') {
+                            try {
+                                if (tolerance > 0) {
+                                    const simplified = turf.simplify(
+                                        { type: 'Feature', geometry: geom, properties: {} },
+                                        { tolerance, highQuality: false, mutate: false }
+                                    );
+                                    geom = simplified.geometry;
+                                }
+                            } catch (_) { }
+                        }
+                        return { ...f, geometry: truncateCoords(geom, dp) };
+                    });
+
+                    const encoded = encodeURIComponent(JSON.stringify({
+                        type: 'FeatureCollection',
+                        features: processedFeatures
+                    }));
+
+                    if (encoded.length <= STATIC_URL_BUDGET) {
+                        return encoded;
+                    }
+                } catch (_) { }
+            }
+
+            // If somehow nothing fits, return empty rather than a broken URL
+            console.warn('Static preview: could not fit GeoJSON within URL budget even at maximum simplification.');
+            return encodeURIComponent(JSON.stringify({ type: 'FeatureCollection', features: [] }));
+        }
+
+
+        async function loadFutureForecasts() {
+            const listContainer = document.getElementById('archive-list');
+            const forecastsBadge = document.getElementById('forecasts-count');
+            const nowIso = new Date().toISOString().slice(0, 16);
+            const q = query(
+                collection(db, "forecasts_v2"),
+                where("isActive", "==", true),
+                where("validTo", ">=", nowIso),
+                orderBy("validTo", "asc")
+            );
+
+            try {
+                const querySnapshot = await getDocs(q);
+                listContainer.innerHTML = '';
+
+                if (querySnapshot.empty) {
+                    if (forecastsBadge) forecastsBadge.textContent = '0';
+                    listContainer.innerHTML = `<div class="loading-state">No upcoming published forecasts found.</div>`;
+                    return;
+                }
+
+                if (forecastsBadge) forecastsBadge.textContent = String(querySnapshot.size);
+
+                querySnapshot.forEach((docSnap) => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    let geoJSON = JSON.parse(data.geoJSON);
+                    const displayFeatures = window.GenWeatherUtils
+                        ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
+                        : geoJSON.features;
+                    geoJSON = { type: 'FeatureCollection', features: displayFeatures };
+
+                    geoJSON.features = geoJSON.features.map(f => {
+                        const col = f.properties.color || "#cccccc";
+                        const isSevere = !!f.properties.isSevere;
+                        return {
+                            ...f,
+                            properties: {
+                                ...f.properties,
+                                "fill": isSevere ? "rgba(0,0,0,0)" : col,
+                                "fill-opacity": isSevere ? 0 : forecastFillOpacity,
+                                "stroke": isSevere ? "#111111" : col,
+                                "stroke-width": isSevere ? 3 : 2
+                            }
+                        };
+                    });
+
+                    const authorName = data.authorEmail ? data.authorEmail.split('@')[0] : "Forecaster";
+                    const issuedRiskLevels = window.GenWeatherUtils?.summarizeRiskLevels?.(geoJSON.features) || [];
+                    const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || null;
+                    const hasSevere = geoJSON.features.some(f => !!f.properties.isSevere);
+                    const riskBadgeShort = highestRisk ? highestRisk.short : (hasSevere ? 'SEV' : 'RISK');
+                    const riskNum = highestRisk ? String(highestRisk.rank) : (hasSevere ? '!' : '--');
+                    const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
+                    const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
+
+                    const encodedGeo = buildStaticPreviewGeojson(geoJSON.features);
+                    const staticMapUrl = `https://api.mapbox.com/styles/v1/handry20191026/cmd7aol1800u401s9g60ibz29/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
+                    const previewUrl = data.posterUrl || staticMapUrl;
+                    const previewClass = data.posterUrl ? 'map-thumb poster-thumb' : 'map-thumb';
+                    const dateTitle = new Date(data.validFrom).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+                    const posterAction = data.posterUrl
+                        ? `<a href="${data.posterUrl}" target="_blank" rel="noopener" class="poster-link"><i class="fas fa-image"></i> Poster PNG</a>`
+                        : `<span class="poster-pending">s</span>`;
+
+                    const card = `
+                        <article class="archive-card">
+                            <a href="forecast-detail.html?id=${id}" class="archive-card-main">
+                            <img src="${previewUrl}" class="${previewClass}" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'; this.className='map-thumb';">
+                            <div class="risk-col">
+                                <div class="badge-main" style="background-color:${badgeColor}; color:${badgeTextColor};">
+                                    ${riskNum}
+                                    <span>${riskBadgeShort}</span>
+                                </div>
+                            </div>
+                            <div class="info-col">
+                                <h3>Thunderstorm Outlook: ${dateTitle}</h3>
+                                <p><strong>Period:</strong> ${String(data.validFrom || '').replace('T', ' ')} &rarr; ${String(data.validTo || '').replace('T', ' ')}</p>
+                                <p><strong>Forecaster:</strong> <span style="text-transform: capitalize;">${authorName}</span></p>
+                            </div>
+                            </a>
+                            <div class="archive-card-actions">
+                                <a href="forecast-detail.html?id=${id}" class="detail-link"><i class="fas fa-arrow-right"></i> Open detail</a>
+                                ${posterAction}
+                            </div>
+                        </article>
+                    `;
+                    listContainer.insertAdjacentHTML('beforeend', card);
+                });
+            } catch (err) {
+                console.error("Future forecasts load error:", err);
+                listContainer.innerHTML = '<div class="loading-state">Error connecting to database.</div>';
+            }
+        }
+
+        loadFutureForecasts();
+    </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
+    </script>
+</body>
+
+</html>

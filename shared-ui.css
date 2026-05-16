@@ -258,12 +258,13 @@ textarea {
     }
 
     .nav-brand span {
-        display: none;
+        font-size: 13px;
     }
 
     .nav-left a,
     .nav-icon-link {
         padding: 0 12px;
+        font-size: 13px;
     }
 
     .page-shell {
@@ -271,40 +272,131 @@ textarea {
     }
 }
 
+/* ── Mobile toggle button (hidden on desktop) ── */
+.nav-toggle {
+    display: none;
+}
+
 @media (max-width: 720px) {
+
+    /* Top bar: brand stretches, then admin icon + toggle button on the right */
     .top-nav {
-        min-height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
         padding: 0;
+        min-height: auto;
         align-items: stretch;
-        flex-direction: column;
+        justify-content: flex-start;
     }
 
     .nav-brand {
-        min-height: 46px;
-        padding: 10px 14px;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        flex: 1 1 auto;
+        min-height: 52px;
+        padding: 0 16px;
         margin-right: 0;
+        border-right: none;
+    }
+
+    .nav-brand img {
+        width: 28px;
+        height: 28px;
     }
 
     .nav-brand span {
-        display: inline;
+        font-size: 15px;
     }
 
-    .nav-left {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .nav-left a,
-    .nav-icon-link {
-        min-height: 46px;
-        white-space: nowrap;
-    }
-
+    /* Admin + toggle sit on the right of the brand row */
     .nav-right {
+        display: flex;
+        align-items: stretch;
+        flex-shrink: 0;
+    }
+
+    .nav-icon-link {
+        min-height: 52px;
+        padding: 0 16px;
+        border-right: none;
+    }
+
+    /* Chevron toggle button */
+    .nav-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 52px;
+        width: 52px;
+        padding: 0;
+        background: transparent;
+        border: none;
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.82);
+        cursor: pointer;
+        font-size: 14px;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        flex-shrink: 0;
+    }
+
+    .nav-toggle:hover,
+    .top-nav.nav-open .nav-toggle {
+        background: var(--nav-hover);
+        color: #fff;
+    }
+
+    /* Rotate chevron when open */
+    .nav-toggle i {
+        transition: transform 0.25s ease;
+    }
+
+    .top-nav.nav-open .nav-toggle i {
+        transform: rotate(180deg);
+    }
+
+    /* Nav links: hidden by default, expand downward when open */
+    .nav-left {
+        display: flex;
+        flex-direction: column;
         width: 100%;
-        justify-content: flex-end;
-        padding: 0 12px 10px;
+        order: 99; /* pushes below brand row */
+        overflow: hidden;
+        max-height: 0;
+        transition: max-height 0.28s ease, border-color 0.28s ease;
+        border-top: 0px solid rgba(255, 255, 255, 0.1);
+        min-height: 0;
+    }
+
+    .top-nav.nav-open .nav-left {
+        max-height: 400px; /* large enough for any link count */
+        border-top-width: 1px;
+    }
+
+    .nav-left a {
+        width: 100%;
+        min-height: 50px;
+        padding: 0 20px;
+        font-size: 14px;
+        font-weight: 600;
+        border-right: none;
+        border-left: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .nav-left a:first-child {
+        border-left: none;
+    }
+
+    .nav-left a:last-child {
+        border-bottom: none;
+    }
+
+    .nav-left a.active {
+        background: var(--nav-hover);
+        border-left: 3px solid rgba(255, 255, 255, 0.5);
+        padding-left: 17px;
+    }
+
+    .badge {
+        padding: 3px 8px;
+        font-size: 10px;
     }
 }

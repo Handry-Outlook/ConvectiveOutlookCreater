@@ -5,12 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Archive | Thunderstorm Outlook</title>
+    <link rel="icon" type="image/png"
+        href="https://raw.githubusercontent.com/Handry-Outlook/Convective-Outlook/main/Handry_outlook_icon_pride_small.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="shared-ui.css">
     <script src="https://cdn.jsdelivr.net/npm/@turf/turf@6/turf.min.js"></script>
     <script src="forecast-utils.js"></script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-ME7TBBFFFN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+
+        gtag('config', 'G-ME7TBBFFFN');
+    </script>
     <style>
         :root {
             --dark-grey: #333;
@@ -138,9 +149,22 @@
             justify-content: center;
         }
 
-        .info-col h3 { margin: 0 0 10px 0; font-size: 22px; color: var(--dark-grey); font-weight: 700; }
-        .info-col p { margin: 4px 0; font-size: 13px; color: #64748b; }
-        .info-col strong { color: #333; }
+        .info-col h3 {
+            margin: 0 0 10px 0;
+            font-size: 22px;
+            color: var(--dark-grey);
+            font-weight: 700;
+        }
+
+        .info-col p {
+            margin: 4px 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .info-col strong {
+            color: #333;
+        }
 
         .archive-card-actions {
             display: flex;
@@ -183,7 +207,12 @@
             color: #94a3b8;
         }
 
-        .loading-state { text-align: center; padding: 60px; color: #94a3b8; font-style: italic; }
+        .loading-state {
+            text-align: center;
+            padding: 60px;
+            color: #94a3b8;
+            font-style: italic;
+        }
 
         /* Risk Backgrounds (Synced) */
         .bg-low { background-color: var(--risk-2); }
@@ -193,12 +222,302 @@
         .bg-high { background-color: var(--risk-5); }
         .bg-svr { background-color: var(--risk-severe); }
 
+        /* ── View toggle ── */
+        .view-toggle {
+            display: inline-flex;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .view-toggle button {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            border-right: 1px solid #cbd5e1;
+        }
+        .view-toggle button:last-child { border-right: none; }
+        .view-toggle button.active {
+            background: var(--nav-bg);
+            color: #fff;
+        }
+        .view-toggle button:hover:not(.active) { background: #f1f5f9; color: #1e293b; }
+
+        /* ── Calendar ── */
+        #calendar-view { display: none; }
+        #list-view { display: flex; flex-direction: column; gap: 18px; }
+
+        .cal-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 22px;
+            flex-wrap: wrap;
+        }
+        .cal-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #fff;
+            cursor: pointer;
+            font-size: 14px;
+            color: #334155;
+            transition: background 0.18s;
+        }
+        .cal-nav-btn:hover { background: #f1f5f9; }
+        .cal-period-label {
+            font-size: 17px;
+            font-weight: 700;
+            color: #172033;
+            min-width: 160px;
+            text-align: center;
+        }
+        .cal-zoom-tabs {
+            display: inline-flex;
+            border: 1px solid #cbd5e1;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #fff;
+            margin-left: auto;
+        }
+        .cal-zoom-tabs button {
+            padding: 7px 13px;
+            font-size: 12px;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: #64748b;
+            cursor: pointer;
+            border-right: 1px solid #cbd5e1;
+            transition: background 0.15s, color 0.15s;
+        }
+        .cal-zoom-tabs button:last-child { border-right: none; }
+        .cal-zoom-tabs button.active { background: var(--nav-bg); color: #fff; }
+        .cal-zoom-tabs button:hover:not(.active) { background: #f1f5f9; color: #1e293b; }
+
+        /* Month grid */
+        .cal-month-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        .cal-dow-label {
+            text-align: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            padding-bottom: 6px;
+        }
+        .cal-day {
+            min-height: 64px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+            background: #fff;
+            padding: 6px 8px;
+            cursor: default;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        .cal-day.has-outlooks {
+            cursor: pointer;
+            border-color: transparent;
+        }
+        .cal-day.has-outlooks:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15,23,42,0.1);
+        }
+        .cal-day.other-month { opacity: 0.3; pointer-events: none; }
+        .cal-day-num {
+            font-size: 12px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 4px;
+        }
+        .cal-day.today .cal-day-num {
+            color: var(--primary-blue);
+            text-decoration: underline;
+        }
+        .cal-pip-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 3px;
+            margin-top: auto;
+        }
+        .cal-pip {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .cal-day-badge {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            flex: 1;
+            border-radius: 8px;
+            color: #fff;
+            font-weight: 800;
+            font-size: 16px;
+            line-height: 1;
+            padding: 4px 2px;
+        }
+        .cal-day-badge span { font-size: 9px; font-weight: 400; margin-top: 2px; }
+        .cal-day-badge.light-text { color: #172033; }
+
+        /* Year grid (12 months) */
+        .cal-year-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
+        .cal-month-cell {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            background: #fff;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .cal-month-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(15,23,42,0.1);
+        }
+        .cal-month-cell-header {
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #172033;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .cal-month-mini-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            padding: 8px;
+        }
+        .cal-mini-day {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #94a3b8;
+        }
+        .cal-mini-day.has-data {
+            color: #fff;
+            cursor: pointer;
+        }
+        .cal-mini-day.has-data.light-text { color: #172033; }
+
+        /* Panel shown when clicking a day in calendar */
+        .cal-day-panel {
+            margin-top: 18px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: none;
+        }
+        .cal-day-panel.visible { display: block; }
+        .cal-day-panel h4 {
+            margin: 0 0 14px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #172033;
+        }
+        .cal-panel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .cal-panel-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border: 1px solid #dbe4ef;
+            border-radius: 12px;
+            padding: 12px 16px;
+            text-decoration: none;
+            color: inherit;
+            transition: border-color 0.18s, transform 0.18s;
+        }
+        .cal-panel-card:hover {
+            border-color: var(--primary-blue);
+            transform: translateX(3px);
+        }
+        .cal-panel-badge {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+        .cal-panel-badge span { font-size: 8px; font-weight: 400; }
+        .cal-panel-info { flex: 1; min-width: 0; }
+        .cal-panel-info strong { display: block; font-size: 13px; color: #172033; }
+        .cal-panel-info small { font-size: 11px; color: #64748b; }
+
+        /* Legend */
+        .risk-legend {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+        .risk-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+        }
+        .risk-legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 768px) {
             .archive-wrapper { padding: 24px; }
             .archive-card-main { grid-template-columns: 1fr; }
             .map-thumb { height: 150px; border-right: none; border-bottom: 1px solid #eee; }
             .risk-col { padding: 15px; border-right: none; border-bottom: 1px solid #eee; }
             .archive-card-actions { padding: 14px 16px 18px; }
+            .cal-year-grid { grid-template-columns: repeat(2, 1fr); }
+            .cal-month-grid { gap: 3px; }
+            .cal-day { min-height: 50px; padding: 4px 5px; }
+        }
+        @media (max-width: 480px) {
+            .cal-year-grid { grid-template-columns: repeat(1, 1fr); }
         }
     </style>
 </head>
@@ -212,11 +531,18 @@
         </a>
         <nav class="nav-left" aria-label="Primary">
             <a href="index.html">Outlooks</a>
-            <a href="obs.html">Observations</a>
+            <a href="obs.html">Observations <span class="badge" id="outlook-count">Live</span></a>
+            <a href="forecasts.html">Forecasts <span class="badge" id="forecasts-count">0</span></a>
+            <a href="hoco.html">HOCO</a>
             <a href="archive.html" class="active">Archive</a>
         </nav>
         <div class="nav-right">
-            <a href="admin.html" class="nav-icon-link" title="Forecaster admin"><i class="fas fa-user"></i></a>
+            <button class="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <a href="admin.html" class="nav-icon-link" title="Forecaster admin">
+                <i class="fas fa-user"></i>
+            </a>
         </div>
     </header>
 
@@ -228,20 +554,272 @@
                     <h1>Forecast Archive</h1>
                 </div>
                 <div class="action-row">
+                    <div class="view-toggle">
+                        <button id="btn-list" class="active" onclick="setView('list')"><i class="fas fa-list"></i> List</button>
+                        <button id="btn-cal" onclick="setView('calendar')"><i class="fas fa-calendar-alt"></i> Calendar</button>
+                    </div>
                     <a href="index.html" class="btn-ghost"><i class="fas fa-bolt"></i> Live outlook</a>
                     <a href="obs.html" class="btn-secondary"><i class="fas fa-satellite-dish"></i> Observations</a>
                 </div>
             </div>
 
             <p class="intro-text">
-                Historical thunderstorm outlooks issued by the forecasting desk. Open any outlook to view the full convective discussion and map.
+                Historical thunderstorm outlooks issued by the forecasting desk. Open any outlook to view the full
+                convective discussion and map.
             </p>
 
-            <div id="archive-list" class="archive-list">
+            <!-- LIST VIEW -->
+            <div id="list-view" style="display:flex; flex-direction:column; gap:18px;">
                 <div class="loading-state">Fetching published forecasts...</div>
+            </div>
+
+            <!-- CALENDAR VIEW -->
+            <div id="calendar-view" style="display:none;">
+                <div class="cal-controls">
+                    <button class="cal-nav-btn" id="cal-prev" onclick="calNav(-1)"><i class="fas fa-chevron-left"></i></button>
+                    <div class="cal-period-label" id="cal-label">-</div>
+                    <button class="cal-nav-btn" id="cal-next" onclick="calNav(1)"><i class="fas fa-chevron-right"></i></button>
+                    <div class="cal-zoom-tabs">
+                        <button id="zoom-month" class="active" onclick="setZoom('month')">Month</button>
+                        <button id="zoom-year" onclick="setZoom('year')">Year</button>
+                    </div>
+                </div>
+                <div class="risk-legend">
+                    <span style="font-size:11px;font-weight:700;color:#475569;margin-right:2px;">Max risk:</span>
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#67c6ac"></div>Low</div>
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#ffea00;border:1px solid #ccc"></div>Slight</div>
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#ff7a21"></div>Enhanced</div>
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#f91522"></div>Moderate</div>
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#b23cc7"></div>High</div>
+                  
+                    <div class="risk-legend-item"><div class="risk-legend-dot" style="background:#94a3b8"></div>No data</div>
+                </div>
+                <div id="cal-grid"></div>
+                <div class="cal-day-panel" id="cal-day-panel">
+                    <h4 id="cal-day-panel-title"></h4>
+                    <div class="cal-panel-list" id="cal-panel-list"></div>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- View / Calendar controller (non-module, runs before module) -->
+    <script>
+        // ── View toggle ──────────────────────────────────────────────────────────────
+        function setView(v) {
+            document.getElementById('list-view').style.display = v === 'list' ? 'flex' : 'none';
+            document.getElementById('calendar-view').style.display = v === 'calendar' ? 'block' : 'none';
+            document.getElementById('btn-list').classList.toggle('active', v === 'list');
+            document.getElementById('btn-cal').classList.toggle('active', v === 'calendar');
+            if (v === 'calendar') renderCal();
+        }
+
+        // ── Calendar state ───────────────────────────────────────────────────────────
+        window._calZoom = 'month';          // 'month' | 'year'
+        window._calYear = new Date().getFullYear();
+        window._calMonth = new Date().getMonth(); // 0-based
+        window._allForecasts = [];          // populated after Firebase load
+
+        function setZoom(z) {
+            window._calZoom = z;
+            document.getElementById('zoom-month').classList.toggle('active', z === 'month');
+            document.getElementById('zoom-year').classList.toggle('active', z === 'year');
+            closeDayPanel();
+            renderCal();
+        }
+
+        function calNav(dir) {
+            if (window._calZoom === 'month') {
+                window._calMonth += dir;
+                if (window._calMonth > 11) { window._calMonth = 0; window._calYear++; }
+                if (window._calMonth < 0)  { window._calMonth = 11; window._calYear--; }
+            } else {
+                window._calYear += dir;
+            }
+            closeDayPanel();
+            renderCal();
+        }
+
+        function closeDayPanel() {
+            const p = document.getElementById('cal-day-panel');
+            if (p) p.classList.remove('visible');
+        }
+
+        // ── Risk colour palette (mirrors shared-ui.css) ──────────────────────────────
+        const RISK_RANK_COLOR = {
+            1: '#67c6ac',   // V.Low
+            2: '#ffea00',   // Low
+            3: '#ff7a21',   // Slight
+            4: '#f91522',   // Moderate
+            5: '#b23cc7',   // High
+            6: '#111111',   // Severe
+        };
+        const RISK_RANK_SHORT = { 1:'LOW', 2:'SLGH', 3:'ENH', 4:'MDT', 5:'HIGH' };
+
+        function riskColor(rank) { return RISK_RANK_COLOR[rank] || '#94a3b8'; }
+        function riskShort(rank) { return RISK_RANK_SHORT[rank] || '–'; }
+        function isLight(rank)   { return rank === 2; } // yellow needs dark text
+
+        // key = "YYYY-MM-DD"
+        function buildDayMap(forecasts) {
+            const map = {};
+            forecasts.forEach(fc => {
+                const d = new Date(fc.validFrom);
+                const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                if (!map[key]) map[key] = [];
+                map[key].push(fc);
+            });
+            return map;
+        }
+
+        function maxRank(fcs) {
+            return fcs.reduce((m, fc) => Math.max(m, fc._rank || 0), 0);
+        }
+
+        // ── Render calendar ──────────────────────────────────────────────────────────
+        function renderCal() {
+            const grid = document.getElementById('cal-grid');
+            const label = document.getElementById('cal-label');
+            if (!grid) return;
+
+            const dayMap = buildDayMap(window._allForecasts);
+
+            if (window._calZoom === 'month') {
+                renderMonthGrid(grid, label, dayMap);
+            } else {
+                renderYearGrid(grid, label, dayMap);
+            }
+        }
+
+        function renderMonthGrid(grid, label, dayMap) {
+            const y = window._calYear, m = window._calMonth;
+            const monthName = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            label.textContent = monthName;
+
+            const firstDay = new Date(y, m, 1).getDay(); // 0=Sun
+            const daysInMonth = new Date(y, m+1, 0).getDate();
+            const prevDays = new Date(y, m, 0).getDate();
+            const today = new Date();
+
+            const DOWS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            let html = `<div class="cal-month-grid">`;
+            DOWS.forEach(d => { html += `<div class="cal-dow-label">${d}</div>`; });
+
+            // Leading blanks
+            for (let i = 0; i < firstDay; i++) {
+                const d = prevDays - firstDay + 1 + i;
+                html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+            }
+            // Days
+            for (let d = 1; d <= daysInMonth; d++) {
+                const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const fcs = dayMap[key] || [];
+                const rank = maxRank(fcs);
+                const isToday = today.getFullYear()===y && today.getMonth()===m && today.getDate()===d;
+                const hasData = fcs.length > 0;
+                let inner = '';
+                if (hasData) {
+                    const col = riskColor(rank);
+                    const lt = isLight(rank) ? ' light-text' : '';
+                    const srt = riskShort(rank);
+                    inner = `<div class="cal-day-badge${lt}" style="background:${col};">${rank > 0 ? rank : '?'}<span>${srt}</span></div>`;
+                }
+                html += `<div class="cal-day${hasData?' has-outlooks':''}${isToday?' today':''}"
+                    ${hasData ? `onclick="openDayPanel('${key}')"` : ''}>
+                    <div class="cal-day-num">${d}</div>
+                    ${inner}
+                </div>`;
+            }
+            // Trailing
+            const total = firstDay + daysInMonth;
+            const trailing = total % 7 === 0 ? 0 : 7 - (total % 7);
+            for (let d = 1; d <= trailing; d++) {
+                html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+            }
+            html += `</div>`;
+            grid.innerHTML = html;
+        }
+
+        function renderYearGrid(grid, label, dayMap) {
+            const y = window._calYear;
+            label.textContent = String(y);
+
+            let html = `<div class="cal-year-grid">`;
+            for (let m = 0; m < 12; m++) {
+                const monthName = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long' });
+                const daysInMonth = new Date(y, m+1, 0).getDate();
+                const firstDay = new Date(y, m, 1).getDay();
+
+                html += `<div class="cal-month-cell" onclick="drillToMonth(${m})">
+                    <div class="cal-month-cell-header">${monthName}</div>
+                    <div class="cal-month-mini-grid">`;
+
+                // DOW headers
+                ['S','M','T','W','T','F','S'].forEach(d => {
+                    html += `<div class="cal-mini-day" style="color:#94a3b8;font-size:8px;">${d}</div>`;
+                });
+                // Blanks
+                for (let i = 0; i < firstDay; i++) {
+                    html += `<div class="cal-mini-day"></div>`;
+                }
+                // Days
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const key = `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                    const fcs = dayMap[key] || [];
+                    const rank = maxRank(fcs);
+                    if (fcs.length > 0) {
+                        const col = riskColor(rank);
+                        const lt = isLight(rank) ? ' light-text' : '';
+                        html += `<div class="cal-mini-day has-data${lt}" style="background:${col};" title="${d} – ${riskShort(rank)}">${d}</div>`;
+                    } else {
+                        html += `<div class="cal-mini-day">${d}</div>`;
+                    }
+                }
+                html += `</div></div>`;
+            }
+            html += `</div>`;
+            grid.innerHTML = html;
+        }
+
+        function drillToMonth(m) {
+            window._calMonth = m;
+            setZoom('month');
+        }
+
+        function openDayPanel(key) {
+            const dayMap = buildDayMap(window._allForecasts);
+            const fcs = (dayMap[key] || []).slice().sort((a,b) => new Date(b.issuedAt||b.validFrom) - new Date(a.issuedAt||a.validFrom));
+            if (!fcs.length) return;
+
+            const [y, mo, d] = key.split('-');
+            const dateStr = new Date(Number(y), Number(mo)-1, Number(d)).toLocaleDateString('en-GB', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
+            const panel = document.getElementById('cal-day-panel');
+            document.getElementById('cal-day-panel-title').textContent = `Outlooks for ${dateStr}`;
+
+            const list = document.getElementById('cal-panel-list');
+            list.innerHTML = fcs.map(fc => {
+                const rank = fc._rank || 0;
+                const col = riskColor(rank);
+                const lt = isLight(rank) ? ' style="color:#172033"' : '';
+                const issued = fc.issuedAt ? new Date(fc.issuedAt).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}) : '–';
+                return `<a href="forecast-detail.html?id=${fc._id}" class="cal-panel-card">
+                    <div class="cal-panel-badge" style="background:${col};"${lt}>
+                        ${rank > 0 ? rank : '?'}<span>${riskShort(rank)}</span>
+                    </div>
+                    <div class="cal-panel-info">
+                        <strong>Thunderstorm Outlook</strong>
+                        <small>Valid: ${fc.validFrom.replace('T',' ')} → ${fc.validTo.replace('T',' ')}</small><br>
+                        <small>Issued: ${issued} · Forecaster: ${fc._author}</small>
+                    </div>
+                    <i class="fas fa-arrow-right" style="color:#94a3b8;font-size:12px;"></i>
+                </a>`;
+            }).join('');
+
+            panel.classList.add('visible');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    </script>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
@@ -260,141 +838,283 @@
         const db = getFirestore(app);
         const MAPBOX_TOKEN = 'pk.eyJ1IjoibWV0ZW9ncm91cC1tYXBib3giLCJhIjoiY2pudWJyMWVhMDQ0bjNxdXFsNWJ5M2ZtbSJ9.ANOKYyv5s0VFVbnesnGGUQ';
 
-        function buildArchiveStaticPreviewGeojson(features) {
-            const baseGeojson = {
-                type: 'FeatureCollection',
-                features: (features || []).map(feature => ({
-                    type: 'Feature',
-                    geometry: feature.geometry,
-                    properties: {
-                        fill: feature.properties?.fill || '#cccccc',
-                        'fill-opacity': feature.properties?.['fill-opacity'] ?? 0.6,
-                        stroke: feature.properties?.stroke || feature.properties?.fill || '#cccccc',
-                        'stroke-width': feature.properties?.['stroke-width'] ?? 2
-                    }
-                }))
-            };
+        // ─── Static preview GeoJSON builder ──────────────────────────────────────────
+        // Strategy: reduce coordinate decimal precision (no topology simplification).
+        // 6dp = ~11cm, 5dp = ~1m, 4dp = ~11m, 3dp = ~111m — all fine for a thumbnail.
+        // The Mapbox Static API URL limit is ~8192 chars total; non-GeoJSON overhead
+        // is ~650 chars, so we target a raw GeoJSON budget of 7000 chars.
+        const STATIC_GEOJSON_BUDGET = 7000;
 
-            const candidates = [baseGeojson];
-            [0.005, 0.01, 0.02, 0.04, 0.08].forEach(tolerance => {
+        function toHex(val, fallback) {
+            if (typeof val === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(val.trim())) return val.trim();
+            return fallback;
+        }
+
+        function truncateCoords(geometry, dp) {
+            if (!geometry) return geometry;
+            function rc(c) { return [+c[0].toFixed(dp), +c[1].toFixed(dp)]; }
+            function rr(ring) { return ring.map(rc); }
+            function rp(coords) { return coords.map(rr); }
+            switch (geometry.type) {
+                case 'Polygon': return { ...geometry, coordinates: rp(geometry.coordinates) };
+                case 'MultiPolygon': return { ...geometry, coordinates: geometry.coordinates.map(rp) };
+                case 'LineString': return { ...geometry, coordinates: geometry.coordinates.map(rc) };
+                case 'MultiLineString': return { ...geometry, coordinates: geometry.coordinates.map(rr) };
+                case 'Point': return { ...geometry, coordinates: rc(geometry.coordinates) };
+                default: return geometry;
+            }
+        }
+
+        const STATIC_URL_BUDGET = 7900;
+        const forecastFillOpacity = window.GenWeatherUtils?.FORECAST_POLYGON_FILL_OPACITY ?? 0.42;
+
+        function buildStaticPreviewGeojson(features) {
+            if (!features || features.length === 0) {
+                return encodeURIComponent(JSON.stringify({ type: 'FeatureCollection', features: [] }));
+            }
+
+            const minimalFeatures = features.map(feature => {
                 try {
-                    candidates.push(turf.simplify(baseGeojson, { tolerance, highPrecision: false }));
-                } catch (error) {
-                    console.warn('Archive static map simplify failed for tolerance', tolerance, error);
+                    const rawFill = feature.properties?.fill;
+                    const rawStroke = feature.properties?.stroke || rawFill;
+                    const fillOpacity = feature.properties?.['fill-opacity'] ?? forecastFillOpacity;
+                    const hexFill = toHex(rawFill, '#cccccc');
+                    const hexStroke = toHex(rawStroke, hexFill);
+                    return {
+                        type: 'Feature',
+                        geometry: feature.geometry,
+                        properties: {
+                            fill: hexFill,
+                            'fill-opacity': typeof fillOpacity === 'number' ? fillOpacity : forecastFillOpacity,
+                            stroke: hexStroke,
+                            'stroke-width': feature.properties?.['stroke-width'] ?? 2
+                        }
+                    };
+                } catch (e) {
+                    return {
+                        type: 'Feature', geometry: feature.geometry,
+                        properties: { fill: '#cccccc', 'fill-opacity': forecastFillOpacity, stroke: '#cccccc', 'stroke-width': 2 }
+                    };
                 }
             });
 
-            for (const candidate of candidates) {
-                const serialized = JSON.stringify(candidate);
-                if (serialized.length < 7800) {
-                    return encodeURIComponent(serialized);
-                }
+            const attempts = [
+                { tolerance: 0, dp: 5 },
+                { tolerance: 0, dp: 4 },
+                { tolerance: 0, dp: 3 },
+                { tolerance: 0.001, dp: 4 },
+                { tolerance: 0.005, dp: 3 },
+                { tolerance: 0.01, dp: 3 },
+                { tolerance: 0.05, dp: 2 },
+                { tolerance: 0.1, dp: 2 },
+                { tolerance: 0.25, dp: 2 },
+                { tolerance: 0.5, dp: 1 },
+                { tolerance: 1.0, dp: 1 },
+            ];
+
+            for (const { tolerance, dp } of attempts) {
+                try {
+                    const processedFeatures = minimalFeatures.map(f => {
+                        let geom = f.geometry;
+                        if (geom?.type === 'Polygon' || geom?.type === 'MultiPolygon') {
+                            try {
+                                if (tolerance > 0) {
+                                    const simplified = turf.simplify(
+                                        { type: 'Feature', geometry: geom, properties: {} },
+                                        { tolerance, highQuality: false, mutate: false }
+                                    );
+                                    geom = simplified.geometry;
+                                }
+                            } catch (_) { }
+                        }
+                        return { ...f, geometry: truncateCoords(geom, dp) };
+                    });
+
+                    const encoded = encodeURIComponent(JSON.stringify({
+                        type: 'FeatureCollection',
+                        features: processedFeatures
+                    }));
+
+                    if (encoded.length <= STATIC_URL_BUDGET) {
+                        return encoded;
+                    }
+                } catch (_) { }
             }
 
+            // If somehow nothing fits, return empty rather than a broken URL
+            console.warn('Static preview: could not fit GeoJSON within URL budget even at maximum simplification.');
             return encodeURIComponent(JSON.stringify({ type: 'FeatureCollection', features: [] }));
         }
 
+
         async function loadArchive() {
-            const listContainer = document.getElementById('archive-list');
-            
+            const listContainer = document.getElementById('list-view');
+            const forecastsBadge = document.getElementById('forecasts-count');
+
+            // ── Default sort: descending issuance time ──────────────────────────────
+            // We order by issuedAt (when the forecast was published/created).
+            // Fallback: if issuedAt doesn't exist on older docs, validFrom is used.
             const q = query(
-                collection(db, "forecasts_v2"), 
-                where("isActive", "==", true), 
+                collection(db, "forecasts_v2"),
+                where("isActive", "==", true),
+                orderBy("issuedAt", "desc")
+            );
+
+            // Fallback query in case issuedAt field doesn't exist yet in collection
+            const qFallback = query(
+                collection(db, "forecasts_v2"),
+                where("isActive", "==", true),
                 orderBy("validFrom", "desc")
             );
 
+            let querySnapshot;
             try {
-                const querySnapshot = await getDocs(q);
-                listContainer.innerHTML = '';
-
-                if (querySnapshot.empty) {
-                    listContainer.innerHTML = `<div class="loading-state">No published forecasts found.</div>`;
+                querySnapshot = await getDocs(q);
+                // If empty, try fallback (field may not be indexed yet)
+                if (querySnapshot.empty) querySnapshot = await getDocs(qFallback);
+            } catch (e) {
+                // issuedAt index may not exist – fall back gracefully
+                try { querySnapshot = await getDocs(qFallback); }
+                catch (err2) {
+                    console.error("Archive Load Error:", err2);
+                    listContainer.innerHTML = '<div class="loading-state">Error connecting to database.</div>';
                     return;
                 }
+            }
 
-                querySnapshot.forEach((docSnap) => {
-                    const data = docSnap.data();
-                    const id = docSnap.id;
-                    let geoJSON = JSON.parse(data.geoJSON);
-                    const displayFeatures = window.GenWeatherUtils
-                        ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
-                        : geoJSON.features;
+            listContainer.innerHTML = '';
 
-                    geoJSON = {
-                        type: 'FeatureCollection',
-                        features: displayFeatures
+            if (querySnapshot.empty) {
+                if (forecastsBadge) forecastsBadge.textContent = '0';
+                listContainer.innerHTML = `<div class="loading-state">No published forecasts found.</div>`;
+                return;
+            }
+
+            const now = new Date();
+            let futureCount = 0;
+            const calForecasts = []; // for calendar
+
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                if (new Date(data.validTo) >= now) futureCount += 1;
+                const id = docSnap.id;
+                let geoJSON = JSON.parse(data.geoJSON);
+                const displayFeatures = window.GenWeatherUtils
+                    ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
+                    : geoJSON.features;
+
+                geoJSON = { type: 'FeatureCollection', features: displayFeatures };
+
+                geoJSON.features = geoJSON.features.map(f => {
+                    const col = f.properties.color || "#cccccc";
+                    const isSevere = !!f.properties.isSevere;
+                    return {
+                        ...f,
+                        properties: {
+                            ...f.properties,
+                            "fill": isSevere ? "rgba(0,0,0,0)" : col,
+                            "fill-opacity": isSevere ? 0 : forecastFillOpacity,
+                            "stroke": isSevere ? "#111111" : col,
+                            "stroke-width": isSevere ? 3 : 2
+                        }
                     };
-
-                    geoJSON.features = geoJSON.features.map(f => {
-                        const col = f.properties.color || "#cccccc";
-                        const isSevere = !!f.properties.isSevere;
-                        return {
-                            ...f,
-                            properties: {
-                                ...f.properties,
-                                "fill": isSevere ? "rgba(0,0,0,0)" : col,
-                                "fill-opacity": isSevere ? 0 : 0.6,
-                                "stroke": isSevere ? "#111111" : col,
-                                "stroke-width": isSevere ? 3 : 2
-                            }
-                        };
-                    });
-
-                    // Author Clean (email to username)
-                    const authorName = data.authorEmail ? data.authorEmail.split('@')[0] : "Forecaster";
-
-                    // Determine Primary Risk for Badge
-                    const issuedRiskLevels = window.GenWeatherUtils?.summarizeRiskLevels?.(geoJSON.features) || [];
-                    const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || null;
-                    const hasSevere = geoJSON.features.some(f => !!f.properties.isSevere);
-                    const riskBadgeShort = highestRisk ? highestRisk.short : (hasSevere ? 'SEV' : 'RISK');
-                    const riskNum = highestRisk ? String(highestRisk.rank) : (hasSevere ? '!' : '--');
-                    const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
-                    const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
-
-                    const encodedGeo = buildArchiveStaticPreviewGeojson(geoJSON.features);
-                    
-                    const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
-                    const previewUrl = data.posterUrl || staticMapUrl;
-                    const previewClass = data.posterUrl ? 'map-thumb poster-thumb' : 'map-thumb';
-
-                    const dateTitle = new Date(data.validFrom).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
-                    const posterAction = data.posterUrl
-                        ? `<a href="${data.posterUrl}" target="_blank" rel="noopener" class="poster-link"><i class="fas fa-image"></i> Poster PNG</a>`
-                        : `<span class="poster-pending">Poster PNG not synced yet</span>`;
-
-                    const card = `
-                        <article class="archive-card">
-                            <a href="forecast-detail.html?id=${id}" class="archive-card-main">
-                            <img src="${previewUrl}" class="${previewClass}" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'; this.className='map-thumb';">
-                            <div class="risk-col">
-                                <div class="badge-main" style="background-color:${badgeColor}; color:${badgeTextColor};">
-                                    ${riskNum}
-                                    <span>${riskBadgeShort}</span>
-                                </div>
-                            </div>
-                            <div class="info-col">
-                                <h3>Thunderstorm Outlook: ${dateTitle}</h3>
-                                <p><strong>Period:</strong> ${data.validFrom.replace('T', ' ')} &rarr; ${data.validTo.replace('T', ' ')}</p>
-                                <p><strong>Forecaster:</strong> <span style="text-transform: capitalize;">${authorName}</span></p>
-                            </div>
-                            </a>
-                            <div class="archive-card-actions">
-                                <a href="forecast-detail.html?id=${id}" class="detail-link"><i class="fas fa-arrow-right"></i> Open detail</a>
-                                ${posterAction}
-                            </div>
-                        </article>
-                    `;
-                    listContainer.insertAdjacentHTML('beforeend', card);
                 });
-            } catch (err) {
-                console.error("Archive Load Error:", err);
-                listContainer.innerHTML = '<div class="loading-state">Error connecting to database.</div>';
+
+                const authorName = data.authorEmail ? data.authorEmail.split('@')[0] : "Forecaster";
+
+                const issuedRiskLevels = window.GenWeatherUtils?.summarizeRiskLevels?.(geoJSON.features) || [];
+                const highestRisk = issuedRiskLevels[issuedRiskLevels.length - 1] || null;
+                const hasSevere = geoJSON.features.some(f => !!f.properties.isSevere);
+                const riskBadgeShort = highestRisk ? highestRisk.short : (hasSevere ? 'SEV' : 'RISK');
+                const riskNum = highestRisk ? String(highestRisk.rank) : (hasSevere ? '!' : '--');
+                const badgeColor = highestRisk ? highestRisk.color : (hasSevere ? '#111111' : '#94a3b8');
+                const badgeTextColor = highestRisk?.rank === 2 ? '#172033' : '#ffffff';
+                const riskRank = highestRisk ? highestRisk.rank : (hasSevere ? 6 : 0);
+
+                // Stash minimal object for calendar
+                calForecasts.push({
+                    _id: id,
+                    _rank: riskRank,
+                    _author: authorName,
+                    validFrom: data.validFrom,
+                    validTo: data.validTo,
+                    issuedAt: data.issuedAt || data.validFrom,
+                });
+
+                const encodedGeo = buildStaticPreviewGeojson(geoJSON.features);
+                const staticMapUrl = `https://api.mapbox.com/styles/v1/mapbox/light-v11/static/geojson(${encodedGeo})/auto/300x200?padding=20&access_token=${MAPBOX_TOKEN}`;
+                const previewUrl = data.posterUrl || staticMapUrl;
+                const previewClass = data.posterUrl ? 'map-thumb poster-thumb' : 'map-thumb';
+
+                const issuedLabel = data.issuedAt
+                    ? new Date(data.issuedAt).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : new Date(data.validFrom).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+
+                const posterAction = data.posterUrl
+                    ? `<a href="${data.posterUrl}" target="_blank" rel="noopener" class="poster-link"><i class="fas fa-image"></i> Poster PNG</a>`
+                    : `<span class="poster-pending"></span>`;
+
+                const card = `
+                    <article class="archive-card">
+                        <a href="forecast-detail.html?id=${id}" class="archive-card-main">
+                        <img src="${previewUrl}" class="${previewClass}" onerror="this.src='https://via.placeholder.com/300x200?text=Map+Preview'; this.className='map-thumb';">
+                        <div class="risk-col">
+                            <div class="badge-main" style="background-color:${badgeColor}; color:${badgeTextColor};">
+                                ${riskNum}
+                                <span>${riskBadgeShort}</span>
+                            </div>
+                        </div>
+                        <div class="info-col">
+                            <h3>Thunderstorm Outlook</h3>
+                            <p><strong>Issued:</strong> ${issuedLabel}</p>
+                            <p><strong>Period:</strong> ${data.validFrom.replace('T', ' ')} &rarr; ${data.validTo.replace('T', ' ')}</p>
+                            <p><strong>Forecaster:</strong> <span style="text-transform: capitalize;">${authorName}</span></p>
+                        </div>
+                        </a>
+                        <div class="archive-card-actions">
+                            <a href="forecast-detail.html?id=${id}" class="detail-link"><i class="fas fa-arrow-right"></i> Open detail</a>
+                            ${posterAction}
+                        </div>
+                    </article>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', card);
+            });
+
+            if (forecastsBadge) forecastsBadge.textContent = String(futureCount);
+
+            // Feed global calendar store and (re)render if calendar is visible
+            window._allForecasts = calForecasts;
+            if (document.getElementById('calendar-view').style.display === 'block') {
+                renderCal();
             }
         }
 
-        loadArchive();
+        loadArchive().catch(err => {
+            console.error("Archive Load Error:", err);
+            const lc = document.getElementById('list-view');
+            if (lc) lc.innerHTML = '<div class="loading-state">Error connecting to database.</div>';
+        });
+    </script>
+    <script>
+        (function () {
+            const toggle = document.querySelector('.nav-toggle');
+            const nav = document.querySelector('.top-nav');
+            if (!toggle || !nav) return;
+
+            toggle.addEventListener('click', function () {
+                const open = nav.classList.toggle('nav-open');
+                this.setAttribute('aria-expanded', String(open));
+            });
+
+            // Close the menu if user taps a nav link (nice on mobile)
+            nav.querySelectorAll('.nav-left a').forEach(function (link) {
+                link.addEventListener('click', function () {
+                    nav.classList.remove('nav-open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
     </script>
 </body>
+
 </html>
