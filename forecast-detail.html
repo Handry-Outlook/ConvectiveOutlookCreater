@@ -570,6 +570,7 @@
         const HOCO_ENSEMBLE_SOURCE_ID = 'forecast-detail-hoco-ensemble-source';
         const HOCO_ENSEMBLE_FILL_ID = 'forecast-detail-hoco-ensemble-fill';
         const HOCO_ENSEMBLE_LINE_ID = 'forecast-detail-hoco-ensemble-line';
+        const FORECAST_POLYGON_FILL_OPACITY = 0.42;
         const UK_LIGHTNING_LOOKBACK_MINUTES = 360;
         let map = null;
         let ukLightningStrikes = [];
@@ -1426,7 +1427,7 @@
                     'filter': ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                     'paint': {
                         'fill-color': ['get', 'color'],
-                        'fill-opacity': 0.42
+                        'fill-opacity': FORECAST_POLYGON_FILL_OPACITY
                     }
                 });
 
@@ -1646,15 +1647,30 @@
 
         // ── feature display normalisation ─────────────────────────────────────────
         function buildRawDisplayFeatures(features) {
-            return (features || [])
+            const rawFeatures = (features || [])
                 .filter(f => f?.geometry && (f.geometry.type === 'Polygon' || f.geometry.type === 'MultiPolygon'))
                 .map(f => {
                     const props = f.properties || {};
                     const isSevere = !!(props.isSevere || props.severe || props.user_severe);
                     const color = props.color || props.user_color || '#94a3b8';
                     const rank  = Number(props.rank ?? props.user_rank ?? 0);
-                    return { ...f, properties: { ...props, color, isSevere, rank } };
+                    return {
+                        type: 'Feature',
+                        geometry: f.geometry,
+                        properties: {
+                            ...props,
+                            color,
+                            rank,
+                            risk: props.risk ?? props.user_risk,
+                            severe: isSevere,
+                            isSevere
+                        }
+                    };
                 });
+
+            return window.GenWeatherUtils
+                ? window.GenWeatherUtils.normalizeDisplayFeatures(rawFeatures)
+                : rawFeatures;
         }
 
         // ── lightning helpers ─────────────────────────────────────────────────────
@@ -1805,7 +1821,7 @@
                     const isSevere = !!f.properties?.isSevere;
                     ctx.save(); ctx.beginPath();
                     traceProjectedGeometry(ctx, f.geometry, projection.project);
-                    if (!isSevere) { ctx.fillStyle = f.properties?.color || '#94a3b8'; ctx.globalAlpha = 0.42; ctx.fill('evenodd'); }
+                    if (!isSevere) { ctx.fillStyle = f.properties?.color || '#94a3b8'; ctx.globalAlpha = FORECAST_POLYGON_FILL_OPACITY; ctx.fill('evenodd'); }
                     ctx.globalAlpha = 1;
                     ctx.strokeStyle = isSevere ? '#111111' : (f.properties?.color || '#94a3b8');
                     ctx.lineWidth = isSevere ? 4.4 : 3.2; ctx.stroke(); ctx.restore();
@@ -1839,7 +1855,7 @@
                 const isSevere  = !!f.properties?.isSevere;
                 const hexFill   = isSevere ? '#cccccc' : toHex(f.properties?.color, '#cccccc');
                 const hexStroke = isSevere ? '#111111' : toHex(f.properties?.color, '#cccccc');
-                return { type: 'Feature', geometry: f.geometry, properties: { fill: hexFill, 'fill-opacity': isSevere ? 0 : 0.42, stroke: hexStroke, 'stroke-width': isSevere ? 4.8 : 4 } };
+                return { type: 'Feature', geometry: f.geometry, properties: { fill: hexFill, 'fill-opacity': isSevere ? 0 : FORECAST_POLYGON_FILL_OPACITY, stroke: hexStroke, 'stroke-width': isSevere ? 4.8 : 4 } };
             });
             const BUDGET = 7200;
             const attempts = [
