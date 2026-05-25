@@ -547,6 +547,7 @@
         const posterStatus = document.getElementById('poster-status');
         const posterPreviewShell = document.getElementById('poster-preview-shell');
         const posterPreviewImg = document.getElementById('poster-preview-img');
+        let currentPosterObjectUrl = null;
         const lightningToggle = document.getElementById('lightningToggle');
         const forecastLayerToggle = document.getElementById('forecastLayerToggle');
         const lightningLayerSelect = document.getElementById('lightningLayer');
@@ -610,6 +611,39 @@
         function setLightningStatus(message, tone = 'off') {
             lightningStatus.textContent = message;
             lightningStatus.className = `status-chip ${tone}`;
+        }
+
+        function revokeCurrentPosterObjectUrl() {
+            if (!currentPosterObjectUrl) return;
+            URL.revokeObjectURL(currentPosterObjectUrl);
+            currentPosterObjectUrl = null;
+        }
+
+        function showArchivedPosterPreview(data) {
+            if (!data?.posterUrl) return;
+            revokeCurrentPosterObjectUrl();
+            posterLinkBtn.hidden = false;
+            posterLinkBtn.href = data.posterUrl;
+            posterLinkBtn.target = '_blank';
+            posterLinkBtn.rel = 'noopener';
+            if (data.posterFileName) {
+                posterLinkBtn.download = data.posterFileName;
+            } else {
+                posterLinkBtn.removeAttribute('download');
+            }
+
+            posterPreviewShell.hidden = false;
+            posterPreviewImg.onload = () => {
+                posterStatus.textContent = 'Showing the archived poster from storage because local poster regeneration was unavailable.';
+                posterPreviewShell.hidden = false;
+            };
+            posterPreviewImg.onerror = () => {
+                posterStatus.textContent = 'Neither the local poster render nor the archived poster could be displayed.';
+                posterPreviewShell.hidden = true;
+                posterLinkBtn.hidden = true;
+                posterPreviewImg.removeAttribute('src');
+            };
+            posterPreviewImg.src = data.posterUrl;
         }
 
         function formatDateKey(date) {
@@ -1368,36 +1402,13 @@
             document.getElementById('discussion-content').innerText = data.description;
 
             posterCard.hidden = false;
-            if (data.posterUrl) {
-                posterLinkBtn.hidden = false;
-                posterLinkBtn.href = data.posterUrl;
-                posterLinkBtn.target = '_blank';
-                posterLinkBtn.rel = 'noopener';
-                if (data.posterFileName) {
-                    posterLinkBtn.download = data.posterFileName;
-                }
-
-                posterStatus.textContent = 'Loading synced poster preview from archive storage.';
-                posterPreviewShell.hidden = false;
-                posterPreviewImg.onload = () => {
-                    posterStatus.textContent = 'This is the synced export image stored with the published outlook for archive use.';
-                    posterPreviewShell.hidden = false;
-                };
-                posterPreviewImg.onerror = () => {
-                    posterStatus.textContent = 'Poster PNG could not be loaded from storage. Attempting to generate it locally...';
-                    posterPreviewShell.hidden = true;
-                    posterLinkBtn.hidden = true;
-                    posterPreviewImg.removeAttribute('src');
-                    attemptLocalPosterRender(data, geoJSON);
-                };
-                posterPreviewImg.src = data.posterUrl;
-            } else {
-                posterLinkBtn.hidden = true;
-                posterPreviewShell.hidden = true;
-                posterPreviewImg.removeAttribute('src');
-                posterStatus.textContent = 'No synced poster PNG found. Generating it locally...';
-                attemptLocalPosterRender(data, geoJSON);
-            }
+            posterLinkBtn.hidden = true;
+            posterPreviewShell.hidden = true;
+            posterPreviewImg.removeAttribute('src');
+            posterStatus.textContent = data.posterUrl
+                ? 'Generating the poster locally so the preview matches the current forecast renderer...'
+                : 'No synced poster PNG found. Generating it locally...';
+            attemptLocalPosterRender(data, geoJSON);
 
             const displayFeatures = window.GenWeatherUtils
                 ? window.GenWeatherUtils.normalizeDisplayFeatures(geoJSON.features)
@@ -2172,7 +2183,9 @@
         // ── fallback render caller (replaces old stub) ────────────────────────────
         async function attemptLocalPosterRender(data, geoJSON) {
             try {
-                posterStatus.textContent = 'Generating poster locally…';
+                posterStatus.textContent = data?.posterUrl
+                    ? 'Generating poster locally from the current forecast geometry…'
+                    : 'Generating poster locally…';
 
                 const posterArtifact = await renderDetailForecastPoster(geoJSON, {
                     validFrom:       data.validFrom,
@@ -2185,9 +2198,13 @@
                 const response   = await fetch(posterArtifact.dataUrl);
                 const blob       = await response.blob();
                 const objectUrl  = URL.createObjectURL(blob);
+                revokeCurrentPosterObjectUrl();
+                currentPosterObjectUrl = objectUrl;
 
                 posterPreviewImg.onload = () => {
-                    posterStatus.textContent = 'Poster PNG generated locally for preview (not synced to archive storage).';
+                    posterStatus.textContent = data?.posterUrl
+                        ? 'Poster preview regenerated locally so it matches the current interactive map styling.'
+                        : 'Poster PNG generated locally for preview (not synced to archive storage).';
                     posterPreviewShell.hidden = false;
                 };
                 posterPreviewImg.onerror = () => {
@@ -2203,10 +2220,13 @@
                 posterLinkBtn.target = '_blank';
                 posterLinkBtn.rel    = 'noopener';
                 posterLinkBtn.download = posterArtifact.fileName;
-
-                window.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
             } catch (error) {
                 console.error('Local poster render failed.', error);
+                if (data?.posterUrl) {
+                    posterStatus.textContent = 'Could not regenerate the poster locally. Falling back to the archived poster.';
+                    showArchivedPosterPreview(data);
+                    return;
+                }
                 posterStatus.textContent = 'Could not generate the poster PNG locally. Re-publish from Admin to regenerate the archived poster.';
                 posterPreviewShell.hidden = true;
                 posterLinkBtn.hidden = true;
