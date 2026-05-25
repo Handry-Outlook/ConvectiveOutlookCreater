@@ -1673,6 +1673,23 @@
                 : rawFeatures;
         }
 
+        function buildPosterPreviewFeatures(features) {
+            return buildRawDisplayFeatures(features).map(feature => {
+                const isSevere = !!feature.properties?.isSevere;
+                const color = feature.properties?.color || '#94a3b8';
+                return {
+                    ...feature,
+                    properties: {
+                        ...feature.properties,
+                        fill: isSevere ? 'rgba(0,0,0,0)' : color,
+                        'fill-opacity': isSevere ? 0 : FORECAST_POLYGON_FILL_OPACITY,
+                        stroke: isSevere ? '#111111' : color,
+                        'stroke-width': isSevere ? 3 : 2
+                    }
+                };
+            });
+        }
+
         // ── lightning helpers ─────────────────────────────────────────────────────
         function getPosterLightningStyle(ageMinutes, scaleFactor = 1) {
             if (ageMinutes <= 30)  return { glowColor: '#ffd24d', coreColor: '#ffffff', glowRadius: 12 * scaleFactor, coreRadius: 4.6 * scaleFactor, glowOpacity: 0.36, coreOpacity: 1 };
@@ -1758,7 +1775,7 @@
         }
 
         function buildPosterProjection(features, width, height, padding = 76) {
-            const displayFeatures = buildRawDisplayFeatures(features);
+            const displayFeatures = buildPosterPreviewFeatures(features);
             let minLng = Infinity, maxLng = -Infinity, minY = Infinity, maxY = -Infinity;
             const reg = ([lng, lat]) => {
                 if (!Number.isFinite(lng) || !Number.isFinite(lat)) return;
@@ -1819,12 +1836,20 @@
                 .slice().sort((a, b) => (a.properties?.isSevere ? 999 : a.properties?.rank || 0) - (b.properties?.isSevere ? 999 : b.properties?.rank || 0))
                 .forEach(f => {
                     const isSevere = !!f.properties?.isSevere;
+                    const fillOpacity = f.properties?.['fill-opacity'] ?? FORECAST_POLYGON_FILL_OPACITY;
+                    const strokeWidth = f.properties?.['stroke-width'] ?? (isSevere ? 3 : 2);
                     ctx.save(); ctx.beginPath();
                     traceProjectedGeometry(ctx, f.geometry, projection.project);
-                    if (!isSevere) { ctx.fillStyle = f.properties?.color || '#94a3b8'; ctx.globalAlpha = FORECAST_POLYGON_FILL_OPACITY; ctx.fill('evenodd'); }
+                    if (!isSevere) {
+                        ctx.fillStyle = f.properties?.fill || f.properties?.color || '#94a3b8';
+                        ctx.globalAlpha = typeof fillOpacity === 'number' ? fillOpacity : FORECAST_POLYGON_FILL_OPACITY;
+                        ctx.fill('evenodd');
+                    }
                     ctx.globalAlpha = 1;
-                    ctx.strokeStyle = isSevere ? '#111111' : (f.properties?.color || '#94a3b8');
-                    ctx.lineWidth = isSevere ? 4.4 : 3.2; ctx.stroke(); ctx.restore();
+                    ctx.strokeStyle = f.properties?.stroke || (isSevere ? '#111111' : (f.properties?.color || '#94a3b8'));
+                    ctx.lineWidth = typeof strokeWidth === 'number' ? strokeWidth : (isSevere ? 3 : 2);
+                    ctx.stroke();
+                    ctx.restore();
                 });
 
             if (Array.isArray(options.lightningStrikes) && options.lightningStrikes.length) {
@@ -1851,11 +1876,21 @@
                     default: return geom;
                 }
             }
-            const rawFeatures = buildRawDisplayFeatures(features).map(f => {
+            const rawFeatures = buildPosterPreviewFeatures(features).map(f => {
                 const isSevere  = !!f.properties?.isSevere;
-                const hexFill   = isSevere ? '#cccccc' : toHex(f.properties?.color, '#cccccc');
-                const hexStroke = isSevere ? '#111111' : toHex(f.properties?.color, '#cccccc');
-                return { type: 'Feature', geometry: f.geometry, properties: { fill: hexFill, 'fill-opacity': isSevere ? 0 : FORECAST_POLYGON_FILL_OPACITY, stroke: hexStroke, 'stroke-width': isSevere ? 4.8 : 4 } };
+                const fillOpacity = f.properties?.['fill-opacity'] ?? FORECAST_POLYGON_FILL_OPACITY;
+                const hexFill   = toHex(f.properties?.fill, isSevere ? '#cccccc' : toHex(f.properties?.color, '#cccccc'));
+                const hexStroke = toHex(f.properties?.stroke, isSevere ? '#111111' : toHex(f.properties?.color, '#cccccc'));
+                return {
+                    type: 'Feature',
+                    geometry: f.geometry,
+                    properties: {
+                        fill: hexFill,
+                        'fill-opacity': typeof fillOpacity === 'number' ? fillOpacity : FORECAST_POLYGON_FILL_OPACITY,
+                        stroke: hexStroke,
+                        'stroke-width': f.properties?.['stroke-width'] ?? (isSevere ? 3 : 2)
+                    }
+                };
             });
             const BUDGET = 7200;
             const attempts = [
@@ -1934,7 +1969,7 @@
         async function renderPosterMapWithLiveMapbox(features, width, height) {
             if (!window.mapboxgl?.Map) throw new Error('Mapbox GL JS is unavailable.');
 
-            const displayFeatures = buildRawDisplayFeatures(features);
+            const displayFeatures = buildPosterPreviewFeatures(features);
             const maxRenderEdge = 1280;
             const renderScale = Math.min(1, maxRenderEdge / Math.max(width, height, 1));
             const renderWidth = Math.max(320, Math.round(width * renderScale));
@@ -2006,7 +2041,7 @@
                     source: sourceId,
                     filter: ['!=', ['coalesce', ['get', 'isSevere'], false], true],
                     paint: {
-                        'line-color': ['get', 'color'],
+                        'line-color': ['coalesce', ['get', 'stroke'], ['get', 'color']],
                         'line-width': 2
                     }
                 });
