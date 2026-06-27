@@ -2030,6 +2030,15 @@
         function getAutoRunsForSelectedWindow() {
             if (!selectedForecastWindow) return [];
 
+            // TEMP DIAGNOSTIC — remove once region filtering is confirmed working.
+            console.table(hocoRuns.map(r => ({
+                id: r.id,
+                region: JSON.stringify(r.region),
+                type: r.type,
+                geojsonUrl: r.geojsonUrl,
+                matchesEngland: regionMatchesRun(FORECAST_OVERVIEW_REGION, r)
+            })));
+
             return hocoRuns
                 .filter(run => run.type === 'automated')
                 .filter(run => regionMatchesRun(FORECAST_OVERVIEW_REGION, run))
