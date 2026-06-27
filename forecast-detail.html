@@ -877,20 +877,41 @@
         // Matches the regionMatchesRun() logic used on the multi-region overview page.
         const FORECAST_DETAIL_REGION = 'England';
 
+        // Other known HOCO regions besides England. Used to detect a run that
+        // belongs to another region even when its `region` field is blank —
+        // some automated runs are missing/empty `region` on the document itself,
+        // but the run id/geojsonUrl still encodes the region (e.g. "AUTO-...-Germany-Day0-1").
+        const OTHER_HOCO_REGIONS = ['Germany', 'Poland', 'Scotland', 'Wales', 'Ireland', 'France', 'Spain'];
+
+        function runMentionsOtherRegion(run) {
+            const haystack = `${run?.id || ''} ${run?.geojsonUrl || ''}`;
+            return OTHER_HOCO_REGIONS.some(other => haystack.includes(other));
+        }
+
         function regionMatchesRun(regionId, run) {
-            const runRegion = String(run?.region || 'UK').trim();
+            const runRegion = String(run?.region || '').trim();
+
+            // If the region field explicitly disagrees, trust it.
+            if (runRegion && runRegion !== regionId) {
+                if (regionId === 'England' && runRegion === 'UK') return true;
+                if (regionId === 'England' && runRegion.startsWith('England')) return true;
+                if (regionId === 'Wales' && runRegion.startsWith('Wales')) return true;
+                if (regionId === 'Scotland' && runRegion.startsWith('Scotland')) return true;
+                if (regionId === 'Ireland' && runRegion === 'Ireland') return true;
+                return false;
+            }
             if (runRegion === regionId) return true;
-            if (regionId === 'England' && (runRegion === 'UK' || runRegion.startsWith('England'))) return true;
-            if (regionId === 'Wales' && runRegion.startsWith('Wales')) return true;
-            if (regionId === 'Scotland' && runRegion.startsWith('Scotland')) return true;
-            if (regionId === 'Ireland' && (runRegion === 'Ireland' || runRegion.startsWith('Ireland'))) return true;
-            return false;
+
+            // region field is blank/missing — fall back to checking the run id/url,
+            // since some non-England runs are being written without a region field.
+            if (runMentionsOtherRegion(run)) return false;
+
+            // No region info anywhere: treat as legacy UK/England run.
+            return regionId === 'England';
         }
 
         function getAutoRunsForSelectedWindow() {
             if (!selectedForecastWindow) return [];
-            // TEMP DIAGNOSTIC — remove once region filtering is confirmed working.
-            console.table(hocoRuns.map(r => ({ id: r.id, region: r.region, type: r.type })));
             return hocoRuns
                 .filter(run => run.type === 'automated')
                 .filter(run => regionMatchesRun(FORECAST_DETAIL_REGION, run))
