@@ -877,16 +877,21 @@
         // Matches the regionMatchesRun() logic used on the multi-region overview page.
         const FORECAST_DETAIL_REGION = 'England';
 
+        // England bounding box — kept as a named constant for documentation purposes.
+        // The Firestore query already excludes known non-England regions via `not-in`,
+        // so this JS function only needs to handle England / UK / blank-region cases.
         function regionMatchesRun(regionId, run) {
-            // Default blank/missing region to 'UK' — legacy runs pre-date multi-region
-            // support and were all England/UK, so treating them as UK is correct.
-            const runRegion = String(run?.region || 'UK').trim();
-            if (runRegion === regionId) return true;
-            if (regionId === 'England' && (runRegion === 'UK' || runRegion.startsWith('England'))) return true;
-            if (regionId === 'Wales' && runRegion.startsWith('Wales')) return true;
-            if (regionId === 'Scotland' && runRegion.startsWith('Scotland')) return true;
-            if (regionId === 'Ireland' && (runRegion === 'Ireland' || runRegion.startsWith('Ireland'))) return true;
-            return false;
+            const runRegion = String(run?.region ?? '').trim();
+            // Explicit non-empty region field — trust it directly.
+            if (runRegion) {
+                if (runRegion === regionId) return true;
+                if (regionId === 'England' && runRegion === 'UK') return true;
+                if (regionId === 'England' && runRegion.startsWith('England')) return true;
+                return false;
+            }
+            // No region field at all — the Firestore query already excluded known
+            // non-England regions via `not-in`, so a blank here means England/UK legacy.
+            return regionId === 'England';
         }
 
         function getAutoRunsForSelectedWindow() {
@@ -1026,6 +1031,14 @@
             windowEnd.setDate(windowEnd.getDate() + 2);
             windowEnd.setHours(23, 59, 59, 999);
 
+            // Non-England region names. A run is excluded if its `region` field
+            // exactly matches one of these (case-insensitive). Runs with a blank or
+            // missing `region` are kept — they are legacy England/UK runs.
+            const NON_ENGLAND_REGIONS = new Set(
+                ['Germany', 'Poland', 'Scotland', 'Wales', 'Ireland', 'France', 'Spain']
+                    .map(r => r.toLowerCase())
+            );
+
             const runsQuery = query(
                 collection(hocoDb, 'hoco_requests'),
                 where('createdAt', '>=', windowStart),
@@ -1038,6 +1051,10 @@
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     if (data.type !== 'automated') return;
+                    // Reject any run whose region field explicitly names a non-England region.
+                    // Blank/missing region is kept (legacy England/UK runs have no region field).
+                    const runRegion = String(data.region ?? '').trim().toLowerCase();
+                    if (runRegion && NON_ENGLAND_REGIONS.has(runRegion)) return;
                     hocoRuns.push({ id: docSnap.id, ...data });
                 });
                 refreshHocoForSelectedWindow();

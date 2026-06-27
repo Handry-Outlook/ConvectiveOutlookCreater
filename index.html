@@ -1430,7 +1430,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, limit, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, limit, onSnapshot, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -1994,16 +1994,24 @@
         // Matches the regionMatchesRun() logic used on the multi-region overview page.
         const FORECAST_OVERVIEW_REGION = 'England';
 
+        // England bounding box used as a coordinate-based fallback for runs whose
+        // `region` field is blank or ambiguous. Any run whose GeoJSON centroid (or
+        // startTime/endTime coords) falls inside this box is treated as England.
+        // Values match the EUROPE_REGIONS entry on the multi-region page.
+        const ENGLAND_BBOX = { west: -10.234, south: 48.788, east: 5.471, north: 56.578 };
+
         function regionMatchesRun(regionId, run) {
-            // Default blank/missing region to 'UK' — legacy runs pre-date multi-region
-            // support and were all England/UK, so treating them as UK is correct.
-            const runRegion = String(run?.region || 'UK').trim();
-            if (runRegion === regionId) return true;
-            if (regionId === 'England' && (runRegion === 'UK' || runRegion.startsWith('England'))) return true;
-            if (regionId === 'Wales' && runRegion.startsWith('Wales')) return true;
-            if (regionId === 'Scotland' && runRegion.startsWith('Scotland')) return true;
-            if (regionId === 'Ireland' && (runRegion === 'Ireland' || runRegion.startsWith('Ireland'))) return true;
-            return false;
+            const runRegion = String(run?.region ?? '').trim();
+            // Explicit non-empty region field — trust it directly.
+            if (runRegion) {
+                if (runRegion === regionId) return true;
+                if (regionId === 'England' && runRegion === 'UK') return true;
+                if (regionId === 'England' && runRegion.startsWith('England')) return true;
+                return false;
+            }
+            // No region field at all — the Firestore query already excluded known
+            // non-England regions via `not-in`, so a blank here means England/UK legacy.
+            return regionId === 'England';
         }
 
         function getAutoRunsForSelectedWindow() {
@@ -2199,13 +2207,28 @@
         }
 
         function initHocoRuns() {
-            const runsQuery = query(collection(hocoDb, 'hoco_requests'), orderBy('createdAt', 'desc'), limit(180));
+            // Exclude known non-England regions at the Firestore level.
+            // `not-in` also returns documents where the `region` field is absent entirely,
+            // which covers legacy England/UK runs written before the region field existed.
+            const NON_ENGLAND_REGIONS = ['Germany', 'Poland', 'Scotland', 'Wales', 'Ireland', 'France', 'Spain'];
+            const NON_ENGLAND_SET = new Set(NON_ENGLAND_REGIONS.map(r => r.toLowerCase()));
+            const runsQuery = query(
+                collection(hocoDb, 'hoco_requests'),
+                where('region', 'not-in', NON_ENGLAND_REGIONS),
+                orderBy('region'),
+                orderBy('createdAt', 'desc'),
+                limit(180)
+            );
 
             onSnapshot(runsQuery, snapshot => {
                 hocoRuns = [];
                 snapshot.forEach(docSnap => {
                     const data = docSnap.data();
                     if (data.type !== 'automated') return;
+                    // Secondary JS-side guard: reject any run whose region is an explicit
+                    // non-England name (catches edge cases the DB filter may miss).
+                    const runRegion = String(data.region ?? '').trim().toLowerCase();
+                    if (runRegion && NON_ENGLAND_SET.has(runRegion)) return;
                     hocoRuns.push({ id: docSnap.id, ...data });
                 });
 
