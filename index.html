@@ -2007,6 +2007,9 @@
         function getAutoRunsForSelectedWindow() {
             if (!selectedForecastWindow) return [];
 
+            // TEMP DIAGNOSTIC — remove once region filtering is confirmed working.
+            console.table(hocoRuns.map(r => ({ id: r.id, region: r.region, type: r.type })));
+
             return hocoRuns
                 .filter(run => run.type === 'automated')
                 .filter(run => regionMatchesRun(FORECAST_OVERVIEW_REGION, run))
