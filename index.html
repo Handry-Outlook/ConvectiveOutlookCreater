@@ -1989,11 +1989,27 @@
             hocoSelectedDayLabel.textContent = getSelectedWindowRangeText(selectedForecastWindow);
         }
 
+        // This page is England-only (HOCO now supports multiple regions e.g. Germany,
+        // Poland, Scotland, but this page has not been upgraded with a region picker).
+        // Matches the regionMatchesRun() logic used on the multi-region overview page.
+        const FORECAST_OVERVIEW_REGION = 'England';
+
+        function regionMatchesRun(regionId, run) {
+            const runRegion = String(run?.region || 'UK').trim();
+            if (runRegion === regionId) return true;
+            if (regionId === 'England' && (runRegion === 'UK' || runRegion.startsWith('England'))) return true;
+            if (regionId === 'Wales' && runRegion.startsWith('Wales')) return true;
+            if (regionId === 'Scotland' && runRegion.startsWith('Scotland')) return true;
+            if (regionId === 'Ireland' && (runRegion === 'Ireland' || runRegion.startsWith('Ireland'))) return true;
+            return false;
+        }
+
         function getAutoRunsForSelectedWindow() {
             if (!selectedForecastWindow) return [];
 
             return hocoRuns
                 .filter(run => run.type === 'automated')
+                .filter(run => regionMatchesRun(FORECAST_OVERVIEW_REGION, run))
                 .filter(run => {
                     const weather = String(run.weather || '').toLowerCase();
                     return !weather || weather.includes('lightning') || weather.includes('thunder');
