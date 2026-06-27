@@ -1430,7 +1430,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getFirestore, collection, limit, onSnapshot, orderBy, query, where } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
+        import { getFirestore, collection, limit, onSnapshot, orderBy, query } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js";
 
         // --- FIREBASE CONFIG ---
         const firebaseConfig = {
@@ -1991,35 +1991,31 @@
 
         // This page is England-only (HOCO now supports multiple regions e.g. Germany,
         // Poland, Scotland, but this page has not been upgraded with a region picker).
-        // Matches the regionMatchesRun() logic used on the multi-region overview page.
-        const FORECAST_OVERVIEW_REGION = 'England';
+        // All runs are fetched from Firestore, then filtered to England-only here
+        // before anything is passed to visibleAutoRuns or the slider.
 
-        // England bounding box used as a coordinate-based fallback for runs whose
-        // `region` field is blank or ambiguous. Any run whose GeoJSON centroid (or
-        // startTime/endTime coords) falls inside this box is treated as England.
-        // Values match the EUROPE_REGIONS entry on the multi-region page.
-        const ENGLAND_BBOX = { west: -10.234, south: 48.788, east: 5.471, north: 56.578 };
+        // All known non-England HOCO regions. A run is excluded from the England
+        // slider if its `region` field exactly matches one of these (case-insensitive).
+        // Runs with a blank or missing `region` are kept — they are legacy England/UK runs.
+        const NON_ENGLAND_REGIONS = new Set(
+            ['Germany', 'Poland', 'Scotland', 'Wales', 'Ireland', 'France', 'Spain']
+                .map(r => r.toLowerCase())
+        );
 
-        function regionMatchesRun(regionId, run) {
-            const runRegion = String(run?.region ?? '').trim();
-            // Explicit non-empty region field — trust it directly.
-            if (runRegion) {
-                if (runRegion === regionId) return true;
-                if (regionId === 'England' && runRegion === 'UK') return true;
-                if (regionId === 'England' && runRegion.startsWith('England')) return true;
-                return false;
-            }
-            // No region field at all — the Firestore query already excluded known
-            // non-England regions via `not-in`, so a blank here means England/UK legacy.
-            return regionId === 'England';
+        function isEnglandRun(run) {
+            const r = String(run?.region ?? '').trim().toLowerCase();
+            if (!r) return true;                        // blank = legacy England/UK run
+            if (r === 'uk') return true;                // 'UK' always means England
+            if (r.startsWith('england')) return true;   // 'England', 'England South', etc.
+            if (NON_ENGLAND_REGIONS.has(r)) return false; // explicit non-England name
+            return false;                               // unknown region — exclude to be safe
         }
 
         function getAutoRunsForSelectedWindow() {
             if (!selectedForecastWindow) return [];
-
             return hocoRuns
                 .filter(run => run.type === 'automated')
-                .filter(run => regionMatchesRun(FORECAST_OVERVIEW_REGION, run))
+                .filter(run => isEnglandRun(run))
                 .filter(run => {
                     const weather = String(run.weather || '').toLowerCase();
                     return !weather || weather.includes('lightning') || weather.includes('thunder');
@@ -2207,29 +2203,14 @@
         }
 
         function initHocoRuns() {
-            // Exclude known non-England regions at the Firestore level.
-            // `not-in` also returns documents where the `region` field is absent entirely,
-            // which covers legacy England/UK runs written before the region field existed.
-            const NON_ENGLAND_REGIONS = ['Germany', 'Poland', 'Scotland', 'Wales', 'Ireland', 'France', 'Spain'];
-            const NON_ENGLAND_SET = new Set(NON_ENGLAND_REGIONS.map(r => r.toLowerCase()));
-            const runsQuery = query(
-                collection(hocoDb, 'hoco_requests'),
-                where('region', 'not-in', NON_ENGLAND_REGIONS),
-                orderBy('region'),
-                orderBy('createdAt', 'desc'),
-                limit(180)
-            );
+            // Fetch all runs — region filtering happens in getAutoRunsForSelectedWindow()
+            // before anything is passed to the slider.
+            const runsQuery = query(collection(hocoDb, 'hoco_requests'), orderBy('createdAt', 'desc'), limit(180));
 
             onSnapshot(runsQuery, snapshot => {
                 hocoRuns = [];
                 snapshot.forEach(docSnap => {
-                    const data = docSnap.data();
-                    if (data.type !== 'automated') return;
-                    // Secondary JS-side guard: reject any run whose region is an explicit
-                    // non-England name (catches edge cases the DB filter may miss).
-                    const runRegion = String(data.region ?? '').trim().toLowerCase();
-                    if (runRegion && NON_ENGLAND_SET.has(runRegion)) return;
-                    hocoRuns.push({ id: docSnap.id, ...data });
+                    hocoRuns.push({ id: docSnap.id, ...docSnap.data() });
                 });
 
                 refreshGuidanceForSelectedDay();
